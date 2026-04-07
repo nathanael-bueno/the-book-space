@@ -2,46 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\loginRequest;
+use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(StoreUserRequest $request): JsonResponse
     {
         try {
-            // Aqui validamos os dados de entrada antes de criar o usuario.
-            // O `unique:users,email` impede cadastro com e-mail repetido.
-            $validated = $request->validate([
-                'nome_completo' => ['required', 'string', 'max:150'],
-                'email' => ['required', 'string', 'email', 'max:150', 'unique:users,email'],
-                'senha' => ['required', 'string', 'min:6'],
-            ], [
-                'email.unique' => 'Este e-mail ja esta cadastrado.',
-            ]);
+            $validated = $request->validated();
         } catch (ValidationException $e) {
-            // Quando a validacao falha, devolvemos 422 com os campos com erro.
-            // Isso facilita mostrar mensagens claras no frontend.
             return response()->json([
                 'message' => 'Dados invalidos.',
-                'errors' => $e->errors(),
+                'errors'  => $e->errors(),
             ], 422);
         }
 
         $user = User::create([
             'nome_completo' => $validated['nome_completo'],
-            'email' => $validated['email'],
-            // A senha recebida (`senha`) e transformada em hash antes de salvar.
-            // Assim nenhum dado sensivel fica armazenado em texto puro no banco.
-            'senha_hash' => Hash::make($validated['senha']),
+            'email'         => $validated['email'],
+            'senha_hash'    => Hash::make($validated['senha']),
         ]);
 
+        EmailVerificationController::sendCode($user);
+
         return response()->json([
-            'message' => 'Usuario cadastrado com sucesso.',
-            'user' => $user,
+            'message' => 'Usuario cadastrado com sucesso. Verifique seu e-mail para ativar a conta.',
+            'user'    => $user,
         ], 201);
+    }
+
+    public function login(loginRequest $request): JsonResponse
+{
+    $credentials = $request->validated();
+
+    $user = User::where('email', $credentials['email'])->first();
+
+    if (!$user || !Hash::check($credentials['senha'], $user->senha_hash)) {
+        return response()->json([
+            'message' => 'Credenciais invalidas.',
+        ], 401);
+    }
+
+    if (!$user->hasVerifiedEmail()) {
+        return response()->json([
+            'message' => 'E-mail não verificado. Verifique sua caixa de entrada.',
+        ], 403);
+    }
+
+    $token = JWTAuth::fromUser($user);
+
+    return response()->json([
+        'message' => 'Login realizado com sucesso.',
+        'token'   => $token,
+    ], 200);
+}
+
+    public function me(): JsonResponse
+    {
+        return response()->json(auth()->user());
     }
 }
