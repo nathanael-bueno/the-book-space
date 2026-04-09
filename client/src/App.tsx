@@ -1,34 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useMemo, useState } from 'react'
+import { booksData, categoryLabels } from './data/books'
+import { BookGrid } from './components/BookGrid'
+import { CategoryFilters } from './components/CategoryFilters'
+import { Header } from './components/Header'
+import type { CategoryFilter } from './types/book'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('todos')
+
+  const filteredBooks = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+
+    return booksData.filter((book) => {
+      const matchesSearch =
+        normalizedQuery.length === 0 ||
+        book.title.toLowerCase().includes(normalizedQuery) ||
+        book.author.toLowerCase().includes(normalizedQuery)
+
+      const matchesCategory =
+        activeCategory === 'todos' || book.category === activeCategory
+
+      return matchesSearch && matchesCategory
+    })
+  }, [activeCategory, searchQuery])
+
+  const categoryTitle =
+    activeCategory === 'todos'
+      ? 'Todos os livros'
+      : `Livros de ${categoryLabels[activeCategory]}`
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app-shell">
+      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+
+      <CategoryFilters
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+      />
+
+      <main className="content-wrap">
+        <section className="section-header">
+          <h1 className="section-title">{categoryTitle}</h1>
+          <p className="section-subtitle">
+            {filteredBooks.length} livro{filteredBooks.length === 1 ? '' : 's'}{' '}
+            disponivel
+            {filteredBooks.length === 1 ? '' : 'eis'} para troca ou doacao
+          </p>
+        </section>
+
+        <BookGrid books={filteredBooks} />
+      </main>
+    </div>
   )
 }
 
