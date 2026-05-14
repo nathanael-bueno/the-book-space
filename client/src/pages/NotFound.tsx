@@ -3,7 +3,7 @@ import { Compass, House, Search } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <main className="mx-auto w-full max-w-4xl rounded-2xl border border-line/45 bg-white p-6 shadow-sm sm:p-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center rounded-xl border border-line/45 bg-white p-5 shadow-sm sm:p-8">
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-deep">
           Erro 404
@@ -17,24 +17,24 @@ export default function NotFound() {
         </p>
       </div>
 
-      <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <div className="mt-5 flex flex-col items-center justify-center gap-2.5 sm:flex-row">
         <Link
-          to="/"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+          to="/app/feed"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
         >
           <House size={16} />
           Ir para inicio
         </Link>
         <Link
-          to="/catalog"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-5 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+          to="/app/catalog"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-5 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
         >
           <Search size={16} />
           Abrir catalogo
         </Link>
       </div>
 
-      <section className="mt-6 rounded-xl border border-line/35 bg-[#fbfaf7] p-4 sm:p-5">
+      <section className="mt-5 rounded-xl border border-line/35 bg-[#fbfaf7] p-3 sm:p-3.5">
         <div className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
           <Compass size={16} className="text-brand-deep" />
           Sugestoes

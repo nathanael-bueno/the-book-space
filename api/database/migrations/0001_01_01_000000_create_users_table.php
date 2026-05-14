@@ -16,7 +16,22 @@ return new class extends Migration
             $table->string('nome_completo');
             $table->string('email')->unique();
             $table->string('senha_hash');
+            $table->string('auth_provider', 30)->default('local');
+            $table->string('provider_id', 191)->nullable();
+            $table->enum('role', ['administrador', 'usuario'])->default('usuario');
+            $table->string('instituicao', 180)->nullable();
+            $table->string('foto', 500)->nullable();
+            $table->text('bio')->nullable();
+            $table->string('cidade', 120)->nullable();
+            $table->string('estado', 2)->nullable();
+            $table->string('faixa_etaria', 20)->nullable();
+            $table->decimal('nota', 3, 2)->default(0);
+            $table->enum('status', ['ativo', 'inativo', 'bloqueado', 'suspenso'])->default('ativo');
+            $table->jsonb('notification_preferences')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
+            $table->timestamp('password_changed_at')->nullable();
+            $table->index(['auth_provider']);
             $table->timestamps();
         });
 

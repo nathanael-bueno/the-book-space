@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class PasswordResetController extends Controller
 {
@@ -19,7 +20,7 @@ class PasswordResetController extends Controller
         ]);
 
         // Resposta genérica por segurança — não revela se o e-mail existe
-        $status = Password::sendResetLink(
+        Password::sendResetLink(
             $request->only('email')
         );
 
@@ -33,7 +34,7 @@ class PasswordResetController extends Controller
         $request->validate([
             'email'             => 'required|email:rfc,dns',
             'token'             => 'required|string',
-            'senha'             => 'required|string|min:8|confirmed',
+            'senha'             => ['required', 'string', PasswordRule::min(8)->letters()->mixedCase()->numbers(), 'confirmed'],
             // Campo no JSON: "senha_confirmation"
         ]);
 
@@ -48,6 +49,7 @@ class PasswordResetController extends Controller
                 $user->forceFill([
                     'senha_hash'     => Hash::make($password),
                     'remember_token' => Str::random(60),
+                    'password_changed_at' => now(),
                 ])->save();
 
                 event(new PasswordReset($user));

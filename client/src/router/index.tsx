@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout'
 import ErrorPage from '../pages/ErrorPage'
 import {
@@ -10,17 +10,20 @@ import {
   BookDetails,
   BookForm,
   Catalog,
+  CompleteProfile,
   CreatePost,
+  EditPost,
   DonationFlow,
   DonationsHistory,
   ForgotPassword,
-  Home,
+  GoogleAuthCallback,
   Institutions,
   Login,
   NotFound,
   Notifications,
   Profile,
   ProfileEdit,
+  ProfileNotifications,
   PublicProfile,
   Register,
   ResetPassword,
@@ -30,18 +33,27 @@ import {
   TradeProposal,
   TradeReview,
   TradesHistory,
+  VerifyEmail,
 } from './pages'
 import { withSuspense } from './withSuspense'
 
 export const router = createBrowserRouter([
   {
     path: '/',
+    element: <Navigate to="/auth/login" replace />,
+  },
+  {
+    path: '/app',
     element: <MainLayout />,
     errorElement: <ErrorPage />,
     children: [
       {
         index: true,
-        element: withSuspense(Home),
+        element: <Navigate to="feed" replace />,
+      },
+      {
+        path: 'home',
+        element: <Navigate to="/app/feed" replace />,
       },
       {
         path: 'catalog',
@@ -92,6 +104,10 @@ export const router = createBrowserRouter([
         element: withSuspense(CreatePost),
       },
       {
+        path: 'posts/:postId/edit',
+        element: withSuspense(EditPost),
+      },
+      {
         path: 'institutions',
         element: withSuspense(Institutions),
       },
@@ -116,7 +132,15 @@ export const router = createBrowserRouter([
         element: withSuspense(ProfileEdit),
       },
       {
+        path: 'profile/notifications',
+        element: withSuspense(ProfileNotifications),
+      },
+      {
         path: 'admin',
+        element: withSuspense(AdminDashboard),
+      },
+      {
+        path: 'admin/painel',
         element: withSuspense(AdminDashboard),
       },
       {
@@ -138,19 +162,31 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: '/login',
+    path: '/auth/login',
     element: withSuspense(Login),
   },
   {
-    path: '/register',
+    path: '/auth/google/callback',
+    element: withSuspense(GoogleAuthCallback),
+  },
+  {
+    path: '/auth/complete-profile',
+    element: withSuspense(CompleteProfile),
+  },
+  {
+    path: '/auth/register',
     element: withSuspense(Register),
   },
   {
-    path: '/forgot-password',
+    path: '/auth/verify-email',
+    element: withSuspense(VerifyEmail),
+  },
+  {
+    path: '/auth/forgot-password',
     element: withSuspense(ForgotPassword),
   },
   {
-    path: '/reset-password',
+    path: '/auth/reset-password',
     element: withSuspense(ResetPassword),
   },
   {

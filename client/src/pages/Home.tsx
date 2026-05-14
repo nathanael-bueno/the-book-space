@@ -24,22 +24,22 @@ const todayPosts = [
 
 export default function Home() {
   return (
-    <main className="mx-auto w-full max-w-5xl">
-      <section className="mb-5 rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
+    <main className="mx-auto w-full">
+      <section className="mb-5 rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+        <div className="mb-4 flex items-center justify-between gap-2.5">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
             <Sparkles size={15} />
             Postado hoje
           </p>
           <Link
-            to="/feed"
+            to="/app/feed"
             className="text-sm font-semibold text-ink-dim transition-colors hover:text-brand-deep"
           >
             Ver tudo
           </Link>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2.5 md:grid-cols-2">
           {todayPosts.map((post) => (
             <article
               key={post.id}
@@ -55,7 +55,7 @@ export default function Home() {
               <p className="mt-1 text-xs leading-5 text-ink-dim">
                 {post.content}
               </p>
-              <div className="mt-3 flex items-center gap-3 text-xs text-ink-muted">
+              <div className="mt-3 flex items-center gap-2.5 text-xs text-ink-muted">
                 <span className="inline-flex items-center gap-1">
                   <Heart size={14} className="text-brand-deep" />
                   {post.likes}
@@ -69,14 +69,14 @@ export default function Home() {
           ))}
         </div>
       </section>
-      <section className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
         <p className="text-sm text-ink-dim">
           Para buscar livros por categoria, estado e localizacao, abra o
           catalogo.
         </p>
         <Link
-          to="/catalog"
-          className="mt-3 inline-flex h-10 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+          to="/app/catalog"
+          className="mt-3 inline-flex h-9 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
         >
           Ir para catalogo
         </Link>

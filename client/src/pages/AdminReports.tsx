@@ -1,98 +1,119 @@
+import { AlertTriangle, Check, Eye, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 import {
-  AlertTriangle,
-  Check,
-  Eye,
-  MessageSquareWarning,
-  ShieldAlert,
-  X,
-} from 'lucide-react'
-import { useMemo, useState } from 'react'
-
-type ReportStatus = 'Pendente' | 'Aprovada' | 'Rejeitada'
-
-type Report = {
-  id: string
-  reason: string
-  target: string
-  author: string
-  createdAt: string
-  status: ReportStatus
-}
-
-const initialReports: Report[] = [
-  {
-    id: 'r-1',
-    reason: 'Spam recorrente no feed',
-    target: '@leitorRapido',
-    author: '@ana',
-    createdAt: 'Hoje, 09:12',
-    status: 'Pendente',
-  },
-  {
-    id: 'r-2',
-    reason: 'Linguagem ofensiva em comentario',
-    target: 'Post #842',
-    author: '@carlos',
-    createdAt: 'Hoje, 08:33',
-    status: 'Pendente',
-  },
-  {
-    id: 'r-3',
-    reason: 'Tentativa de golpe em troca',
-    target: 'Troca #211',
-    author: '@marta',
-    createdAt: 'Ontem, 18:05',
-    status: 'Pendente',
-  },
-]
+  listAdminReports,
+  persistReportStatus,
+  type AdminReport,
+  type AdminReportStatus,
+} from '../services/admin'
 
 export default function AdminReports() {
-  const [reports, setReports] = useState<Report[]>(initialReports)
+  const [reports, setReports] = useState<AdminReport[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    id: string
+    status: AdminReportStatus
+  } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    async function loadData() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await listAdminReports()
+        if (!active) return
+        setReports(response)
+      } catch {
+        if (!active) return
+        setError('Nao foi possivel carregar denuncias.')
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+    loadData()
+    return () => {
+      active = false
+    }
+  }, [])
+
   const pendingCount = useMemo(
     () => reports.filter((report) => report.status === 'Pendente').length,
     [reports]
   )
 
-  function updateStatus(id: string, status: ReportStatus) {
-    setReports((prev) =>
-      prev.map((report) => (report.id === id ? { ...report, status } : report))
-    )
+  async function updateStatus(id: string, status: AdminReportStatus) {
+    setError(null)
+    try {
+      await persistReportStatus(id, status)
+      setReports((prev) =>
+        prev.map((report) =>
+          report.id === id ? { ...report, status } : report
+        )
+      )
+      setNotice('Status da denuncia atualizado.')
+    } catch {
+      setError('Nao foi possivel atualizar o status da denuncia.')
+    }
   }
 
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            <ShieldAlert size={14} />
-            Admin {'>'} Moderacao
+    <main className="mx-auto w-full space-y-3">
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Denuncias</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Revisao de denuncias com aprovacao e rejeicao.
           </p>
-          <h1 className="mt-1 text-xl font-semibold text-ink sm:text-2xl">
-            Denuncias da comunidade
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Fluxo mock de revisao, aprovacao e rejeicao.
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-accent/25 bg-[#fbfaf7] px-3 py-2 text-sm font-medium text-ink">
-            <AlertTriangle size={16} className="text-accent" />
-            {pendingCount} pendentes para analise
-          </div>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium text-ink-dim">
+          <AlertTriangle size={14} className="text-accent" />
+          {pendingCount} pendentes
         </div>
       </section>
 
-      <section className="space-y-3">
+      {isLoading ? (
+        <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando denuncias...
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          {notice}
+        </p>
+      ) : null}
+
+      {!isLoading && !error && !reports.length ? (
+        <section className="ui-empty-state flex flex-col items-center gap-2">
+          <AlertTriangle size={32} className="text-brand-deep" />
+          <p className="text-sm font-medium text-ink">
+            Nenhuma denuncia pendente no momento.
+          </p>
+          <p className="text-sm">
+            Quando houver novas denuncias, elas aparecem aqui.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="space-y-2.5">
         {reports.map((report) => {
           const resolved = report.status !== 'Pendente'
           return (
             <article
               key={report.id}
-              className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5"
+              className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-2.5">
                 <div>
-                  <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-                    <MessageSquareWarning size={14} />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
                     {report.target}
                   </p>
                   <h2 className="mt-1 text-base font-semibold text-ink">
@@ -103,22 +124,22 @@ export default function AdminReports() {
                   </p>
                 </div>
                 <span
-                  className={`inline-flex rounded-lg border px-2 py-1 text-xs font-semibold ${
+                  className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
                     report.status === 'Aprovada'
-                      ? 'border-accent/25 bg-[#fbfaf7] text-accent'
+                      ? 'text-accent'
                       : report.status === 'Rejeitada'
-                        ? 'border-line/40 bg-white text-ink-dim'
-                        : 'border-brand-deep/20 bg-[#fbfaf7] text-brand-deep'
+                        ? 'text-ink-dim'
+                        : 'text-brand-deep'
                   }`}
                 >
                   {report.status}
                 </span>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-2 border-t border-line/35 pt-2.5">
                 <button
                   type="button"
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
                 >
                   <Eye size={16} />
                   Ver contexto
@@ -126,8 +147,13 @@ export default function AdminReports() {
                 <button
                   type="button"
                   disabled={resolved}
-                  onClick={() => updateStatus(report.id, 'Aprovada')}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() =>
+                    setPendingStatusChange({
+                      id: report.id,
+                      status: 'Aprovada',
+                    })
+                  }
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Check size={16} />
                   Aprovar acao
@@ -135,8 +161,13 @@ export default function AdminReports() {
                 <button
                   type="button"
                   disabled={resolved}
-                  onClick={() => updateStatus(report.id, 'Rejeitada')}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() =>
+                    setPendingStatusChange({
+                      id: report.id,
+                      status: 'Rejeitada',
+                    })
+                  }
+                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <X size={16} />
                   Rejeitar
@@ -146,6 +177,20 @@ export default function AdminReports() {
           )
         })}
       </section>
-    </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingStatusChange)}
+        title="Confirmar moderacao"
+        description="Deseja confirmar essa acao de moderacao para a denuncia?"
+        confirmLabel="Confirmar"
+        danger={pendingStatusChange?.status === 'Rejeitada'}
+        onCancel={() => setPendingStatusChange(null)}
+        onConfirm={() => {
+          if (!pendingStatusChange) return
+          void updateStatus(pendingStatusChange.id, pendingStatusChange.status)
+          setPendingStatusChange(null)
+        }}
+      />
+    </main>
   )
 }

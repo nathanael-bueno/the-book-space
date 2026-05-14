@@ -1,229 +1,312 @@
-import { Building2, MapPin, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { MapPin, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-
-type Institution = {
-  id: string
-  name: string
-  city: string
-  contact: string
-  status: 'Ativa' | 'Pendente'
-}
-
-const initialInstitutions: Institution[] = [
-  {
-    id: '1',
-    name: 'Biblioteca Comunitaria Aurora',
-    city: 'Sao Paulo - SP',
-    contact: 'aurora@livros.org',
-    status: 'Ativa',
-  },
-  {
-    id: '2',
-    name: 'Casa de Leitura Girassol',
-    city: 'Recife - PE',
-    contact: 'contato@girassol.org',
-    status: 'Ativa',
-  },
-  {
-    id: '3',
-    name: 'Instituto Pontes de Papel',
-    city: 'Belo Horizonte - MG',
-    contact: 'equipe@pontes.org',
-    status: 'Pendente',
-  },
-]
+import InstitutionModal from '../components/admin/InstitutionModal'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
+import {
+  listAdminInstitutions,
+  persistInstitutionCreate,
+  persistInstitutionDelete,
+  persistInstitutionUpdate,
+  type AdminInstitution,
+} from '../services/admin'
 
 export default function AdminInstitutions() {
-  const [institutions, setInstitutions] =
-    useState<Institution[]>(initialInstitutions)
+  const [institutions, setInstitutions] = useState<AdminInstitution[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '',
     city: '',
     contact: '',
-    status: 'Ativa' as Institution['status'],
+    status: 'Ativa' as AdminInstitution['status'],
+    pointType: 'Doacao' as AdminInstitution['pointType'],
   })
 
   const isEditing = useMemo(() => editingId !== null, [editingId])
 
+  useEffect(() => {
+    let active = true
+    async function loadData() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await listAdminInstitutions()
+        if (!active) return
+        setInstitutions(response)
+      } catch {
+        if (!active) return
+        setError('Nao foi possivel carregar instituicoes.')
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+    loadData()
+    return () => {
+      active = false
+    }
+  }, [])
+
   function resetForm() {
     setEditingId(null)
-    setForm({ name: '', city: '', contact: '', status: 'Ativa' })
+    setForm({
+      name: '',
+      city: '',
+      contact: '',
+      status: 'Ativa',
+      pointType: 'Doacao',
+    })
   }
 
-  function onSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!form.name.trim() || !form.city.trim() || !form.contact.trim()) return
-
-    if (editingId) {
-      setInstitutions((prev) =>
-        prev.map((institution) =>
-          institution.id === editingId
-            ? {
-                ...institution,
-                ...form,
-                name: form.name.trim(),
-                city: form.city.trim(),
-                contact: form.contact.trim(),
-              }
-            : institution
-        )
-      )
-      resetForm()
-      return
-    }
-
-    setInstitutions((prev) => [
-      {
-        id: crypto.randomUUID(),
-        name: form.name.trim(),
-        city: form.city.trim(),
-        contact: form.contact.trim(),
-        status: form.status,
-      },
-      ...prev,
-    ])
+  function closeModal() {
+    setIsModalOpen(false)
     resetForm()
   }
 
-  function onEdit(institution: Institution) {
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!form.name.trim() || !form.city.trim() || !form.contact.trim()) return
+
+    const payload = {
+      name: form.name.trim(),
+      city: form.city.trim(),
+      contact: form.contact.trim(),
+      status: form.status,
+      pointType: form.pointType,
+    }
+
+    if (editingId) {
+      setError(null)
+      try {
+        await persistInstitutionUpdate(editingId, payload)
+        setInstitutions((prev) =>
+          prev.map((institution) =>
+            institution.id === editingId
+              ? { ...institution, ...payload }
+              : institution
+          )
+        )
+        setNotice('Instituicao atualizada com sucesso.')
+        setIsModalOpen(false)
+        resetForm()
+      } catch {
+        setError('Nao foi possivel atualizar a instituicao.')
+      }
+      return
+    }
+
+    const newInstitution: AdminInstitution = {
+      id: crypto.randomUUID(),
+      ...payload,
+    }
+
+    setError(null)
+    try {
+      await persistInstitutionCreate(payload)
+      setInstitutions((prev) => [newInstitution, ...prev])
+      setNotice('Instituicao criada com sucesso.')
+      setIsModalOpen(false)
+      resetForm()
+    } catch {
+      setError('Nao foi possivel criar a instituicao.')
+    }
+  }
+
+  function onEdit(institution: AdminInstitution) {
     setEditingId(institution.id)
     setForm({
       name: institution.name,
       city: institution.city,
       contact: institution.contact,
       status: institution.status,
+      pointType: institution.pointType,
     })
+    setIsModalOpen(true)
   }
 
-  function onDelete(id: string) {
-    setInstitutions((prev) =>
-      prev.filter((institution) => institution.id !== id)
-    )
-    if (editingId === id) resetForm()
+  async function onDelete(id: string) {
+    setError(null)
+    try {
+      await persistInstitutionDelete(id)
+      setInstitutions((prev) =>
+        prev.filter((institution) => institution.id !== id)
+      )
+      if (editingId === id) closeModal()
+      setNotice('Instituicao removida com sucesso.')
+    } catch {
+      setError('Nao foi possivel remover a instituicao.')
+    }
   }
 
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            <Building2 size={14} />
-            Admin {'>'} Instituicoes
-          </p>
-          <h1 className="mt-1 text-xl font-semibold text-ink sm:text-2xl">
-            Gerenciar instituicoes parceiras
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Fluxo mock de cadastro, edicao e exclusao.
+    <main className="mx-auto w-full space-y-3">
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Instituicoes</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Cadastro e gestao dos pontos onde ocorrem trocas e doacoes.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            resetForm()
+            setIsModalOpen(true)
+          }}
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-deep"
+        >
+          <Plus size={16} />
+          Criar ponto
+        </button>
       </section>
 
-      <form
+      {isLoading ? (
+        <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando instituicoes...
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          {notice}
+        </p>
+      ) : null}
+
+      {!isLoading && !error && !institutions.length ? (
+        <section className="ui-empty-state flex flex-col items-center gap-2">
+          <MapPin size={32} className="text-brand-deep" />
+          <p className="text-sm font-medium text-ink">
+            Nenhuma instituicao cadastrada.
+          </p>
+          <p className="text-sm">
+            Cadastre a primeira instituicao para comecar.
+          </p>
+        </section>
+      ) : null}
+
+      {!isLoading && !error && institutions.length ? (
+        <section className="overflow-hidden rounded-xl border border-line/45 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-[#fbfaf7]">
+                <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+                  <th className="px-3 py-2.5 font-semibold">Nome</th>
+                  <th className="px-3 py-2.5 font-semibold">Cidade</th>
+                  <th className="px-3 py-2.5 font-semibold">Contato</th>
+                  <th className="px-3 py-2.5 font-semibold">Tipo</th>
+                  <th className="px-3 py-2.5 font-semibold">Status</th>
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    Acoes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {institutions.map((institution) => (
+                  <tr
+                    key={institution.id}
+                    className="border-t border-line/35 align-middle"
+                  >
+                    <td className="px-3 py-3 font-medium text-ink">
+                      {institution.name}
+                    </td>
+                    <td className="px-3 py-3 text-ink-dim">
+                      {institution.city}
+                    </td>
+                    <td className="px-3 py-3 text-ink-dim">
+                      {institution.contact}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium text-brand-deep">
+                        {institution.pointType}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span
+                        className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
+                          institution.status === 'Ativa'
+                            ? 'text-accent'
+                            : 'text-ink-dim'
+                        }`}
+                      >
+                        {institution.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onEdit(institution)}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                        >
+                          <Pencil size={14} />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(institution.id)}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                        >
+                          <Trash2 size={14} />
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      <InstitutionModal
+        open={isModalOpen}
+        isEditing={isEditing}
+        form={form}
+        onChange={(field, value) => {
+          if (field === 'status') {
+            setForm((prev) => ({
+              ...prev,
+              status: value as AdminInstitution['status'],
+            }))
+            return
+          }
+
+          if (field === 'pointType') {
+            setForm((prev) => ({
+              ...prev,
+              pointType: value as AdminInstitution['pointType'],
+            }))
+            return
+          }
+
+          setForm((prev) => ({ ...prev, [field]: value }))
+        }}
+        onCancel={closeModal}
         onSubmit={onSubmit}
-        className="grid gap-4 rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5 lg:grid-cols-4"
-      >
-        <input
-          value={form.name}
-          onChange={(event) =>
-            setForm((prev) => ({ ...prev, name: event.target.value }))
-          }
-          placeholder="Nome da instituicao"
-          className="h-11 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
-        />
-        <input
-          value={form.city}
-          onChange={(event) =>
-            setForm((prev) => ({ ...prev, city: event.target.value }))
-          }
-          placeholder="Cidade / Estado"
-          className="h-11 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
-        />
-        <input
-          value={form.contact}
-          onChange={(event) =>
-            setForm((prev) => ({ ...prev, contact: event.target.value }))
-          }
-          placeholder="E-mail de contato"
-          className="h-11 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
-        />
-        <div className="flex gap-2">
-          <select
-            value={form.status}
-            onChange={(event) =>
-              setForm((prev) => ({
-                ...prev,
-                status: event.target.value as Institution['status'],
-              }))
-            }
-            className="h-11 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
-          >
-            <option>Ativa</option>
-            <option>Pendente</option>
-          </select>
-          <button
-            type="submit"
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
-          >
-            <Plus size={16} />
-            {isEditing ? 'Salvar' : 'Criar'}
-          </button>
-        </div>
-      </form>
+      />
 
-      <section className="grid gap-3">
-        {institutions.map((institution) => (
-          <article
-            key={institution.id}
-            className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold text-ink">
-                  {institution.name}
-                </h2>
-                <p className="mt-1 inline-flex items-center gap-1 text-sm text-ink-muted">
-                  <MapPin size={14} className="text-brand-deep" />
-                  {institution.city}
-                </p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  {institution.contact}
-                </p>
-              </div>
-              <span
-                className={`inline-flex rounded-lg border px-2 py-1 text-xs font-semibold ${
-                  institution.status === 'Ativa'
-                    ? 'border-accent/25 bg-[#fbfaf7] text-accent'
-                    : 'border-line/40 bg-white text-ink-dim'
-                }`}
-              >
-                {institution.status}
-              </span>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => onEdit(institution)}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-              >
-                <Pencil size={16} />
-                Editar
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(institution.id)}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-              >
-                <Trash2 size={16} />
-                Excluir
-              </button>
-            </div>
-          </article>
-        ))}
-      </section>
-    </div>
+      <ConfirmDialog
+        open={Boolean(confirmDeleteId)}
+        title="Excluir instituicao"
+        description="Essa acao remove a instituicao permanentemente. Deseja continuar?"
+        confirmLabel="Excluir"
+        danger
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={() => {
+          if (!confirmDeleteId) return
+          void onDelete(confirmDeleteId)
+          setConfirmDeleteId(null)
+        }}
+      />
+    </main>
   )
 }

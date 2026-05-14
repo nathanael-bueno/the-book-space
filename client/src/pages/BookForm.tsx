@@ -1,113 +1,342 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, BookImage, Save, Trash2 } from 'lucide-react'
-import { books } from '../data/books'
+import { useEffect, useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, BookImage, ImagePlus, Save, Trash2, X } from 'lucide-react'
 import { useToast } from '../stores/useToast'
+import { uploadImage } from '../services/uploads'
+import {
+  createBook,
+  deleteBook,
+  getBook,
+  listGenres,
+  updateBook,
+  type ApiBook,
+} from '../services/books'
+import { ApiError } from '../services/http'
+import {
+  formatCityWithState,
+  listBrazilianStates,
+  listCitiesByState,
+  parseCityWithState,
+} from '../services/locations'
 
-const genres = [
-  'Romance',
-  'Fantasia',
-  'Ficcao Cientifica',
-  'Tecnologia',
-  'Biografia',
-]
 const conditions = ['Novo', 'Muito bom', 'Bom', 'Usado']
 
 export default function BookForm() {
   const toast = useToast()
+  const navigate = useNavigate()
   const { bookId } = useParams()
-  const book = books.find((item) => item.id === bookId)
   const isEditing = Boolean(bookId)
-  const [saved, setSaved] = useState(false)
-  const [coverFile, setCoverFile] = useState<File | null>(null)
 
-  const localCoverPreview = useMemo(
-    () => (coverFile ? URL.createObjectURL(coverFile) : null),
-    [coverFile]
+  const [book, setBook] = useState<ApiBook | null>(null)
+  const [isLoading, setIsLoading] = useState(isEditing)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [titulo, setTitulo] = useState('')
+  const [autor, setAutor] = useState('')
+  const [isbn, setIsbn] = useState('')
+  const [estado, setEstado] = useState('Muito bom')
+  const [uf, setUf] = useState('')
+  const [cidade, setCidade] = useState('')
+  const [descricao, setDescricao] = useState('')
+  const [photos, setPhotos] = useState<string[]>([])
+  const [uploadingCount, setUploadingCount] = useState(0)
+  const [selectedGenreId, setSelectedGenreId] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [genres, setGenres] = useState<Array<{ id: string; nome: string }>>([])
+  const [states, setStates] = useState<Array<{ code: string; name: string }>>(
+    []
   )
-  const coverPreview = localCoverPreview ?? book?.cover
+  const [cities, setCities] = useState<string[]>([])
+  const [isLoadingStates, setIsLoadingStates] = useState(true)
+  const [isLoadingCities, setIsLoadingCities] = useState(false)
 
-  useEffect(
-    () => () => {
-      if (localCoverPreview) URL.revokeObjectURL(localCoverPreview)
-    },
-    [localCoverPreview]
-  )
+  useEffect(() => {
+    let active = true
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setSaved(true)
-    toast.success({
-      title: isEditing ? 'Livro atualizado' : 'Livro cadastrado',
-      message: 'Operacao mock concluida. Integrar com API para persistir.',
-    })
+    async function loadStates() {
+      setIsLoadingStates(true)
+      try {
+        const data = await listBrazilianStates()
+        if (!active) return
+        setStates(data)
+      } catch {
+        if (!active) return
+        setStates([])
+      } finally {
+        if (active) setIsLoadingStates(false)
+      }
+    }
+
+    loadStates()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadGenres() {
+      try {
+        const response = await listGenres()
+        if (!active) return
+        setGenres(response.data)
+      } catch {
+        if (!active) return
+        setGenres([])
+      }
+    }
+
+    loadGenres()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isEditing || !bookId) return
+    const safeBookId = bookId
+    let active = true
+
+    async function loadBook() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await getBook(safeBookId)
+        if (!active) return
+        const data = response.data
+        setBook(data)
+        setTitulo(data.titulo)
+        setAutor(data.autor)
+        setIsbn(data.isbn ?? '')
+        setEstado(data.estado_conservacao)
+        const parsed = parseCityWithState(data.cidade)
+        setUf(parsed.stateCode)
+        setCidade(parsed.city)
+        setDescricao(data.descricao ?? '')
+        setPhotos(data.fotos ?? [])
+        setSelectedGenreId(data.id_genero ?? '')
+      } catch (err) {
+        if (!active) return
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar os dados do livro.'
+        )
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+
+    loadBook()
+    return () => {
+      active = false
+    }
+  }, [bookId, isEditing])
+
+  useEffect(() => {
+    if (!uf) return
+    let active = true
+
+    async function loadCities() {
+      setIsLoadingCities(true)
+      try {
+        const data = await listCitiesByState(uf)
+        if (!active) return
+        setCities(data)
+      } catch {
+        if (!active) return
+        setCities([])
+      } finally {
+        if (active) setIsLoadingCities(false)
+      }
+    }
+
+    loadCities()
+
+    return () => {
+      active = false
+    }
+  }, [uf])
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
+    if (!files.length) return
+
+    event.target.value = ''
+
+    setUploadingCount((n) => n + files.length)
+
+    await Promise.allSettled(
+      files.map(async (file) => {
+        try {
+          const result = await uploadImage(file, 'book')
+          setPhotos((prev) => [...prev, result.url])
+        } catch {
+          toast.error({
+            title: 'Erro no upload',
+            message: `Nao foi possivel enviar "${file.name}".`,
+          })
+        } finally {
+          setUploadingCount((n) => n - 1)
+        }
+      })
+    )
   }
 
-  if (isEditing && !book) {
+  function removePhoto(index: number) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setIsSaving(true)
+    setError(null)
+
+    if (!selectedGenreId) {
+      setIsSaving(false)
+      setError('Selecione um genero para continuar.')
+      return
+    }
+
+    const payload = {
+      titulo: titulo.trim(),
+      autor: autor.trim(),
+      isbn: isbn.trim() || null,
+      estado_conservacao: estado,
+      descricao: descricao.trim() || null,
+      cidade: formatCityWithState(cidade, uf) || null,
+      id_genero: selectedGenreId,
+      fotos: photos.length ? photos : ['https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80'],
+    }
+
+    try {
+      if (isEditing && bookId) {
+        const response = await updateBook(bookId, payload)
+        toast.success({ title: 'Livro atualizado', message: response.message })
+        navigate(`/app/books/${bookId}`)
+      } else {
+        const response = await createBook(payload)
+        toast.success({ title: 'Livro cadastrado', message: response.message })
+        navigate(`/app/books/${response.data.id}`)
+      }
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : 'Nao foi possivel salvar livro.'
+      setError(message)
+      toast.error({ title: 'Erro ao salvar', message })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!bookId) return
+    const confirmed = window.confirm(
+      'Tem certeza que deseja excluir este livro?'
+    )
+    if (!confirmed) return
+
+    setIsDeleting(true)
+    try {
+      const response = await deleteBook(bookId)
+      toast.success({ title: 'Livro removido', message: response.message })
+      navigate('/app/catalog')
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel excluir livro.'
+      toast.error({ title: 'Erro ao excluir', message })
+      setError(message)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  if (isEditing && isLoading) {
     return (
-      <main className="mx-auto flex min-h-[60vh] w-full max-w-3xl flex-col items-center justify-center rounded-2xl border border-line/45 bg-white p-6 text-center shadow-sm">
-        <BookImage size={36} className="text-brand-deep" />
-        <h1 className="mt-4 text-xl font-semibold text-ink">
-          Livro nao encontrado
-        </h1>
-        <p className="mt-2 text-sm text-ink-dim">
-          Nao foi possivel carregar os dados para edicao.
-        </p>
-        <Link
-          to="/"
-          className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
-        >
-          <ArrowLeft size={16} />
-          Voltar para home
-        </Link>
+      <main className="mx-auto w-full space-y-3">
+        <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando livro...
+        </section>
+      </main>
+    )
+  }
+
+  if (isEditing && !book && error) {
+    return (
+      <main className="mx-auto w-full space-y-3">
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          <BookImage size={36} className="text-brand-deep" />
+          <h1 className="mt-4 text-xl font-semibold text-ink">
+            Livro nao encontrado
+          </h1>
+          <p className="mt-2 text-sm text-ink-dim">{error}</p>
+          <Link
+            to="/app/feed"
+            className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+          >
+            <ArrowLeft size={16} />
+            Voltar para home
+          </Link>
+        </section>
       </main>
     )
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl">
+    <main className="mx-auto w-full space-y-3">
       <Link
-        to={book ? `/books/${book.id}` : '/'}
+        to={book ? `/app/books/${book.id}` : '/app/feed'}
         className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
       >
         <ArrowLeft size={16} />
         Voltar
       </Link>
 
-      <form
-        key={bookId ?? 'new-book'}
-        onSubmit={handleSubmit}
-        className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm"
-      >
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1fr_0.75fr]">
-          <section>
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-              {isEditing ? 'Editar livro' : 'Novo livro'}
-            </p>
-            <h1 className="mt-2 text-2xl font-semibold text-ink">
+      <section className="">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-ink">
               {isEditing ? 'Atualize os dados do livro' : 'Cadastre um livro'}
             </h1>
-            <p className="mt-2 text-sm text-ink-dim">
+            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
               Informe os dados principais para que outros leitores encontrem o
               exemplar certo.
             </p>
-            {saved ? (
-              <p className="mt-3 rounded-lg border border-accent/25 bg-accent/5 px-3 py-2 text-xs font-semibold text-accent">
-                Dados salvos localmente (mock). Proximo passo: enviar para API.
+          </div>
+        </div>
+      </section>
+
+      <form
+        key={bookId ?? 'new-book'}
+        onSubmit={handleSubmit}
+        className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
+      >
+        <div className="grid gap-2.5 lg:grid-cols-[1fr_0.75fr]">
+          <section>
+            {error ? (
+              <p className="mt-3 rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-semibold text-brand-deep">
+                {error}
               </p>
             ) : null}
 
-            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
                   Titulo
                 </span>
                 <input
-                  defaultValue={book?.title}
+                  value={titulo}
+                  onChange={(event) => setTitulo(event.target.value)}
                   placeholder="Ex: Dom Casmurro"
-                  className="h-11 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 />
               </label>
 
@@ -116,9 +345,10 @@ export default function BookForm() {
                   Autor
                 </span>
                 <input
-                  defaultValue={book?.author}
+                  value={autor}
+                  onChange={(event) => setAutor(event.target.value)}
                   placeholder="Nome do autor"
-                  className="h-11 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 />
               </label>
 
@@ -127,8 +357,10 @@ export default function BookForm() {
                   ISBN
                 </span>
                 <input
+                  value={isbn}
+                  onChange={(event) => setIsbn(event.target.value)}
                   placeholder="978-85-..."
-                  className="h-11 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 />
               </label>
 
@@ -137,11 +369,15 @@ export default function BookForm() {
                   Genero
                 </span>
                 <select
-                  defaultValue={book?.category ?? 'Romance'}
-                  className="h-11 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  value={selectedGenreId}
+                  onChange={(event) => setSelectedGenreId(event.target.value)}
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 >
+                  <option value="">Selecione</option>
                   {genres.map((genre) => (
-                    <option key={genre}>{genre}</option>
+                    <option key={genre.id} value={genre.id}>
+                      {genre.nome}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -151,8 +387,9 @@ export default function BookForm() {
                   Estado
                 </span>
                 <select
-                  defaultValue={book?.condition ?? 'Muito bom'}
-                  className="h-11 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  value={estado}
+                  onChange={(event) => setEstado(event.target.value)}
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 >
                   {conditions.map((condition) => (
                     <option key={condition}>{condition}</option>
@@ -162,13 +399,54 @@ export default function BookForm() {
 
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                  UF
+                </span>
+                <select
+                  value={uf}
+                  onChange={(event) => {
+                    setUf(event.target.value)
+                    setCidade('')
+                    setCities([])
+                  }}
+                  disabled={isLoadingStates}
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">
+                    {isLoadingStates
+                      ? 'Carregando estados...'
+                      : 'Selecione a UF'}
+                  </option>
+                  {states.map((stateOption) => (
+                    <option key={stateOption.code} value={stateOption.code}>
+                      {stateOption.name} ({stateOption.code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1.5 sm:col-span-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
                   Cidade
                 </span>
-                <input
-                  defaultValue={book?.city}
-                  placeholder="Cidade, UF"
-                  className="h-11 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
-                />
+                <select
+                  value={cidade}
+                  onChange={(event) => setCidade(event.target.value)}
+                  disabled={!uf || isLoadingCities}
+                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">
+                    {!uf
+                      ? 'Selecione a UF primeiro'
+                      : isLoadingCities
+                        ? 'Carregando cidades...'
+                        : 'Selecione a cidade'}
+                  </option>
+                  {cities.map((cityName) => (
+                    <option key={cityName} value={cityName}>
+                      {cityName}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label className="space-y-1.5 sm:col-span-2">
@@ -176,67 +454,103 @@ export default function BookForm() {
                   Descricao
                 </span>
                 <textarea
-                  defaultValue={book?.description}
+                  value={descricao}
+                  onChange={(event) => setDescricao(event.target.value)}
                   rows={5}
                   placeholder="Conte sobre estado, edicao, marcas de uso e detalhes importantes."
-                  className="w-full resize-none rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 py-3 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  className="w-full resize-none rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 />
               </label>
             </div>
           </section>
 
-          <aside className="space-y-4">
-            <div className="rounded-xl border border-line/45 bg-[#fbfaf7] p-4">
-              <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-lg border border-line/35 bg-white">
-                {coverPreview ? (
-                  <img
-                    src={coverPreview}
-                    alt={`Capa do livro ${book?.title ?? 'novo livro'}`}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <BookImage size={40} className="text-brand-deep" />
-                )}
-              </div>
-              <div className="mt-4 space-y-1.5">
-                <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  Foto da capa
-                </span>
-                <label
-                  htmlFor="book-cover-file"
-                  className="group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line/55 bg-white px-3 py-4 text-center transition-colors hover:border-accent/55 hover:bg-[#fbfaf7]"
+          <aside className="space-y-3">
+            <div className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 sm:p-3.5">
+              <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                Fotos do livro
+              </span>
+
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {photos.map((url, index) => (
+                  <div
+                    key={url}
+                    className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-line/35 bg-white"
+                  >
+                    <img
+                      src={url}
+                      alt={`Foto ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index)}
+                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      aria-label="Remover foto"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+
+                {uploadingCount > 0
+                  ? Array.from({ length: uploadingCount }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex aspect-[3/4] animate-pulse items-center justify-center rounded-lg border border-line/35 bg-white"
+                      >
+                        <BookImage size={24} className="text-line" />
+                      </div>
+                    ))
+                  : null}
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex aspect-[3/4] flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-line/45 bg-white text-ink-muted transition-colors hover:border-accent/50 hover:text-accent"
                 >
-                  <input
-                    id="book-cover-file"
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) =>
-                      setCoverFile(event.target.files?.[0] ?? null)
-                    }
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-medium text-ink-dim group-hover:text-brand-deep">
-                    Clique para enviar capa
-                  </span>
-                </label>
+                  <ImagePlus size={22} />
+                  <span className="text-xs font-medium">Adicionar</span>
+                </button>
               </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
+              <p className="mt-2 text-xs text-ink-muted">
+                JPG, PNG ou WEBP. A primeira foto e a capa.
+              </p>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               <button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+                disabled={isSaving || isDeleting || uploadingCount > 0}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save size={17} />
-                {isEditing ? 'Salvar alteracoes' : 'Cadastrar livro'}
+                {uploadingCount > 0
+                  ? 'Enviando fotos...'
+                  : isSaving
+                    ? 'Salvando...'
+                    : isEditing
+                      ? 'Salvar alteracoes'
+                      : 'Cadastrar livro'}
               </button>
               {isEditing ? (
                 <button
                   type="button"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-brand-deep/35 hover:text-brand-deep"
+                  onClick={handleDelete}
+                  disabled={isSaving || isDeleting}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-brand-deep/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Trash2 size={17} />
-                  Excluir livro
+                  {isDeleting ? 'Excluindo...' : 'Excluir livro'}
                 </button>
               ) : null}
             </div>

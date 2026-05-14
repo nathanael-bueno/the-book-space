@@ -2,44 +2,64 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Send, Star } from 'lucide-react'
+import { ApiError } from '../services/http'
+import { submitTradeReview } from '../services/trades'
+import { useToast } from '../stores/useToast'
 
 const ratingLabels = ['Ruim', 'Regular', 'Boa', 'Muito boa', 'Excelente']
 
 export default function TradeReview() {
+  const toast = useToast()
   const { tradeId } = useParams()
   const [rating, setRating] = useState(4)
   const [comment, setComment] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSubmitted(true)
+    if (!tradeId) return
+
+    setIsSubmitting(true)
+    try {
+      await submitTradeReview(tradeId, {
+        nota: rating,
+        comentario: comment.trim() || undefined,
+      })
+      setSubmitted(true)
+      toast.success({
+        title: 'Avaliacao enviada',
+        message: 'Sua avaliacao foi registrada com sucesso.',
+      })
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel enviar a avaliacao.'
+      toast.error({ title: 'Erro ao avaliar', message })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl">
+    <main className="mx-auto w-full space-y-3">
       <Link
-        to={`/trades/${tradeId ?? 'trade-1'}`}
+        to={`/app/trades/${tradeId ?? ''}`}
         className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
       >
         <ArrowLeft size={16} />
         Voltar para detalhes
       </Link>
 
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <form className="p-4 sm:p-5" onSubmit={handleSubmit}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            Avaliacao
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-ink">
-            Como foi a troca?
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-ink-dim">
+      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+        <form onSubmit={handleSubmit}>
+          <h1 className="text-2xl font-semibold text-ink">Como foi a troca?</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
             Avalie a experiencia com o outro leitor e deixe um comentario breve.
           </p>
 
-          <div className="mt-6 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-3">
+          <div className="mt-5 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
             <p className="text-sm font-semibold text-ink">
               Nota: {ratingLabels[rating - 1]}
             </p>
@@ -79,16 +99,17 @@ export default function TradeReview() {
 
           {submitted ? (
             <p className="mt-4 rounded-lg border border-accent/25 bg-[#fbfaf7] px-3 py-2.5 text-sm font-semibold text-brand-deep">
-              Avaliacao enviada no mock.
+              Avaliacao enviada com sucesso.
             </p>
           ) : null}
 
           <button
             type="submit"
-            className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep sm:w-auto"
+            disabled={isSubmitting || submitted}
+            className="mt-5 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:opacity-60 sm:w-auto"
           >
             <Send size={17} />
-            Enviar avaliacao
+            {isSubmitting ? 'Enviando...' : 'Enviar avaliacao'}
           </button>
         </form>
       </section>

@@ -1,134 +1,164 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Bell,
-  BookOpen,
   CheckCircle2,
   Gift,
   Heart,
+  Loader2,
   MessageCircle,
   Repeat2,
 } from 'lucide-react'
+import { ApiError } from '../services/http'
+import {
+  listNotifications,
+  markNotificationAsRead,
+  type ApiNotification,
+} from '../services/notifications'
 
-const notifications = [
-  {
-    id: 'notif-1',
-    type: 'Proposta de troca',
-    title: 'Ana Ribeiro quer trocar por Dom Casmurro',
-    description:
-      'Ela ofereceu Grande Sertao: Veredas e deixou uma mensagem para combinar a entrega.',
-    time: 'Agora',
-    unread: true,
-    icon: Repeat2,
-    actionLabel: 'Ver proposta',
-    actionTo: '/books/1/trade',
-  },
-  {
-    id: 'notif-2',
-    type: 'Troca aceita',
-    title: 'Sua troca por A Hora da Estrela foi aceita',
-    description:
-      'Eduarda Nunes aceitou sua proposta. Abra a conversa para ajustar os proximos passos.',
-    time: '12 min',
-    unread: true,
-    icon: CheckCircle2,
-    actionLabel: 'Abrir conversa',
-    actionTo: '/books/6',
-  },
-  {
-    id: 'notif-3',
-    type: 'Interacao social',
-    title: 'Bruno curtiu seu livro cadastrado',
-    description:
-      'Capitaes da Areia recebeu uma curtida e um comentario perguntando sobre o estado da capa.',
-    time: 'Ontem',
-    unread: false,
-    icon: Heart,
-    actionLabel: 'Ver livro',
-    actionTo: '/books/3',
-  },
-  {
-    id: 'notif-4',
-    type: 'Comentario',
-    title: 'Carla comentou em Memorias Postumas',
-    description:
-      'Ela quer saber se voce aceita retirar o livro no centro no fim da tarde.',
-    time: 'Ontem',
-    unread: false,
-    icon: MessageCircle,
-    actionLabel: 'Responder',
-    actionTo: '/books/4',
-  },
-  {
-    id: 'notif-5',
-    type: 'Doacao confirmada',
-    title: 'Doacao registrada com sucesso',
-    description:
-      'Seu exemplar foi marcado para doacao. Voce recebera atualizacoes quando houver interessado.',
-    time: '2 dias',
-    unread: false,
-    icon: Gift,
-    actionLabel: 'Acompanhar',
-    actionTo: '/profile',
-  },
-]
+const iconByType: Record<string, typeof Repeat2> = {
+  troca: Repeat2,
+  proposta: Repeat2,
+  aceita: CheckCircle2,
+  curtida: Heart,
+  comentario: MessageCircle,
+  doacao: Gift,
+}
+
+function getIconByType(type: string) {
+  const normalized = type.toLowerCase()
+  const key = Object.keys(iconByType).find((item) => normalized.includes(item))
+  return key ? iconByType[key] : Bell
+}
+
+function toRelativeTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Agora'
+  const diffMs = Date.now() - date.getTime()
+  if (diffMs < 60_000) return 'Agora'
+  if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)} min`
+  if (diffMs < 86_400_000) return `${Math.floor(diffMs / 3_600_000)} h`
+  if (diffMs < 172_800_000) return 'Ontem'
+  return `${Math.floor(diffMs / 86_400_000)} dias`
+}
+
+function resolveActionTo(notification: ApiNotification) {
+  const metaAction = notification.meta?.action_to?.trim()
+  if (metaAction)
+    return metaAction.startsWith('/app') ? metaAction : `/app${metaAction}`
+  return '/app/notifications'
+}
 
 export default function Notifications() {
-  const unreadCount = notifications.filter((item) => item.unread).length
+  const navigate = useNavigate()
+  const [notifications, setNotifications] = useState<ApiNotification[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isMarkingId, setIsMarkingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    async function loadNotifications() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await listNotifications()
+        if (!active) return
+        setNotifications(response.data)
+      } catch (err) {
+        if (!active) return
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar as notificacoes.'
+        setError(message)
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+    loadNotifications()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const unreadCount = useMemo(
+    () => notifications.filter((item) => !item.lida_em).length,
+    [notifications]
+  )
+
+  async function handleNotificationAction(notification: ApiNotification) {
+    const target = resolveActionTo(notification)
+    try {
+      setIsMarkingId(notification.id)
+      if (!notification.lida_em) {
+        await markNotificationAsRead(notification.id)
+        setNotifications((current) =>
+          current.map((item) =>
+            item.id === notification.id
+              ? { ...item, lida_em: new Date().toISOString() }
+              : item
+          )
+        )
+      }
+    } catch {
+      // navega mesmo com erro para nao bloquear o fluxo do usuario.
+    } finally {
+      setIsMarkingId(null)
+      navigate(target)
+    }
+  }
 
   return (
-    <main className="mx-auto w-full max-w-5xl">
+    <main className="mx-auto w-full space-y-3">
       <Link
-        to="/"
-        className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+        to="/app/feed"
+        className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
       >
         <ArrowLeft size={16} />
         Voltar
       </Link>
 
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-accent/15 bg-canvas/55 text-accent shadow-sm">
-                <Bell size={26} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-ink">
-                  Notificacoes
-                </h1>
-                <p className="mt-1 text-sm text-ink-dim">
-                  {unreadCount} novas atualizacoes sobre trocas, interacoes e
-                  doacoes.
-                </p>
-              </div>
-            </div>
-            <span className="inline-flex h-9 items-center justify-center rounded-lg border border-line/45 bg-[#fbfaf7] px-3 text-sm font-semibold text-brand-deep">
-              {notifications.length} no total
-            </span>
-          </div>
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Notificacoes</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            {unreadCount} novas atualizacoes sobre trocas, interacoes e doacoes.
+          </p>
         </div>
+        <span className="inline-flex h-9 items-center justify-center rounded-lg border border-line/45 bg-[#fbfaf7] px-3 text-sm font-semibold text-brand-deep">
+          {notifications.length} no total
+        </span>
       </section>
 
-      <section className="mt-5 space-y-3">
+      <section className="space-y-2.5">
+        {isLoading ? (
+          <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+            Carregando notificacoes...
+          </p>
+        ) : null}
+        {error ? (
+          <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+            {error}
+          </p>
+        ) : null}
         {notifications.map((item) => {
-          const Icon = item.icon
+          const Icon = getIconByType(item.tipo)
+          const unread = !item.lida_em
 
           return (
             <article
               key={item.id}
-              className={`rounded-2xl border p-4 shadow-sm transition-colors sm:p-5 ${
-                item.unread
-                  ? 'border-accent/30 bg-white'
-                  : 'border-line/45 bg-white'
+              className={`rounded-xl border border-line/45 bg-white p-3 shadow-sm transition-colors sm:p-3.5 ${
+                unread ? 'border-accent/30 bg-white' : 'border-line/45 bg-white'
               }`}
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex gap-3">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-2.5">
                   <div
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
-                      item.unread
+                    className={`flex h-9 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
+                      unread
                         ? 'border-accent/20 bg-[#fbfaf7] text-accent'
                         : 'border-line/35 bg-white text-brand-deep'
                     }`}
@@ -138,41 +168,58 @@ export default function Notifications() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-                        {item.type}
+                        {item.tipo}
                       </p>
-                      {item.unread ? (
+                      {unread ? (
                         <span className="h-2 w-2 rounded-full bg-accent" />
                       ) : null}
                     </div>
                     <h2 className="mt-1 text-base font-semibold text-ink">
-                      {item.title}
+                      {item.titulo}
                     </h2>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-dim">
-                      {item.description}
+                      {item.descricao ?? 'Sem detalhes adicionais.'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+                <div className="flex items-center justify-between gap-2.5 sm:flex-col sm:items-end">
                   <span className="text-sm font-medium text-ink-muted">
-                    {item.time}
+                    {toRelativeTime(item.created_at)}
                   </span>
-                  <Link
-                    to={item.actionTo}
+                  <button
+                    type="button"
+                    onClick={() => handleNotificationAction(item)}
+                    disabled={isMarkingId === item.id}
                     className="inline-flex h-9 items-center justify-center rounded-lg border border-line/55 bg-white px-3 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
                   >
-                    {item.actionLabel}
-                  </Link>
+                    {isMarkingId === item.id ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        Abrindo...
+                      </span>
+                    ) : (
+                      'Abrir'
+                    )}
+                  </button>
                 </div>
               </div>
             </article>
           )
         })}
+        {!isLoading && !error && !notifications.length ? (
+          <section className="ui-empty-state flex flex-col items-center gap-2">
+            <Bell size={32} className="text-brand-deep" />
+            <p className="text-sm font-medium text-ink">
+              Nenhuma notificacao no momento.
+            </p>
+            <p className="text-sm">Novas atualizacoes aparecerao aqui.</p>
+          </section>
+        ) : null}
       </section>
 
-      <section className="mt-5 rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex items-start gap-3">
-          <BookOpen size={22} className="mt-0.5 text-brand-deep" />
+      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+        <div className="flex items-start gap-2.5">
           <div>
             <h2 className="text-base font-semibold text-ink">
               Preferencias ativas

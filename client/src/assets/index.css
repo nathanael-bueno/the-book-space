@@ -4,33 +4,35 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Backgrounds */
-  --color-canvas: #FAE8B4;   /* Bege */
-  --color-surface: #FFF9E6;  /* Bege mais claro para cards */
-  --color-raised: #F2D9A2;   /* Bege mais escuro para inputs */
-  --color-overlay: #E6C88A;
+  --color-canvas: #F6F2E9;
+  --color-surface: #FFFCF7;
+  --color-surface-alt: #fbfaf7;
+  --color-surface-layout: #fcfbf9;
+  --color-raised: #F2ECE2;
+  --color-overlay: #ECE4D7;
 
   /* Borders */
-  --color-line: #D9B680;
-  --color-line-strong: #A64B29; /* Marrom para bordas fortes */
+  --color-line: #D9D1C3;
+  --color-line-strong: #C8BDAA;
 
   /* Text */
-  --color-ink: #2D1B14;       /* Marrom quase preto para texto */
-  --color-ink-dim: #593A2E;
-  --color-ink-muted: #8C6A5A;
-  --color-ink-ghost: #A64B29;
+  --color-ink: #1F2937;
+  --color-ink-dim: #4B5563;
+  --color-ink-muted: #6B7280;
+  --color-ink-ghost: #9CA3AF;
 
-  /* Accent — Brown & Carmine */
-  --color-accent: #A64B29;    /* Marrom Principal */
-  --color-accent-hi: #C15C39;
-  --color-accent-dim: #F2D9A2;
-  
-  /* Details - Carmine */
-  --color-brand-deep: #640010; /* Carmin */
+  /* Accent */
+  --color-accent: #A64B29;
+  --color-accent-hi: #8B3E22;
+  --color-accent-dim: #FAEAE3;
+
+  /* Details */
+  --color-brand-deep: #7A3519;
 
   /* Semantic */
-  --color-danger: #640010;    /* Carmin para erro também */
-  --color-danger-line: #A64B29;
-  --color-success: #3E5939;
+  --color-danger: #B91C1C;
+  --color-danger-line: #FCA5A5;
+  --color-success: #2E7D32;
 }
 
 :root {
@@ -41,6 +43,14 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-modal: 10px;
+  --shadow-card: 0 2px 8px rgba(31, 41, 55, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(31, 41, 55, 0.1);
+  --shadow-button: 0 4px 12px rgba(166, 75, 41, 0.22);
+  --focus-ring: 0 0 0 3px rgba(166, 75, 41, 0.18);
 }
 
 body {
@@ -51,7 +61,121 @@ body {
   color: var(--color-ink);
 }
 
+input,
+select,
+textarea {
+  border-radius: var(--radius-control) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+button {
+  border-radius: var(--radius-control) !important;
+}
+
+.ui-sidebar-item {
+  border-radius: var(--radius-control) !important;
+}
+
+.ui-btn {
+  border-radius: var(--radius-control) !important;
+}
+
+.ui-empty-state {
+  border: 1px dashed color-mix(in oklab, var(--color-line) 72%, white 28%);
+  background: #fcfbf9;
+  border-radius: var(--radius-card);
+  padding: 30px 18px;
+  text-align: center;
+  color: var(--color-ink-dim);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 8px 18px rgba(31, 41, 55, 0.05);
+}
+
+.ui-empty-state-title {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+.ui-empty-state-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-ink-dim);
+}
+
+.lucide {
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
+}
+
+.ui-social-icon {
+  width: 15px;
+  height: 15px;
+  display: block;
+  filter: saturate(0.82) contrast(0.94);
+}
+
+.ui-auth-card {
+  background: color-mix(in oklab, var(--color-surface) 94%, white 6%);
+  border: 1px solid color-mix(in oklab, var(--color-line) 85%, white 15%);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-modal);
+}
+
+.ui-auth-icon {
+  border-radius: var(--radius-card);
+  border: 1px solid color-mix(in oklab, var(--color-line) 80%, white 20%);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.ui-auth-input {
+  border: 1px solid color-mix(in oklab, var(--color-line) 88%, white 12%);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.ui-auth-primary-btn {
+  box-shadow: var(--shadow-button);
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-line) 80%, transparent 20%);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-accent) 55%, var(--color-line) 45%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-line) 80%, transparent 20%) transparent;
 }

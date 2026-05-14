@@ -1,6 +1,5 @@
 <?php
 
-use PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,10 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth.jwt' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
+            'role.admin' => \App\Http\Middleware\EnsureAdminRole::class,
+            'verified.email' => \App\Http\Middleware\EnsureVerifiedEmail::class,
+            'token.fresh' => \App\Http\Middleware\EnsureFreshJwt::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-         // Token ausente ou inválido → 401
+        // Token ausente ou invalido -> 401
         $exceptions->render(function (UnauthorizedHttpException $e, $request) {
             if ($request->is('api/*')) {
                 return response()->json([
@@ -29,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        // Acesso negado → 403
+        // Acesso negado -> 403
         $exceptions->render(function (AccessDeniedHttpException $e, $request) {
             if ($request->is('api/*')) {
                 return response()->json([

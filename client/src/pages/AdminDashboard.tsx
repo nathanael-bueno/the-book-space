@@ -1,112 +1,117 @@
 import {
   AlertTriangle,
-  ArrowUpRight,
   BookHeart,
   RefreshCcw,
   Repeat2,
-  ShieldCheck,
+  UserRound,
   Users,
 } from 'lucide-react'
-
-const metrics = [
-  {
-    label: 'Usuarios ativos',
-    value: '1.284',
-    delta: '+8.4%',
-    detail: 'nos ultimos 30 dias',
-    icon: Users,
-  },
-  {
-    label: 'Trocas concluidas',
-    value: '342',
-    delta: '+12.1%',
-    detail: 'neste mes',
-    icon: Repeat2,
-  },
-  {
-    label: 'Doacoes realizadas',
-    value: '97',
-    delta: '+5.7%',
-    detail: 'confirmadas em instituicoes',
-    icon: BookHeart,
-  },
-  {
-    label: 'Denuncias pendentes',
-    value: '14',
-    delta: '-2.0%',
-    detail: 'aguardando moderacao',
-    icon: AlertTriangle,
-  },
-]
-
-const recentEvents = [
-  {
-    title: 'Novo pico de trocas',
-    description: 'Regiao Centro registrou 29 trocas em 24h.',
-    when: 'ha 2h',
-  },
-  {
-    title: 'Instituicao aprovada',
-    description: 'Biblioteca Comunitaria Aurora entrou na rede.',
-    when: 'ha 5h',
-  },
-  {
-    title: 'Fila de denuncias reduzida',
-    description: 'Equipe moderou 12 novos relatos com sucesso.',
-    when: 'ontem',
-  },
-]
+import { useCallback, useEffect, useState } from 'react'
+import {
+  getAdminDashboardStats,
+  type AdminDashboardRecentUser,
+} from '../services/admin'
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    activeUsers: 0,
+    completedTrades: 0,
+    donations: 0,
+    pendingReports: 0,
+    recentUsers: [] as AdminDashboardRecentUser[],
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const metrics = [
+    {
+      label: 'Usuarios ativos',
+      value: stats.activeUsers.toLocaleString('pt-BR'),
+      detail: 'contas com status Ativo',
+      icon: Users,
+    },
+    {
+      label: 'Trocas concluidas',
+      value: stats.completedTrades.toLocaleString('pt-BR'),
+      detail: 'status concluida',
+      icon: Repeat2,
+    },
+    {
+      label: 'Doacoes realizadas',
+      value: stats.donations.toLocaleString('pt-BR'),
+      detail: 'registros totais de doacao',
+      icon: BookHeart,
+    },
+    {
+      label: 'Denuncias pendentes',
+      value: stats.pendingReports.toLocaleString('pt-BR'),
+      detail: 'aguardando moderacao',
+      icon: AlertTriangle,
+    },
+  ]
+
+  const loadStats = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await getAdminDashboardStats()
+      setStats(response)
+    } catch {
+      setError('Nao foi possivel carregar as metricas do dashboard.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadStats()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadStats])
+
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
-          <div>
-            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-              <ShieldCheck size={14} />
-              Painel administrativo
-            </p>
-            <h1 className="mt-1 text-xl font-semibold text-ink sm:text-2xl">
-              Visao geral da plataforma
-            </h1>
-            <p className="mt-1 text-sm text-ink-muted">
-              Acompanhe saude da comunidade e principais indicadores.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-          >
-            <RefreshCcw size={16} />
-            Atualizar
-          </button>
+    <main className="mx-auto w-full space-y-3">
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Painel</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Acompanhe saude da comunidade e principais indicadores.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={loadStats}
+          disabled={isLoading}
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-4 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+        >
+          <RefreshCcw size={16} />
+          {isLoading ? 'Atualizando...' : 'Atualizar'}
+        </button>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {error ? (
+        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error}
+        </p>
+      ) : null}
+
+      <section className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => {
           const Icon = metric.icon
-          const positive = metric.delta.startsWith('+')
 
           return (
             <article
               key={metric.label}
-              className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5"
+              className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent/15 bg-[#fbfaf7] text-brand-deep">
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent/15 bg-[#fbfaf7] text-brand-deep">
                   <Icon size={18} />
                 </div>
-                <span
-                  className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs font-semibold ${
-                    positive
-                      ? 'border-accent/25 bg-[#fbfaf7] text-accent'
-                      : 'border-line/40 bg-white text-ink-dim'
-                  }`}
-                >
-                  {metric.delta}
+                <span className="inline-flex items-center rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium text-brand-deep">
+                  KPI
                 </span>
               </div>
               <p className="mt-4 text-sm text-ink-muted">{metric.label}</p>
@@ -119,39 +124,41 @@ export default function AdminDashboard() {
         })}
       </section>
 
-      <section className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="border-l-4 border-brand-deep pl-3 text-base font-semibold text-ink">
-            Atividade recente
-          </h2>
-          <button
-            type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
-          >
-            Relatorio completo
-            <ArrowUpRight size={16} />
-          </button>
-        </div>
+      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+        <h2 className="text-base font-semibold text-ink">
+          Usuarios cadastrados recentemente
+        </h2>
 
-        <div className="mt-4 space-y-3">
-          {recentEvents.map((event) => (
-            <article
-              key={event.title}
-              className="rounded-xl border border-line/35 bg-[#fbfaf7] px-4 py-3"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-ink">
-                  {event.title}
-                </h3>
-                <span className="text-xs font-medium text-brand-deep">
-                  {event.when}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-ink-muted">{event.description}</p>
-            </article>
-          ))}
+        <div className="mt-2.5 space-y-2.5 border-t border-line/35 pt-2.5">
+          {stats.recentUsers.length
+            ? stats.recentUsers.map((user) => (
+                <article
+                  key={user.id}
+                  className="flex items-center gap-2.5 rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-1.5"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent/15 bg-white text-brand-deep">
+                    <UserRound size={16} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-ink-muted">
+                      {user.email}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-brand-deep">
+                    {user.created_at}
+                  </span>
+                </article>
+              ))
+            : !isLoading && (
+                <p className="text-sm text-ink-muted">
+                  Nenhum usuario cadastrado ainda.
+                </p>
+              )}
         </div>
       </section>
-    </div>
+    </main>
   )
 }

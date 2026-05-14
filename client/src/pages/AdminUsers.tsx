@@ -1,50 +1,45 @@
-import { Ban, Search, Shield, ShieldBan, UserRound, UserX } from 'lucide-react'
-import { useMemo, useState } from 'react'
-
-type UserStatus = 'Ativo' | 'Suspenso' | 'Banido'
-
-type AdminUser = {
-  id: string
-  name: string
-  email: string
-  reputation: number
-  status: UserStatus
-}
-
-const initialUsers: AdminUser[] = [
-  {
-    id: 'u-1',
-    name: 'Ana Clara',
-    email: 'ana@bookspace.app',
-    reputation: 4.9,
-    status: 'Ativo',
-  },
-  {
-    id: 'u-2',
-    name: 'Lucas Mendes',
-    email: 'lucas@bookspace.app',
-    reputation: 3.8,
-    status: 'Ativo',
-  },
-  {
-    id: 'u-3',
-    name: 'Marina Souza',
-    email: 'marina@bookspace.app',
-    reputation: 2.1,
-    status: 'Suspenso',
-  },
-  {
-    id: 'u-4',
-    name: 'Perfil Anonimo',
-    email: 'anonimo@bookspace.app',
-    reputation: 1.0,
-    status: 'Banido',
-  },
-]
+import { Ban, Search, ShieldBan, UserX } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
+import {
+  listAdminUsers,
+  persistUserStatus,
+  type AdminUser,
+  type AdminUserStatus,
+} from '../services/admin'
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>(initialUsers)
+  const [users, setUsers] = useState<AdminUser[]>([])
   const [search, setSearch] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    id: string
+    status: AdminUserStatus
+  } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    async function loadData() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await listAdminUsers()
+        if (!active) return
+        setUsers(response)
+      } catch {
+        if (!active) return
+        setError('Nao foi possivel carregar usuarios.')
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+    loadData()
+    return () => {
+      active = false
+    }
+  }, [])
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -56,49 +51,74 @@ export default function AdminUsers() {
     )
   }, [search, users])
 
-  function updateStatus(id: string, status: UserStatus) {
-    setUsers((prev) =>
-      prev.map((user) => (user.id === id ? { ...user, status } : user))
-    )
+  async function updateStatus(id: string, status: AdminUserStatus) {
+    setError(null)
+    try {
+      await persistUserStatus(id, status)
+      setUsers((prev) =>
+        prev.map((user) => (user.id === id ? { ...user, status } : user))
+      )
+      setNotice('Status do usuario atualizado.')
+    } catch {
+      setError('Nao foi possivel atualizar o status do usuario.')
+    }
   }
 
   return (
-    <div className="space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            <Shield size={14} />
-            Admin {'>'} Usuarios
+    <main className="mx-auto w-full space-y-3">
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Usuarios</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Controle de status de conta para moderacao da comunidade.
           </p>
-          <h1 className="mt-1 text-xl font-semibold text-ink sm:text-2xl">
-            Gestao de usuarios
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Acionar suspensao e banimento em fluxo mock.
-          </p>
-          <label className="mt-4 flex h-11 items-center gap-2 rounded-lg border border-line/55 bg-[#fbfaf7] px-3">
-            <Search size={16} className="text-brand-deep" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por nome ou email"
-              className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted"
-            />
-          </label>
         </div>
+        <label className="flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-[#fbfaf7] px-3">
+          <Search size={16} className="text-brand-deep" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por nome ou email"
+            className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-muted"
+          />
+        </label>
       </section>
 
-      <section className="space-y-3">
+      {isLoading ? (
+        <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando usuarios...
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          {notice}
+        </p>
+      ) : null}
+
+      {!isLoading && !error && !filteredUsers.length ? (
+        <section className="ui-empty-state flex flex-col items-center gap-2">
+          <Search size={32} className="text-brand-deep" aria-hidden="true" />
+          <p className="text-sm font-medium text-ink">
+            Nenhum usuario encontrado para este filtro.
+          </p>
+          <p className="text-sm">Tente outro nome, email ou status.</p>
+        </section>
+      ) : null}
+
+      <section className="space-y-2.5">
         {filteredUsers.map((user) => (
           <article
             key={user.id}
-            className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5"
+            className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
           >
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-2.5">
               <div>
-                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-                  <UserRound size={14} />
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
                   ID {user.id}
                 </p>
                 <h2 className="mt-1 text-base font-semibold text-ink">
@@ -111,41 +131,47 @@ export default function AdminUsers() {
               </div>
 
               <span
-                className={`inline-flex rounded-lg border px-2 py-1 text-xs font-semibold ${
+                className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
                   user.status === 'Ativo'
-                    ? 'border-accent/25 bg-[#fbfaf7] text-accent'
+                    ? 'text-accent'
                     : user.status === 'Suspenso'
-                      ? 'border-brand-deep/20 bg-[#fbfaf7] text-brand-deep'
-                      : 'border-line/40 bg-white text-ink-dim'
+                      ? 'text-brand-deep'
+                      : 'text-ink-dim'
                 }`}
               >
                 {user.status}
               </span>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2.5 flex flex-wrap gap-2 border-t border-line/35 pt-2.5">
               <button
                 type="button"
-                onClick={() => updateStatus(user.id, 'Suspenso')}
+                onClick={() =>
+                  setPendingStatusChange({ id: user.id, status: 'Suspenso' })
+                }
                 disabled={user.status === 'Banido'}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <UserX size={16} />
                 Suspender
               </button>
               <button
                 type="button"
-                onClick={() => updateStatus(user.id, 'Banido')}
+                onClick={() =>
+                  setPendingStatusChange({ id: user.id, status: 'Banido' })
+                }
                 disabled={user.status === 'Banido'}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Ban size={16} />
                 Banir
               </button>
               <button
                 type="button"
-                onClick={() => updateStatus(user.id, 'Ativo')}
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+                onClick={() =>
+                  setPendingStatusChange({ id: user.id, status: 'Ativo' })
+                }
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-deep"
               >
                 <ShieldBan size={16} />
                 Reativar
@@ -154,6 +180,20 @@ export default function AdminUsers() {
           </article>
         ))}
       </section>
-    </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingStatusChange)}
+        title="Confirmar alteracao"
+        description="Deseja aplicar essa mudanca de status para este usuario?"
+        confirmLabel="Confirmar"
+        danger={pendingStatusChange?.status === 'Banido'}
+        onCancel={() => setPendingStatusChange(null)}
+        onConfirm={() => {
+          if (!pendingStatusChange) return
+          void updateStatus(pendingStatusChange.id, pendingStatusChange.status)
+          setPendingStatusChange(null)
+        }}
+      />
+    </main>
   )
 }

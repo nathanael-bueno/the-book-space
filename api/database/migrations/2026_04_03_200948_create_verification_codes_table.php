@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('verification_codes', function (Blueprint $table) {
             $table->id();
             $table->string('email')->index();
-            $table->string('code', 6);
-            $table->enum('type', ['email_verification', 'password_reset']);
+            $table->string('code', 255);
+            $table->enum('type', ['email_verification', 'password_reset', 'login_code']);
             $table->timestamp('expires_at');
             $table->timestamps();
         });

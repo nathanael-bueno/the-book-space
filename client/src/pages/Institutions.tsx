@@ -1,63 +1,84 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Building2, HandHeart, Mail, MapPin, Phone } from 'lucide-react'
-
-const activeInstitutions = [
-  {
-    id: 'inst-1',
-    name: 'Biblioteca Comunitaria Aurora',
-    address: 'Rua das Acacias, 120',
-    city: 'Belo Horizonte, MG',
-    contact: 'contato@auroraleitora.org',
-    phone: '(31) 3333-1200',
-    needs: 'Literatura infantil e livros paradidaticos',
-  },
-  {
-    id: 'inst-2',
-    name: 'Instituto Paginas Abertas',
-    address: 'Av. Paulista, 900',
-    city: 'Sao Paulo, SP',
-    contact: 'doacoes@paginasabertas.org',
-    phone: '(11) 4002-2200',
-    needs: 'Romances nacionais e livros de vestibular',
-  },
-  {
-    id: 'inst-3',
-    name: 'Casa de Leitura Mar do Norte',
-    address: 'Rua do Farol, 45',
-    city: 'Recife, PE',
-    contact: 'leitura@mardonorte.org',
-    phone: '(81) 3222-4500',
-    needs: 'Ficcao, poesia e livros em bom estado',
-  },
-]
+import {
+  listPublicInstitutions,
+  type PublicInstitution,
+} from '../services/institutions'
 
 export default function Institutions() {
+  const [institutions, setInstitutions] = useState<PublicInstitution[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadInstitutions() {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const response = await listPublicInstitutions()
+        if (!active) return
+        setInstitutions(response.data)
+      } catch {
+        if (!active) return
+        setError('Nao foi possivel carregar instituicoes no momento.')
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+
+    void loadInstitutions()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            <Building2 size={15} />
-            Instituicoes ativas
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-ink">
-            Pontos de doacao
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-dim">
-            Encontre organizacoes que recebem livros e ajudam a ampliar o acesso
-            a leitura.
-          </p>
+    <main className="mx-auto w-full space-y-3">
+      <section className="">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-ink">
+              Pontos de doacao
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+              Encontre organizacoes que recebem livros e ajudam a ampliar o
+              acesso a leitura.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        {activeInstitutions.map((institution) => (
+      {isLoading ? (
+        <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando instituicoes...
+        </section>
+      ) : null}
+
+      {error ? (
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error}
+        </section>
+      ) : null}
+
+      {!isLoading && !error && !institutions.length ? (
+        <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Nenhuma instituicao ativa disponivel no momento.
+        </section>
+      ) : null}
+
+      {!isLoading && !error && institutions.length ? (
+        <section className="grid gap-2.5 lg:grid-cols-3">
+          {institutions.map((institution) => (
           <article
             key={institution.id}
-            className="flex flex-col rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5"
+            className="flex flex-col rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-accent/15 bg-[#fbfaf7] text-brand-deep">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-accent/15 bg-[#fbfaf7] text-brand-deep">
               <Building2 size={23} />
             </div>
             <h2 className="mt-4 text-lg font-semibold leading-tight text-ink">
@@ -67,11 +88,7 @@ export default function Institutions() {
             <div className="mt-4 space-y-3 text-sm text-ink-dim">
               <p className="flex items-start gap-2">
                 <MapPin size={16} className="mt-0.5 shrink-0 text-brand-deep" />
-                <span>
-                  {institution.address}
-                  <br />
-                  {institution.city}
-                </span>
+                <span>{institution.city}</span>
               </p>
               <p className="flex items-center gap-2">
                 <Mail size={16} className="shrink-0 text-brand-deep" />
@@ -93,15 +110,16 @@ export default function Institutions() {
             </div>
 
             <Link
-              to={`/institutions/${institution.id}/donate`}
-              className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+              to={`/app/institutions/${institution.id}/donate`}
+              className="mt-5 inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
             >
               <HandHeart size={17} />
               Doar livros
             </Link>
           </article>
-        ))}
-      </section>
+          ))}
+        </section>
+      ) : null}
     </main>
   )
 }

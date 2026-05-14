@@ -1,120 +1,189 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, MessageSquareText, Send } from 'lucide-react'
-
-type Message = {
-  id: string
-  sender: 'me' | 'partner'
-  author: string
-  text: string
-  time: string
-}
-
-const initialMessages: Message[] = [
-  {
-    id: 'msg-1',
-    sender: 'partner',
-    author: 'Ana Ribeiro',
-    text: 'Oi! Ainda tenho interesse na troca.',
-    time: '10:12',
-  },
-  {
-    id: 'msg-2',
-    sender: 'me',
-    author: 'Voce',
-    text: 'Perfeito. O livro esta em muito bom estado.',
-    time: '10:18',
-  },
-  {
-    id: 'msg-3',
-    sender: 'partner',
-    author: 'Ana Ribeiro',
-    text: 'Podemos combinar a entrega no centro amanha?',
-    time: '10:21',
-  },
-]
+import { ApiError } from '../services/http'
+import { getCurrentUserId } from '../services/auth'
+import {
+  getTrade,
+  listTradeMessages,
+  sendTradeMessage,
+  type ApiTrade,
+  type ApiTradeMessage,
+} from '../services/trades'
 
 export default function TradeChat() {
   const { tradeId } = useParams()
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const hasInvalidTradeId = !tradeId
+  const currentUserId = useMemo(() => getCurrentUserId(), [])
+  const [trade, setTrade] = useState<ApiTrade | null>(null)
+  const [messages, setMessages] = useState<ApiTradeMessage[]>([])
   const [draft, setDraft] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSending, setIsSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  useEffect(() => {
+    if (!tradeId) return
+    const safeTradeId = tradeId
 
-    const trimmedDraft = draft.trim()
-    if (!trimmedDraft) {
-      return
+    let active = true
+
+    async function load() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const [tradeResponse, messagesResponse] = await Promise.all([
+          getTrade(safeTradeId),
+          listTradeMessages(safeTradeId),
+        ])
+        if (!active) return
+        setTrade(tradeResponse.data)
+        setMessages(messagesResponse.data)
+      } catch (err) {
+        if (!active) return
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar o chat da troca.'
+        )
+      } finally {
+        if (active) setIsLoading(false)
+      }
     }
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        id: `msg-${currentMessages.length + 1}`,
-        sender: 'me',
-        author: 'Voce',
-        text: trimmedDraft,
-        time: 'agora',
-      },
-    ])
-    setDraft('')
+    load()
+
+    const intervalId = window.setInterval(async () => {
+      try {
+        const messagesResponse = await listTradeMessages(safeTradeId)
+        if (!active) return
+        setMessages(messagesResponse.data)
+      } catch {
+        // Ignora falhas temporarias de polling para nao interromper o chat.
+      }
+    }, 8000)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+    }
+  }, [tradeId])
+
+  if (hasInvalidTradeId) {
+    return (
+      <main className="mx-auto w-full space-y-3">
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          Troca invalida.
+        </section>
+      </main>
+    )
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!tradeId) return
+
+    const trimmedDraft = draft.trim()
+    if (!trimmedDraft) return
+
+    setIsSending(true)
+    try {
+      const response = await sendTradeMessage(tradeId, trimmedDraft)
+      setMessages((currentMessages) => [...currentMessages, response.data])
+      setDraft('')
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel enviar mensagem.'
+      )
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl">
+    <main className="mx-auto w-full space-y-3">
       <Link
-        to={`/trades/${tradeId ?? 'trade-1'}`}
-        className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+        to={`/app/trades/${tradeId ?? ''}`}
+        className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
       >
         <ArrowLeft size={16} />
         Voltar para detalhes
       </Link>
 
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="border-b border-line/45 p-4 sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            Chat da troca
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Chat da troca</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Conversa com{' '}
+            {trade?.proponent?.id === currentUserId
+              ? trade?.recipient?.nome_completo
+              : trade?.proponent?.nome_completo}
+            .
           </p>
-          <h1 className="mt-2 inline-flex items-center gap-2 text-2xl font-semibold text-ink">
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-line/45 bg-white shadow-sm">
+        <div className="border-b border-line/35 p-3 sm:p-3.5">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold text-brand-deep">
             <MessageSquareText size={22} className="text-brand-deep" />
-            Conversa com Ana Ribeiro
-          </h1>
+            Conversa ativa
+          </p>
         </div>
 
-        <div className="space-y-3 bg-[#fbfaf7] p-4 sm:p-5">
+        {isLoading ? (
+          <div className="p-3 text-sm text-ink-dim sm:p-3.5">
+            Carregando mensagens...
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="border-t border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep sm:p-3.5">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="space-y-2.5 bg-[#fbfaf7] p-3 sm:p-3.5">
           {messages.map((message) => {
-            const isMine = message.sender === 'me'
+            const isMine = message.id_remetente === currentUserId
             return (
               <div
                 key={message.id}
                 className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[82%] rounded-2xl border px-4 py-3 shadow-sm sm:max-w-[70%] ${
+                  className={`max-w-[82%] rounded-2xl border px-4 py-2.5 shadow-sm sm:max-w-[70%] ${
                     isMine
                       ? 'border-accent/20 bg-accent text-white'
                       : 'border-line/45 bg-white text-ink'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center justify-between gap-2.5">
                     <p
                       className={`text-xs font-semibold ${
                         isMine ? 'text-white' : 'text-brand-deep'
                       }`}
                     >
-                      {message.author}
+                      {message.sender?.nome_completo ?? 'Leitor'}
                     </p>
                     <p
                       className={`text-xs ${
                         isMine ? 'text-white/80' : 'text-ink-muted'
                       }`}
                     >
-                      {message.time}
+                      {new Date(message.created_at).toLocaleTimeString(
+                        'pt-BR',
+                        {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }
+                      )}
                     </p>
                   </div>
-                  <p className="mt-1 text-sm leading-6">{message.text}</p>
+                  <p className="mt-1 text-sm leading-6">{message.mensagem}</p>
                 </div>
               </div>
             )
@@ -122,7 +191,7 @@ export default function TradeChat() {
         </div>
 
         <form
-          className="flex flex-col gap-3 border-t border-line/45 p-4 sm:flex-row sm:p-5"
+          className="flex flex-col gap-2.5 border-t border-line/45 p-4 sm:flex-row sm:p-5"
           onSubmit={handleSubmit}
         >
           <label className="sr-only" htmlFor="trade-message">
@@ -133,14 +202,15 @@ export default function TradeChat() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Escreva uma mensagem..."
-            className="h-11 flex-1 rounded-lg border border-line/55 bg-white px-3 text-sm text-ink shadow-sm outline-none transition-colors placeholder:text-ink-muted focus:border-accent"
+            className="h-9 flex-1 rounded-lg border border-line/55 bg-white px-3 text-sm text-ink shadow-sm outline-none transition-colors placeholder:text-ink-muted focus:border-accent"
           />
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+            disabled={isSending}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:opacity-60"
           >
             <Send size={17} />
-            Enviar
+            {isSending ? 'Enviando...' : 'Enviar'}
           </button>
         </form>
       </section>

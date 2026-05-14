@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
-  BookOpen,
   Check,
   CheckCircle2,
   Clock3,
@@ -10,105 +9,59 @@ import {
   Repeat2,
   X,
 } from 'lucide-react'
-
-type TradeStatus = 'pending' | 'accepted' | 'completed'
-
-type BookSummary = {
-  title: string
-  author: string
-  condition: string
-  owner: string
-}
-
-type Trade = {
-  id: string
-  status: TradeStatus
-  partner: string
-  requested: BookSummary
-  offered: BookSummary
-}
-
-const trades: Trade[] = [
-  {
-    id: 'trade-1',
-    status: 'pending',
-    partner: 'Ana Ribeiro',
-    requested: {
-      title: 'Grande Sertao: Veredas',
-      author: 'Joao Guimaraes Rosa',
-      condition: 'Bom',
-      owner: 'Ana Ribeiro',
-    },
-    offered: {
-      title: 'Ensaio Sobre a Cegueira',
-      author: 'Jose Saramago',
-      condition: 'Muito bom',
-      owner: 'Voce',
-    },
-  },
-  {
-    id: 'trade-2',
-    status: 'accepted',
-    partner: 'Eduarda Nunes',
-    requested: {
-      title: 'A Hora da Estrela',
-      author: 'Clarice Lispector',
-      condition: 'Muito bom',
-      owner: 'Eduarda Nunes',
-    },
-    offered: {
-      title: 'Torto Arado',
-      author: 'Itamar Vieira Junior',
-      condition: 'Novo',
-      owner: 'Voce',
-    },
-  },
-  {
-    id: 'trade-3',
-    status: 'completed',
-    partner: 'Bruno Costa',
-    requested: {
-      title: 'Capitaes da Areia',
-      author: 'Jorge Amado',
-      condition: 'Muito bom',
-      owner: 'Bruno Costa',
-    },
-    offered: {
-      title: 'Quarto de Despejo',
-      author: 'Carolina Maria de Jesus',
-      condition: 'Bom',
-      owner: 'Voce',
-    },
-  },
-]
+import { ApiError } from '../services/http'
+import { getCurrentUserId } from '../services/auth'
+import {
+  getTrade,
+  updateTradeStatus,
+  type ApiTrade,
+  type ApiTradeBook,
+} from '../services/trades'
+import { useToast } from '../stores/useToast'
 
 const timeline = [
-  { key: 'pending', label: 'Proposta enviada', text: 'A troca foi criada.' },
-  { key: 'accepted', label: 'Troca aceita', text: 'Combine entrega no chat.' },
-  { key: 'completed', label: 'Concluida', text: 'Livros recebidos.' },
+  { key: 'pendente', label: 'Proposta enviada', text: 'A troca foi criada.' },
+  { key: 'aceita', label: 'Troca aceita', text: 'Combine entrega no chat.' },
+  { key: 'concluida', label: 'Concluida', text: 'Livros recebidos.' },
 ]
 
-const statusStep: Record<TradeStatus, number> = {
-  pending: 0,
-  accepted: 1,
-  completed: 2,
+const statusStep: Record<ApiTrade['status'], number> = {
+  pendente: 0,
+  aceita: 1,
+  concluida: 2,
+  recusada: 0,
+  cancelada: 0,
 }
 
-function BookCard({ book, label }: { book: BookSummary; label: string }) {
+function BookCard({ book, label }: { book?: ApiTradeBook; label: string }) {
   return (
-    <article className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
+    <article className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
       <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
         {label}
       </p>
-      <div className="mt-4 flex gap-3">
-        <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg border border-line/35 bg-[#fbfaf7] text-brand-deep">
-          <BookOpen size={22} />
+      <div className="mt-4 flex gap-2.5">
+        <div className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-line/35 bg-[#fbfaf7] text-brand-deep">
+          {book?.fotos?.[0] ? (
+            <img
+              src={book.fotos[0]}
+              alt={`Capa do livro ${book.titulo}`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-[11px] font-medium text-ink-muted">
+              Sem capa
+            </span>
+          )}
         </div>
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-ink">{book.title}</h2>
-          <p className="mt-1 text-sm text-ink-muted">{book.author}</p>
+          <h2 className="text-base font-semibold text-ink">
+            {book?.titulo ?? 'Titulo indisponivel'}
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {book?.autor ?? 'Autor indisponivel'}
+          </p>
           <p className="mt-3 text-sm leading-6 text-ink-dim">
-            {book.condition} · {book.owner}
+            {book?.estado_conservacao ?? 'Estado nao informado'}
           </p>
         </div>
       </div>
@@ -117,49 +70,137 @@ function BookCard({ book, label }: { book: BookSummary; label: string }) {
 }
 
 export default function TradeDetails() {
+  const toast = useToast()
   const { tradeId } = useParams()
-  const trade = trades.find((item) => item.id === tradeId) ?? trades[0]
-  const [actionMessage, setActionMessage] = useState('')
+  const hasInvalidTradeId = !tradeId
+  const currentUserId = useMemo(() => getCurrentUserId(), [])
+  const [trade, setTrade] = useState<ApiTrade | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    if (!tradeId) return
+    const safeTradeId = tradeId
+
+    let active = true
+
+    async function load() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await getTrade(safeTradeId)
+        if (!active) return
+        setTrade(response.data)
+      } catch (err) {
+        if (!active) return
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar os detalhes da troca.'
+        )
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      active = false
+    }
+  }, [tradeId])
+
+  if (hasInvalidTradeId) {
+    return (
+      <main className="mx-auto w-full space-y-3">
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          Troca invalida.
+        </section>
+      </main>
+    )
+  }
+
+  async function runAction(
+    action: 'aceitar' | 'recusar' | 'cancelar' | 'confirmar'
+  ) {
+    if (!trade) return
+    setIsSaving(true)
+    try {
+      const response = await updateTradeStatus(trade.id, action)
+      setTrade(response.data)
+      toast.success({ title: 'Status atualizado', message: response.message })
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel atualizar o status da troca.'
+      toast.error({ title: 'Erro na acao', message })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <main className="mx-auto w-full space-y-3">
+        <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando troca...
+        </section>
+      </main>
+    )
+  }
+
+  if (!trade || error) {
+    return (
+      <main className="mx-auto w-full space-y-3">
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error ?? 'Troca nao encontrada.'}
+        </section>
+      </main>
+    )
+  }
+
   const activeStep = statusStep[trade.status]
+  const isProponent = trade.id_usuario_proponente === currentUserId
+  const isRecipient = trade.id_usuario_destinatario === currentUserId
+  const canReview = trade.status === 'concluida'
 
   return (
-    <main className="mx-auto w-full max-w-6xl">
+    <main className="mx-auto w-full space-y-3">
       <Link
-        to="/trades"
-        className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+        to="/app/trades"
+        className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
       >
         <ArrowLeft size={16} />
         Voltar para trocas
       </Link>
 
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-                Troca com {trade.partner}
-              </p>
-              <h1 className="mt-2 text-2xl font-semibold text-ink">
-                Status da troca
-              </h1>
-            </div>
-            <Link
-              to={`/trades/${trade.id}/chat`}
-              className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
-            >
-              <MessageSquareText size={16} />
-              Abrir chat
-            </Link>
-          </div>
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">Status da troca</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Veja a etapa atual da proposta e avance para o chat quando precisar
+            alinhar a entrega.
+          </p>
+        </div>
+        <Link
+          to={`/app/trades/${trade.id}/chat`}
+          className="inline-flex h-9 w-fit items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+        >
+          <MessageSquareText size={16} />
+          Abrir chat
+        </Link>
+      </section>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+        <div>
+          <div className="grid gap-2.5 md:grid-cols-3">
             {timeline.map((item, index) => {
               const isDone = index <= activeStep
               return (
                 <div
                   key={item.key}
-                  className="rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-3"
+                  className="rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5"
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -189,53 +230,71 @@ export default function TradeDetails() {
         </div>
       </section>
 
-      <section className="mt-5 grid gap-5 lg:grid-cols-2">
-        <BookCard book={trade.requested} label="Livro solicitado" />
-        <BookCard book={trade.offered} label="Livro oferecido" />
+      <section className="grid gap-2.5 lg:grid-cols-2">
+        <BookCard book={trade.requested_book} label="Livro solicitado" />
+        <BookCard book={trade.offered_book} label="Livro oferecido" />
       </section>
 
-      <section className="mt-5 rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
         <h2 className="border-l-4 border-brand-deep pl-3 text-base font-semibold text-ink">
           Acoes
         </h2>
-        {actionMessage ? (
-          <p className="mt-4 rounded-lg border border-accent/25 bg-[#fbfaf7] px-3 py-2.5 text-sm font-semibold text-brand-deep">
-            {actionMessage}
-          </p>
-        ) : null}
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <button
-            type="button"
-            onClick={() => setActionMessage('Troca aceita no mock.')}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
-          >
-            <Check size={17} />
-            Aceitar
-          </button>
-          <button
-            type="button"
-            onClick={() => setActionMessage('Troca recusada no mock.')}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-          >
-            <X size={17} />
-            Recusar
-          </button>
-          <button
-            type="button"
-            onClick={() => setActionMessage('Troca cancelada no mock.')}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-          >
-            <X size={17} />
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={() => setActionMessage('Recebimento confirmado no mock.')}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-          >
-            <Repeat2 size={17} />
-            Confirmar troca
-          </button>
+        <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+          {isRecipient && trade.status === 'pendente' ? (
+            <>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => runAction('aceitar')}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:opacity-60"
+              >
+                <Check size={17} />
+                Aceitar
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => runAction('recusar')}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep disabled:opacity-60"
+              >
+                <X size={17} />
+                Recusar
+              </button>
+            </>
+          ) : null}
+
+          {isProponent && trade.status === 'pendente' ? (
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => runAction('cancelar')}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep disabled:opacity-60"
+            >
+              <X size={17} />
+              Cancelar
+            </button>
+          ) : null}
+
+          {trade.status === 'aceita' ? (
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => runAction('confirmar')}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep disabled:opacity-60"
+            >
+              <Repeat2 size={17} />
+              Confirmar recebimento
+            </button>
+          ) : null}
+
+          {canReview ? (
+            <Link
+              to={`/app/trades/${trade.id}/review`}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            >
+              Avaliar troca
+            </Link>
+          ) : null}
         </div>
       </section>
     </main>

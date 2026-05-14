@@ -7,8 +7,11 @@ export function withSuspense(
   return (
     <Suspense
       fallback={
-        <main className="mx-auto w-full max-w-5xl rounded-2xl border border-line/45 bg-white p-5 text-sm text-ink-dim shadow-sm">
-          Carregando...
+        <main className="flex min-h-screen w-full items-center justify-center px-4">
+          <div className="inline-flex items-center gap-2 text-sm font-medium text-ink-dim">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-line/45 border-t-brand-deep" />
+            Carregando...
+          </div>
         </main>
       }
     >

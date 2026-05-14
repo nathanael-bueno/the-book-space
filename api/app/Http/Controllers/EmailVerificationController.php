@@ -7,7 +7,7 @@ use App\Models\VerificationCode;
 use App\Notifications\EmailVerificationCodeNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class EmailVerificationController extends Controller
 {
@@ -23,7 +23,7 @@ class EmailVerificationController extends Controller
 
         VerificationCode::create([
             'email'      => $user->email,
-            'code'       => $code,
+            'code'       => Hash::make($code),
             'type'       => 'email_verification',
             'expires_at' => now()->addMinutes(15),
         ]);
@@ -39,27 +39,22 @@ class EmailVerificationController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+        $genericError = response()->json(['message' => 'Codigo invalido ou expirado.'], 422);
 
-        if (!$user) {
-            return response()->json(['message' => 'Usuário não encontrado.'], 404);
-        }
-
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'E-mail já verificado.'], 400);
+        if (!$user || $user->hasVerifiedEmail()) {
+            return $genericError;
         }
 
         $record = VerificationCode::where('email', $request->email)
-            ->where('code', $request->code)
             ->where('type', 'email_verification')
+            ->latest()
             ->first();
 
-        if (!$record) {
-            return response()->json(['message' => 'Código inválido.'], 400);
-        }
-
-        if ($record->isExpired()) {
-            $record->delete();
-            return response()->json(['message' => 'Código expirado.'], 400);
+        if (!$record || $record->isExpired() || !Hash::check((string) $request->code, $record->code)) {
+            if ($record && $record->isExpired()) {
+                $record->delete();
+            }
+            return $genericError;
         }
 
         $user->markEmailAsVerified();
@@ -70,22 +65,22 @@ class EmailVerificationController extends Controller
 
     public function resend(Request $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email:rfc,dns',
-        ]);
+        $authUser = $request->user();
+        $email = $authUser?->email;
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'Usuário não encontrado.'], 404);
+        if (!$email) {
+            $request->validate([
+                'email' => 'required|email',
+            ]);
+            $email = (string) $request->input('email');
         }
 
-        if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'E-mail já verificado.'], 400);
+        $user = User::where('email', $email)->first();
+
+        if ($user && !$user->hasVerifiedEmail()) {
+            self::sendCode($user);
         }
 
-        self::sendCode($user);
-
-        return response()->json(['message' => 'Código de verificação reenviado.'], 200);
+        return response()->json(['message' => 'Se o e-mail for valido, um novo codigo sera enviado.'], 200);
     }
 }

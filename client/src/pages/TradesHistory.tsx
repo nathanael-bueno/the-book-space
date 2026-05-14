@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -8,104 +9,120 @@ import {
   Star,
   XCircle,
 } from 'lucide-react'
-
-type TradeStatus = 'pending' | 'accepted' | 'completed'
-
-type Trade = {
-  id: string
-  status: TradeStatus
-  requestedTitle: string
-  offeredTitle: string
-  partner: string
-  updatedAt: string
-  note: string
-}
-
-const trades: Trade[] = [
-  {
-    id: 'trade-1',
-    status: 'pending',
-    requestedTitle: 'Grande Sertao: Veredas',
-    offeredTitle: 'Ensaio Sobre a Cegueira',
-    partner: 'Ana Ribeiro',
-    updatedAt: '29 abr 2026',
-    note: 'Aguardando resposta da dona do livro.',
-  },
-  {
-    id: 'trade-2',
-    status: 'accepted',
-    requestedTitle: 'A Hora da Estrela',
-    offeredTitle: 'Torto Arado',
-    partner: 'Eduarda Nunes',
-    updatedAt: '28 abr 2026',
-    note: 'Troca aceita. Combine retirada pelo chat.',
-  },
-  {
-    id: 'trade-3',
-    status: 'completed',
-    requestedTitle: 'Capitaes da Areia',
-    offeredTitle: 'Quarto de Despejo',
-    partner: 'Bruno Costa',
-    updatedAt: '24 abr 2026',
-    note: 'Troca concluida. Avalie a experiencia.',
-  },
-]
+import { ApiError } from '../services/http'
+import { getCurrentUserId } from '../services/auth'
+import { listMyTrades, type ApiTrade } from '../services/trades'
 
 const statusInfo: Record<
-  TradeStatus,
+  ApiTrade['status'],
   { label: string; icon: typeof Clock3; className: string }
 > = {
-  pending: {
+  pendente: {
     label: 'Pendente',
     icon: Clock3,
     className: 'border-amber-200 bg-amber-50 text-amber-700',
   },
-  accepted: {
+  aceita: {
     label: 'Aceita',
     icon: CheckCircle2,
     className: 'border-accent/25 bg-[#fbfaf7] text-accent',
   },
-  completed: {
+  concluida: {
     label: 'Concluida',
     icon: Star,
     className: 'border-brand-deep/20 bg-[#fbfaf7] text-brand-deep',
   },
+  recusada: {
+    label: 'Recusada',
+    icon: XCircle,
+    className: 'border-line/35 bg-white text-ink-muted',
+  },
+  cancelada: {
+    label: 'Cancelada',
+    icon: XCircle,
+    className: 'border-line/35 bg-white text-ink-muted',
+  },
 }
 
 export default function TradesHistory() {
+  const [trades, setTrades] = useState<ApiTrade[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const currentUserId = useMemo(() => getCurrentUserId(), [])
+
+  useEffect(() => {
+    let active = true
+
+    async function load() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await listMyTrades(30)
+        if (!active) return
+        setTrades(response.data)
+      } catch (err) {
+        if (!active) return
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar seu historico de trocas.'
+        )
+      } finally {
+        if (active) setIsLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
-    <main className="mx-auto w-full max-w-6xl">
-      <section className="overflow-hidden rounded-2xl border border-line/45 bg-white shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-accent via-brand-deep to-accent" />
-        <div className="p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-                Trocas
-              </p>
-              <h1 className="mt-2 text-2xl font-semibold text-ink">
-                Historico de trocas
-              </h1>
-            </div>
-            <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2 text-sm font-semibold text-ink-dim">
-              <Repeat2 size={16} className="text-brand-deep" />
-              {trades.length} registros
-            </div>
-          </div>
+    <main className="mx-auto w-full space-y-3">
+      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-ink">
+            Historico de trocas
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+            Acompanhe o andamento das suas propostas e veja as trocas ja
+            finalizadas.
+          </p>
+        </div>
+        <div className="inline-flex h-9 w-fit items-center gap-2 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 text-sm font-semibold text-ink-dim">
+          <Repeat2 size={16} className="text-brand-deep" />
+          {trades.length} registros
         </div>
       </section>
 
-      <section className="mt-5 grid gap-4">
+      {isLoading ? (
+        <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          Carregando historico de trocas...
+        </section>
+      ) : null}
+
+      {error ? (
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {error}
+        </section>
+      ) : null}
+
+      <section className="grid gap-2.5">
         {trades.map((trade) => {
           const currentStatus = statusInfo[trade.status]
           const StatusIcon = currentStatus.icon
+          const partner =
+            trade.id_usuario_proponente === currentUserId
+              ? trade.recipient?.nome_completo
+              : trade.proponent?.nome_completo
 
           return (
             <article
               key={trade.id}
-              className="rounded-2xl border border-line/45 bg-white p-4 shadow-sm sm:p-5"
+              className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
             >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
@@ -115,17 +132,20 @@ export default function TradesHistory() {
                       {currentStatus.label}
                     </span>
                     <span className="text-sm text-ink-muted">
-                      Atualizada em {trade.updatedAt}
+                      Atualizada em{' '}
+                      {trade.updated_at
+                        ? new Date(trade.updated_at).toLocaleDateString('pt-BR')
+                        : '-'}
                     </span>
                   </div>
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                  <div className="mt-4 grid gap-2.5 md:grid-cols-[1fr_auto_1fr] md:items-center">
                     <div className="rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
                       <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                        Voce pediu
+                        Livro solicitado
                       </p>
                       <p className="mt-1 text-sm font-semibold text-ink">
-                        {trade.requestedTitle}
+                        {trade.requested_book?.titulo ?? '-'}
                       </p>
                     </div>
                     <Repeat2
@@ -134,57 +154,50 @@ export default function TradesHistory() {
                     />
                     <div className="rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
                       <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                        Voce ofereceu
+                        Livro oferecido
                       </p>
                       <p className="mt-1 text-sm font-semibold text-ink">
-                        {trade.offeredTitle}
+                        {trade.offered_book?.titulo ?? '-'}
                       </p>
                     </div>
                   </div>
 
                   <p className="mt-3 text-sm leading-6 text-ink-dim">
-                    {trade.note} Parceiro: {trade.partner}.
+                    Parceiro: {partner ?? 'Leitor da comunidade'}.
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
                   <Link
-                    to={`/trades/${trade.id}`}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
+                    to={`/app/trades/${trade.id}`}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
                   >
                     Detalhes
                     <ArrowRight size={16} />
                   </Link>
                   <Link
-                    to={`/trades/${trade.id}/chat`}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+                    to={`/app/trades/${trade.id}/chat`}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
                   >
                     <MessageSquareText size={16} />
                     Chat
                   </Link>
-                  {trade.status === 'completed' ? (
-                    <Link
-                      to={`/trades/${trade.id}/review`}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-                    >
-                      <Star size={16} />
-                      Avaliar
-                    </Link>
-                  ) : (
-                    <button
-                      type="button"
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-muted shadow-sm"
-                    >
-                      <XCircle size={16} />
-                      Aguardando
-                    </button>
-                  )}
                 </div>
               </div>
             </article>
           )
         })}
       </section>
+
+      {!isLoading && !error && !trades.length ? (
+        <section className="ui-empty-state flex flex-col items-center gap-2">
+          <Repeat2 size={32} className="text-brand-deep" />
+          <p className="text-sm font-medium text-ink">
+            Nenhuma troca encontrada.
+          </p>
+          <p className="text-sm">Suas propostas de troca aparecerao aqui.</p>
+        </section>
+      ) : null}
     </main>
   )
 }

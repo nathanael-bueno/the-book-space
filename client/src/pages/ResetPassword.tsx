@@ -1,14 +1,9 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import {
-  BookOpen,
-  Eye,
-  EyeOff,
-  Check,
-  ArrowLeft,
-  ShieldCheck,
-} from 'lucide-react'
+import { Eye, EyeOff, Check, ArrowLeft, ShieldCheck } from 'lucide-react'
 import { useToast } from '../stores/useToast'
+import { resetPassword } from '../services/auth'
+import { ApiError } from '../services/http'
 
 const passwordRules = [
   { label: 'Mínimo 8 caracteres', test: (p: string) => p.length >= 8 },
@@ -20,8 +15,10 @@ export default function ResetPassword() {
   const toast = useToast()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
+  const emailFromLink = searchParams.get('email') ?? ''
   const hasValidToken = Boolean(token && token.trim().length > 12)
 
+  const [email, setEmail] = useState(emailFromLink)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -36,7 +33,11 @@ export default function ResetPassword() {
   const passwordMismatch =
     confirmPassword.length > 0 && password !== confirmPassword
   const canSubmit =
-    hasValidToken && allRulesPass && passwordsMatch && !isLoading
+    hasValidToken &&
+    email.trim().length > 0 &&
+    allRulesPass &&
+    passwordsMatch &&
+    !isLoading
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,15 +51,29 @@ export default function ResetPassword() {
       return
     }
     setIsLoading(true)
-    // TODO: integrate with /api/auth/reset-password using body { token, password }
-    setTimeout(() => {
+    try {
+      await resetPassword({
+        email,
+        token,
+        senha: password,
+        senha_confirmation: confirmPassword,
+      })
       setIsLoading(false)
       setDone(true)
       toast.success({
         title: 'Senha redefinida',
         message: 'Sua nova senha foi registrada com sucesso.',
       })
-    }, 1500)
+    } catch (error) {
+      setIsLoading(false)
+      toast.error({
+        title: 'Falha ao redefinir',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Nao foi possivel redefinir a senha.',
+      })
+    }
   }
 
   return (
@@ -78,11 +93,8 @@ export default function ResetPassword() {
       </div>
 
       {/* Reset Password Card */}
-      <div className="relative z-10 w-full max-w-sm bg-white/95 border border-white/70 rounded-2xl p-8 shadow-[0_20px_56px_rgba(15,23,42,0.14)] backdrop-blur-md">
+      <div className="ui-auth-card relative z-10 w-full max-w-sm p-8 backdrop-blur-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-white border border-neutral-200 flex items-center justify-center mb-4 shadow-sm">
-            <BookOpen size={24} className="text-brand-deep" />
-          </div>
           <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight">
             Nova senha
           </h1>
@@ -92,13 +104,30 @@ export default function ResetPassword() {
         </div>
 
         {!done ? (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {!hasValidToken ? (
               <div className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-medium text-brand-deep">
                 Link invalido ou expirado. Solicite um novo e-mail de
                 recuperacao.
               </div>
             ) : null}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="email"
+                className="block text-neutral-600 text-xs font-medium ml-0.5"
+              >
+                E-mail
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                className="ui-auth-input w-full h-9 px-3.5 py-2.5 text-sm placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/12 transition-all duration-200"
+              />
+            </div>
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
@@ -116,7 +145,7 @@ export default function ResetPassword() {
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
                   placeholder="••••••••"
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-3 pr-10 text-neutral-950 text-sm placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/12 transition-all duration-200"
+                  className="ui-auth-input w-full h-9 px-3.5 py-2.5 pr-10 text-sm placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/12 transition-all duration-200"
                 />
                 <button
                   type="button"
@@ -168,7 +197,7 @@ export default function ResetPassword() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full bg-neutral-50 border rounded-lg px-3.5 py-3 pr-10 text-neutral-950 text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 transition-all duration-200 ${
+                  className={`ui-auth-input w-full h-9 border px-3.5 py-2.5 pr-10 text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 transition-all duration-200 ${
                     passwordMismatch
                       ? 'border-brand-deep/50 focus:border-brand-deep focus:ring-brand-deep/12'
                       : 'border-neutral-200 focus:border-accent focus:ring-accent/12'
@@ -192,7 +221,7 @@ export default function ResetPassword() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full bg-accent hover:bg-brand-deep disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg py-3 transition-all duration-300 shadow-md shadow-accent/16 mt-2"
+              className="ui-auth-primary-btn w-full bg-accent hover:bg-brand-deep disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 transition-all duration-300 mt-2"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -206,7 +235,7 @@ export default function ResetPassword() {
           </form>
         ) : (
           <div className="text-center py-2">
-            <div className="w-12 h-12 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-center mx-auto mb-5">
+            <div className="ui-auth-icon w-9 h-9 flex items-center justify-center mx-auto mb-5">
               <ShieldCheck size={22} className="text-brand-deep" />
             </div>
             <h2 className="text-neutral-950 text-lg font-semibold mb-2">
@@ -217,8 +246,8 @@ export default function ResetPassword() {
               nova senha.
             </p>
             <Link
-              to="/login"
-              className="inline-block w-full bg-accent hover:bg-brand-deep text-white font-semibold text-sm rounded-lg py-3 transition-all duration-300 text-center shadow-md shadow-accent/16"
+              to="/auth/login"
+              className="ui-auth-primary-btn inline-block w-full bg-accent hover:bg-brand-deep text-white font-semibold text-sm py-2.5 transition-all duration-300 text-center"
             >
               Ir para o login
             </Link>
@@ -226,9 +255,9 @@ export default function ResetPassword() {
         )}
 
         {!done && (
-          <div className="mt-8 pt-6 border-t border-neutral-200 text-center">
+          <div className="mt-6 pt-4 border-t border-neutral-200 text-center">
             <Link
-              to="/login"
+              to="/auth/login"
               className="inline-flex items-center gap-2 text-neutral-500 hover:text-brand-deep text-xs font-medium transition-colors duration-200"
             >
               <ArrowLeft size={14} />
