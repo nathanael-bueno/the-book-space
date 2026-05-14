@@ -45,7 +45,6 @@ type SearchSuggestion = {
   cover: string
 }
 
-
 const NAV_ITEMS: SidebarItem[] = [
   {
     to: '/app/feed',

@@ -48,7 +48,10 @@ export default function VerifyEmail() {
         if (!active) return
         toast.error({
           title: 'Erro',
-          message: error instanceof ApiError ? error.message : 'Nao foi possivel carregar as categorias.',
+          message:
+            error instanceof ApiError
+              ? error.message
+              : 'Nao foi possivel carregar as categorias.',
         })
       })
 
@@ -69,7 +72,10 @@ export default function VerifyEmail() {
     } catch (error) {
       toast.error({
         title: 'Erro',
-        message: error instanceof ApiError ? error.message : 'Nao foi possivel verificar.',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Nao foi possivel verificar.',
       })
     } finally {
       setIsLoading(false)
@@ -79,7 +85,10 @@ export default function VerifyEmail() {
   async function handleResendCode() {
     const normalizedEmail = email.trim()
     if (!normalizedEmail) {
-      toast.error({ title: 'Erro', message: 'Informe o e-mail para reenviar o codigo.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Informe o e-mail para reenviar o codigo.',
+      })
       return
     }
 
@@ -92,7 +101,10 @@ export default function VerifyEmail() {
     } catch (error) {
       toast.error({
         title: 'Erro',
-        message: error instanceof ApiError ? error.message : 'Nao foi possivel reenviar o codigo.',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Nao foi possivel reenviar o codigo.',
       })
     } finally {
       setIsResending(false)
@@ -121,7 +133,10 @@ export default function VerifyEmail() {
     } catch (error) {
       toast.error({
         title: 'Erro',
-        message: error instanceof ApiError ? error.message : 'Nao foi possivel salvar as categorias favoritas.',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Nao foi possivel salvar as categorias favoritas.',
       })
     } finally {
       setIsSavingGenres(false)

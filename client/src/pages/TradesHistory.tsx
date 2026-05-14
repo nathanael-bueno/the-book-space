@@ -64,7 +64,10 @@ export default function TradesHistory() {
         if (!active) return
         toast.error({
           title: 'Erro',
-          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar seu historico de trocas.',
+          message:
+            err instanceof ApiError
+              ? err.message
+              : 'Nao foi possivel carregar seu historico de trocas.',
         })
       } finally {
         if (active) setIsLoading(false)

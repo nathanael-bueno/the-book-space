@@ -217,7 +217,11 @@ export default function BookForm() {
       descricao: descricao.trim() || null,
       cidade: formatCityWithState(cidade, uf) || null,
       id_genero: selectedGenreId,
-      fotos: photos.length ? photos : ['https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80'],
+      fotos: photos.length
+        ? photos
+        : [
+            'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80',
+          ],
     }
 
     try {

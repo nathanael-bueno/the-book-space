@@ -29,7 +29,10 @@ export default function AdminUsers() {
         setUsers(response)
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar usuarios.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar usuarios.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -56,9 +59,15 @@ export default function AdminUsers() {
       setUsers((prev) =>
         prev.map((user) => (user.id === id ? { ...user, status } : user))
       )
-      toast.success({ title: 'Status atualizado', message: 'Status do usuario atualizado.' })
+      toast.success({
+        title: 'Status atualizado',
+        message: 'Status do usuario atualizado.',
+      })
     } catch {
-      toast.error({ title: 'Erro', message: 'Nao foi possivel atualizar o status do usuario.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Nao foi possivel atualizar o status do usuario.',
+      })
     }
   }
 

@@ -23,7 +23,10 @@ export default function SocialFeed() {
         if (!active) return
         toast.error({
           title: 'Erro',
-          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar o feed social.',
+          message:
+            err instanceof ApiError
+              ? err.message
+              : 'Nao foi possivel carregar o feed social.',
         })
       } finally {
         if (active) setIsLoading(false)

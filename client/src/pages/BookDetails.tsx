@@ -41,7 +41,9 @@ export default function BookDetails() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const currentUserId = useMemo(() => getCurrentUserId(), [])
-  const isOwner = Boolean(book && currentUserId && book.id_usuario_dono === currentUserId)
+  const isOwner = Boolean(
+    book && currentUserId && book.id_usuario_dono === currentUserId
+  )
 
   useEffect(() => {
     if (!bookId) return
@@ -57,19 +59,27 @@ export default function BookDetails() {
         setBook(response.data)
       } catch (err) {
         if (!active) return
-        setError(err instanceof ApiError ? err.message : 'Nao foi possivel carregar o livro.')
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar o livro.'
+        )
       } finally {
         if (active) setIsLoading(false)
       }
     }
 
     loadBook()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [bookId])
 
   async function handleDelete() {
     if (!bookId) return
-    const confirmed = window.confirm('Tem certeza que deseja excluir este livro?')
+    const confirmed = window.confirm(
+      'Tem certeza que deseja excluir este livro?'
+    )
     if (!confirmed) return
 
     setIsDeleting(true)
@@ -78,7 +88,10 @@ export default function BookDetails() {
       toast.success({ title: 'Livro removido', message: response.message })
       navigate('/app/catalog')
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Nao foi possivel excluir o livro.'
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel excluir o livro.'
       toast.error({ title: 'Erro ao excluir', message })
     } finally {
       setIsDeleting(false)
@@ -114,7 +127,9 @@ export default function BookDetails() {
       <main className="mx-auto w-full space-y-3">
         <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-5">
           <BookOpen size={36} className="text-brand-deep/60" />
-          <h1 className="mt-4 text-xl font-semibold text-ink">Livro nao encontrado</h1>
+          <h1 className="mt-4 text-xl font-semibold text-ink">
+            Livro nao encontrado
+          </h1>
           <p className="mt-2 text-sm text-ink-dim">
             {error ?? 'O livro que voce tentou abrir nao esta disponivel.'}
           </p>
@@ -132,7 +147,10 @@ export default function BookDetails() {
 
   const photos = book.fotos?.filter(Boolean) ?? []
   const cover = photos[activePhoto] ?? photos[0] ?? ''
-  const status = statusLabel[book.status] ?? { label: book.status, className: 'bg-zinc-100 text-zinc-500 border-zinc-200' }
+  const status = statusLabel[book.status] ?? {
+    label: book.status,
+    className: 'bg-zinc-100 text-zinc-500 border-zinc-200',
+  }
   const canPropose = !isOwner && book.status === 'disponivel'
 
   return (
@@ -146,7 +164,6 @@ export default function BookDetails() {
       </Link>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-
         {/* Coluna da imagem */}
         <div className="space-y-3">
           <div className="overflow-hidden rounded-2xl border border-line/35 bg-[#fbfaf7] shadow-sm">
@@ -173,7 +190,11 @@ export default function BookDetails() {
                       : 'border-line/35 opacity-60 hover:opacity-100',
                   ].join(' ')}
                 >
-                  <img src={url} alt={`Foto ${index + 1}`} className="h-full w-full object-cover" />
+                  <img
+                    src={url}
+                    alt={`Foto ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -182,11 +203,12 @@ export default function BookDetails() {
 
         {/* Coluna das informações */}
         <div className="space-y-4">
-
           {/* Header */}
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${status.className}`}>
+              <span
+                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${status.className}`}
+              >
                 {status.label}
               </span>
               {book.genre ? (
@@ -210,18 +232,26 @@ export default function BookDetails() {
           {/* Metadata cards */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Conservacao</p>
-              <p className="mt-1 text-sm font-semibold text-ink">{book.estado_conservacao}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                Conservacao
+              </p>
+              <p className="mt-1 text-sm font-semibold text-ink">
+                {book.estado_conservacao}
+              </p>
             </div>
             <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Localização</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                Localização
+              </p>
               <p className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-ink">
                 <MapPin size={13} className="text-accent" />
                 {book.cidade ?? 'Nao informado'}
               </p>
             </div>
             <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Dono</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                Dono
+              </p>
               <Link
                 to={`/app/users/${book.owner?.id ?? ''}`}
                 className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-ink transition-colors hover:text-accent"

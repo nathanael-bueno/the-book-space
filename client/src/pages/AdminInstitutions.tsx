@@ -39,7 +39,10 @@ export default function AdminInstitutions() {
         setInstitutions(response)
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar instituicoes.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar instituicoes.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -88,11 +91,17 @@ export default function AdminInstitutions() {
               : institution
           )
         )
-        toast.success({ title: 'Instituicao atualizada', message: 'Instituicao atualizada com sucesso.' })
+        toast.success({
+          title: 'Instituicao atualizada',
+          message: 'Instituicao atualizada com sucesso.',
+        })
         setIsModalOpen(false)
         resetForm()
       } catch {
-        toast.error({ title: 'Erro', message: 'Nao foi possivel atualizar a instituicao.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel atualizar a instituicao.',
+        })
       }
       return
     }
@@ -105,11 +114,17 @@ export default function AdminInstitutions() {
     try {
       await persistInstitutionCreate(payload)
       setInstitutions((prev) => [newInstitution, ...prev])
-      toast.success({ title: 'Instituicao criada', message: 'Instituicao criada com sucesso.' })
+      toast.success({
+        title: 'Instituicao criada',
+        message: 'Instituicao criada com sucesso.',
+      })
       setIsModalOpen(false)
       resetForm()
     } catch {
-      toast.error({ title: 'Erro', message: 'Nao foi possivel criar a instituicao.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Nao foi possivel criar a instituicao.',
+      })
     }
   }
 
@@ -132,9 +147,15 @@ export default function AdminInstitutions() {
         prev.filter((institution) => institution.id !== id)
       )
       if (editingId === id) closeModal()
-      toast.success({ title: 'Instituicao removida', message: 'Instituicao removida com sucesso.' })
+      toast.success({
+        title: 'Instituicao removida',
+        message: 'Instituicao removida com sucesso.',
+      })
     } catch {
-      toast.error({ title: 'Erro', message: 'Nao foi possivel remover a instituicao.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Nao foi possivel remover a instituicao.',
+      })
     }
   }
 

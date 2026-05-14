@@ -28,7 +28,10 @@ export default function AdminReports() {
         setReports(response)
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar denuncias.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar denuncias.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -52,9 +55,15 @@ export default function AdminReports() {
           report.id === id ? { ...report, status } : report
         )
       )
-      toast.success({ title: 'Status atualizado', message: 'Status da denuncia atualizado.' })
+      toast.success({
+        title: 'Status atualizado',
+        message: 'Status da denuncia atualizado.',
+      })
     } catch {
-      toast.error({ title: 'Erro', message: 'Nao foi possivel atualizar o status da denuncia.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Nao foi possivel atualizar o status da denuncia.',
+      })
     }
   }
 

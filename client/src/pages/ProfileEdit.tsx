@@ -63,7 +63,10 @@ export default function ProfileEdit() {
         setStates(data)
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar os estados.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar os estados.',
+        })
       } finally {
         if (active) setIsLoadingStates(false)
       }

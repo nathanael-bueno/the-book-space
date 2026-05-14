@@ -57,7 +57,10 @@ export default function AdminDashboard() {
       const response = await getAdminDashboardStats()
       setStats(response)
     } catch {
-      toast.error({ title: 'Erro', message: 'Nao foi possivel carregar as metricas do dashboard.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Nao foi possivel carregar as metricas do dashboard.',
+      })
     } finally {
       setIsLoading(false)
     }

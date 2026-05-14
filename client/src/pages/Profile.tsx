@@ -46,10 +46,8 @@ export default function Profile() {
 
   const profile = profileState.data
   const isLoading = profileState.loading
-  const error = profileState.error
   const reviews = reviewsState.data
   const isLoadingReviews = reviewsState.loading
-  const reviewsError = reviewsState.error
   const myBooks = summaryState.books
   const completedTradesCount = summaryState.completedTrades
   const donationsCount = summaryState.donations

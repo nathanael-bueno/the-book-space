@@ -55,7 +55,10 @@ export default function TradeProposal() {
         if (!active) return
         toast.error({
           title: 'Erro',
-          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar os dados da proposta.',
+          message:
+            err instanceof ApiError
+              ? err.message
+              : 'Nao foi possivel carregar os dados da proposta.',
         })
       } finally {
         if (active) setIsLoading(false)

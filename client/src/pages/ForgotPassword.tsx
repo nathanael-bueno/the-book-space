@@ -22,7 +22,10 @@ export default function ForgotPassword() {
       setIsLoading(false)
       toast.error({
         title: 'Erro',
-        message: error instanceof ApiError ? error.message : 'Nao foi possivel enviar.',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Nao foi possivel enviar.',
       })
     }
   }

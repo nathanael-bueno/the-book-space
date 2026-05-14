@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Edit3, Filter, MapPin, MoreVertical, Search, Trash2 } from 'lucide-react'
+import {
+  Edit3,
+  Filter,
+  MapPin,
+  MoreVertical,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import { getCurrentUserId } from '../services/auth'
 import { ApiError } from '../services/http'
 import {
@@ -142,7 +149,10 @@ export default function Catalog() {
         if (!active) return
         toast.error({
           title: 'Erro',
-          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar o catalogo.',
+          message:
+            err instanceof ApiError
+              ? err.message
+              : 'Nao foi possivel carregar o catalogo.',
         })
       } finally {
         if (active) setIsLoading(false)
@@ -174,7 +184,10 @@ export default function Catalog() {
       toast.success({ title: 'Livro removido', message: response.message })
       setBooks((prev) => prev.filter((b) => b.id !== book.id))
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Nao foi possivel excluir o livro.'
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel excluir o livro.'
       toast.error({ title: 'Erro ao excluir', message })
     }
   }
@@ -356,7 +369,10 @@ export default function Catalog() {
               </Link>
 
               {isOwner ? (
-                <div className="absolute right-1.5 top-1.5" ref={isMenuOpen ? menuRef : null}>
+                <div
+                  className="absolute right-1.5 top-1.5"
+                  ref={isMenuOpen ? menuRef : null}
+                >
                   <button
                     type="button"
                     onClick={(e) => {

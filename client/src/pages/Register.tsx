@@ -77,7 +77,10 @@ export default function Register() {
         setStates(data)
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar estados e cidades no momento.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar estados e cidades no momento.',
+        })
       } finally {
         if (active) setIsLoadingStates(false)
       }
@@ -104,7 +107,11 @@ export default function Register() {
         setCity('')
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar cidades para o estado selecionado.' })
+        toast.error({
+          title: 'Erro',
+          message:
+            'Nao foi possivel carregar cidades para o estado selecionado.',
+        })
         setCities([])
       } finally {
         if (active) setIsLoadingCities(false)
@@ -135,7 +142,10 @@ export default function Register() {
     } catch (error) {
       toast.error({
         title: 'Erro',
-        message: error instanceof ApiError ? error.message : 'Não foi possível criar conta.',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Não foi possível criar conta.',
       })
     } finally {
       setIsLoading(false)
@@ -145,7 +155,10 @@ export default function Register() {
   const goNextStep = () => {
     if (step === 1) {
       if (!name.trim() || !email.trim()) {
-        toast.error({ title: 'Erro', message: 'Preencha nome e e-mail para continuar.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Preencha nome e e-mail para continuar.',
+        })
         return
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -156,7 +169,10 @@ export default function Register() {
     }
 
     if (step === 2 && (!state || !city || !ageRange)) {
-      toast.error({ title: 'Erro', message: 'Preencha estado, cidade e faixa etaria para continuar.' })
+      toast.error({
+        title: 'Erro',
+        message: 'Preencha estado, cidade e faixa etaria para continuar.',
+      })
       return
     }
 

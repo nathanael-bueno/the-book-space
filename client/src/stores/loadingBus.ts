@@ -3,6 +3,7 @@ type LoadingSnapshot = {
 }
 
 let pendingRequests = 0
+let snapshot: LoadingSnapshot = { pendingRequests: 0 }
 const listeners = new Set<() => void>()
 
 function emit() {
@@ -15,15 +16,17 @@ export function subscribeLoading(listener: () => void) {
 }
 
 export function getLoadingSnapshot(): LoadingSnapshot {
-  return { pendingRequests }
+  return snapshot
 }
 
 export function beginGlobalLoading() {
   pendingRequests += 1
+  snapshot = { pendingRequests }
   emit()
 }
 
 export function endGlobalLoading() {
   pendingRequests = Math.max(0, pendingRequests - 1)
+  snapshot = { pendingRequests }
   emit()
 }
