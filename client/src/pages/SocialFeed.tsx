@@ -3,29 +3,28 @@ import { Link } from 'react-router-dom'
 import { CalendarDays, PenSquare, UserRound } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { listPosts, type ApiPost } from '../services/posts'
+import { useToast } from '../stores/useToast'
 
 export default function SocialFeed() {
+  const toast = useToast()
   const [posts, setPosts] = useState<ApiPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
 
     async function load() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listPosts()
         if (!active) return
         setPosts(response.data)
       } catch (err) {
         if (!active) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Nao foi possivel carregar o feed social.'
-        )
+        toast.error({
+          title: 'Erro',
+          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar o feed social.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -60,12 +59,6 @@ export default function SocialFeed() {
         {isLoading ? (
           <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
             Carregando feed social...
-          </p>
-        ) : null}
-
-        {error ? (
-          <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-            {error}
           </p>
         ) : null}
 
@@ -136,7 +129,7 @@ export default function SocialFeed() {
           )
         })}
 
-        {!isLoading && !error && !posts.length ? (
+        {!isLoading && !posts.length ? (
           <section className="ui-empty-state flex flex-col items-center gap-2">
             <PenSquare
               size={32}

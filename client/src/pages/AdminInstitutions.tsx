@@ -10,15 +10,15 @@ import {
   persistInstitutionUpdate,
   type AdminInstitution,
 } from '../services/admin'
+import { useToast } from '../stores/useToast'
 
 export default function AdminInstitutions() {
+  const toast = useToast()
   const [institutions, setInstitutions] = useState<AdminInstitution[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '',
     city: '',
@@ -33,14 +33,13 @@ export default function AdminInstitutions() {
     let active = true
     async function loadData() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listAdminInstitutions()
         if (!active) return
         setInstitutions(response)
       } catch {
         if (!active) return
-        setError('Nao foi possivel carregar instituicoes.')
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar instituicoes.' })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -80,7 +79,6 @@ export default function AdminInstitutions() {
     }
 
     if (editingId) {
-      setError(null)
       try {
         await persistInstitutionUpdate(editingId, payload)
         setInstitutions((prev) =>
@@ -90,11 +88,11 @@ export default function AdminInstitutions() {
               : institution
           )
         )
-        setNotice('Instituicao atualizada com sucesso.')
+        toast.success({ title: 'Instituicao atualizada', message: 'Instituicao atualizada com sucesso.' })
         setIsModalOpen(false)
         resetForm()
       } catch {
-        setError('Nao foi possivel atualizar a instituicao.')
+        toast.error({ title: 'Erro', message: 'Nao foi possivel atualizar a instituicao.' })
       }
       return
     }
@@ -104,15 +102,14 @@ export default function AdminInstitutions() {
       ...payload,
     }
 
-    setError(null)
     try {
       await persistInstitutionCreate(payload)
       setInstitutions((prev) => [newInstitution, ...prev])
-      setNotice('Instituicao criada com sucesso.')
+      toast.success({ title: 'Instituicao criada', message: 'Instituicao criada com sucesso.' })
       setIsModalOpen(false)
       resetForm()
     } catch {
-      setError('Nao foi possivel criar a instituicao.')
+      toast.error({ title: 'Erro', message: 'Nao foi possivel criar a instituicao.' })
     }
   }
 
@@ -129,16 +126,15 @@ export default function AdminInstitutions() {
   }
 
   async function onDelete(id: string) {
-    setError(null)
     try {
       await persistInstitutionDelete(id)
       setInstitutions((prev) =>
         prev.filter((institution) => institution.id !== id)
       )
       if (editingId === id) closeModal()
-      setNotice('Instituicao removida com sucesso.')
+      toast.success({ title: 'Instituicao removida', message: 'Instituicao removida com sucesso.' })
     } catch {
-      setError('Nao foi possivel remover a instituicao.')
+      toast.error({ title: 'Erro', message: 'Nao foi possivel remover a instituicao.' })
     }
   }
 
@@ -169,18 +165,8 @@ export default function AdminInstitutions() {
           Carregando instituicoes...
         </p>
       ) : null}
-      {error ? (
-        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
-        </p>
-      ) : null}
-      {notice ? (
-        <p className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
-          {notice}
-        </p>
-      ) : null}
 
-      {!isLoading && !error && !institutions.length ? (
+      {!isLoading && !institutions.length ? (
         <section className="ui-empty-state flex flex-col items-center gap-2">
           <MapPin size={32} className="text-brand-deep" />
           <p className="text-sm font-medium text-ink">
@@ -192,7 +178,7 @@ export default function AdminInstitutions() {
         </section>
       ) : null}
 
-      {!isLoading && !error && institutions.length ? (
+      {!isLoading && institutions.length ? (
         <section className="overflow-hidden rounded-xl border border-line/45 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">

@@ -20,7 +20,12 @@ import {
   parseCityWithState,
 } from '../services/locations'
 
-const conditions = ['Novo', 'Muito bom', 'Bom', 'Usado']
+const conditions = [
+  { value: 'Novo', label: '★★★★★ Novo' },
+  { value: 'Muito bom', label: '★★★★☆ Muito bom' },
+  { value: 'Bom', label: '★★★☆☆ Bom' },
+  { value: 'Usado', label: '★★☆☆☆ Usado' },
+]
 
 export default function BookForm() {
   const toast = useToast()
@@ -392,7 +397,9 @@ export default function BookForm() {
                   className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 >
                   {conditions.map((condition) => (
-                    <option key={condition}>{condition}</option>
+                    <option key={condition.value} value={condition.value}>
+                      {condition.label}
+                    </option>
                   ))}
                 </select>
               </label>

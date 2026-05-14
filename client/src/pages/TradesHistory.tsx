@@ -12,6 +12,7 @@ import {
 import { ApiError } from '../services/http'
 import { getCurrentUserId } from '../services/auth'
 import { listMyTrades, type ApiTrade } from '../services/trades'
+import { useToast } from '../stores/useToast'
 
 const statusInfo: Record<
   ApiTrade['status'],
@@ -45,9 +46,9 @@ const statusInfo: Record<
 }
 
 export default function TradesHistory() {
+  const toast = useToast()
   const [trades, setTrades] = useState<ApiTrade[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const currentUserId = useMemo(() => getCurrentUserId(), [])
 
   useEffect(() => {
@@ -55,18 +56,16 @@ export default function TradesHistory() {
 
     async function load() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listMyTrades(30)
         if (!active) return
         setTrades(response.data)
       } catch (err) {
         if (!active) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Nao foi possivel carregar seu historico de trocas.'
-        )
+        toast.error({
+          title: 'Erro',
+          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar seu historico de trocas.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -99,12 +98,6 @@ export default function TradesHistory() {
       {isLoading ? (
         <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
           Carregando historico de trocas...
-        </section>
-      ) : null}
-
-      {error ? (
-        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
         </section>
       ) : null}
 
@@ -189,7 +182,7 @@ export default function TradesHistory() {
         })}
       </section>
 
-      {!isLoading && !error && !trades.length ? (
+      {!isLoading && !trades.length ? (
         <section className="ui-empty-state flex flex-col items-center gap-2">
           <Repeat2 size={32} className="text-brand-deep" />
           <p className="text-sm font-medium text-ink">

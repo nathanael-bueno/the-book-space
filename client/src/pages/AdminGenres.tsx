@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import GenreModal from '../components/admin/GenreModal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import { ApiError } from '../services/http'
 import { useToast } from '../stores/useToast'
 import {
   listAdminGenres,
@@ -24,20 +25,25 @@ export default function AdminGenres() {
   const [createName, setCreateName] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+
+  function getApiMessage(err: unknown, fallback: string): string {
+    return err instanceof ApiError ? err.message : fallback
+  }
 
   useEffect(() => {
     let active = true
     async function loadData() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listAdminGenres()
         if (!active) return
         setGenres(response)
-      } catch {
+      } catch (err) {
         if (!active) return
-        setError('Nao foi possivel carregar generos.')
+        toast.error({
+          title: 'Erro',
+          message: getApiMessage(err, 'Nao foi possivel carregar generos.'),
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -46,7 +52,7 @@ export default function AdminGenres() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   function resetForm() {
     setEditingId(null)
@@ -62,7 +68,6 @@ export default function AdminGenres() {
 
     const payload = { name: name.trim(), category: currentGenre.category }
 
-    setError(null)
     try {
       await persistGenreUpdate(editingId, payload)
       setGenres((prev) =>
@@ -76,11 +81,10 @@ export default function AdminGenres() {
       })
       setIsCreateModalOpen(false)
       resetForm()
-    } catch {
-      setError('Nao foi possivel atualizar o genero.')
+    } catch (err) {
       toast.error({
         title: 'Erro ao atualizar',
-        message: 'Nao foi possivel atualizar o genero.',
+        message: getApiMessage(err, 'Nao foi possivel atualizar o genero.'),
       })
     }
   }
@@ -94,7 +98,6 @@ export default function AdminGenres() {
       category: 'Geral',
     }
 
-    setError(null)
     try {
       await persistGenreCreate(payload)
       setGenres((prev) => [{ id: crypto.randomUUID(), ...payload }, ...prev])
@@ -104,11 +107,10 @@ export default function AdminGenres() {
       })
       setCreateName('')
       setIsCreateModalOpen(false)
-    } catch {
-      setError('Nao foi possivel criar o genero.')
+    } catch (err) {
       toast.error({
         title: 'Erro ao criar',
-        message: 'Nao foi possivel criar o genero.',
+        message: getApiMessage(err, 'Nao foi possivel criar o genero.'),
       })
     }
   }
@@ -120,7 +122,6 @@ export default function AdminGenres() {
   }
 
   async function onDelete(id: string) {
-    setError(null)
     try {
       await persistGenreDelete(id)
       setGenres((prev) => prev.filter((genre) => genre.id !== id))
@@ -132,11 +133,10 @@ export default function AdminGenres() {
         title: 'Genero removido',
         message: 'Genero removido com sucesso.',
       })
-    } catch {
-      setError('Nao foi possivel remover o genero.')
+    } catch (err) {
       toast.error({
         title: 'Erro ao remover',
-        message: 'Nao foi possivel remover o genero.',
+        message: getApiMessage(err, 'Nao foi possivel remover o genero.'),
       })
     }
   }
@@ -189,12 +189,7 @@ export default function AdminGenres() {
           Carregando generos...
         </p>
       ) : null}
-      {error ? (
-        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
-        </p>
-      ) : null}
-      {!isLoading && !error && !genres.length ? (
+      {!isLoading && !genres.length ? (
         <section className="ui-empty-state flex flex-col items-center gap-2">
           <Plus size={32} className="text-brand-deep" />
           <p className="text-sm font-medium text-ink">
@@ -204,7 +199,7 @@ export default function AdminGenres() {
         </section>
       ) : null}
 
-      {!isLoading && !error && genres.length ? (
+      {!isLoading && genres.length ? (
         <section className="overflow-hidden rounded-xl border border-line/45 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">

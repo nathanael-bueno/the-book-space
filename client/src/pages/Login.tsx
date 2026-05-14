@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useLoginFlow } from '../hooks/useLoginFlow'
+import { useToast } from '../stores/useToast'
 
 function GoogleIcon() {
   return (
@@ -46,6 +47,14 @@ export default function Login() {
     handleSocialLogin,
   } = useLoginFlow({ initialErrorMessage: searchParams.get('error') ?? '' })
 
+  const toast = useToast()
+
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error({ title: 'Erro', message: errorMessage })
+    }
+  }, [errorMessage])
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background Image with neutral overlay */}
@@ -74,11 +83,6 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            {errorMessage ? (
-              <div className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-medium text-brand-deep">
-                {errorMessage}
-              </div>
-            ) : null}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"

@@ -36,7 +36,6 @@ export default function ProfileEdit() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const photoObjectUrl = useMemo(
     () => (photoFile ? URL.createObjectURL(photoFile) : null),
     [photoFile]
@@ -64,7 +63,7 @@ export default function ProfileEdit() {
         setStates(data)
       } catch {
         if (!active) return
-        setError('Nao foi possivel carregar os estados.')
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar os estados.' })
       } finally {
         if (active) setIsLoadingStates(false)
       }
@@ -82,7 +81,6 @@ export default function ProfileEdit() {
 
     async function loadProfile() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await getMyProfile()
         if (!active) return
@@ -99,7 +97,7 @@ export default function ProfileEdit() {
           err instanceof ApiError
             ? err.message
             : 'Nao foi possivel carregar seu perfil.'
-        setError(message)
+        toast.error({ title: 'Erro', message })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -138,7 +136,6 @@ export default function ProfileEdit() {
 
   async function handleSave() {
     setIsSaving(true)
-    setError(null)
     try {
       const response = await updateMyProfile({
         nome_completo: nomeCompleto.trim(),
@@ -155,7 +152,6 @@ export default function ProfileEdit() {
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Falha ao salvar perfil.'
-      setError(message)
       toast.error({
         title: 'Erro ao salvar',
         message,
@@ -189,11 +185,6 @@ export default function ProfileEdit() {
         <section className="space-y-3">
           {isLoading ? (
             <p className="text-sm text-ink-dim">Carregando perfil...</p>
-          ) : null}
-          {error ? (
-            <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep">
-              {error}
-            </p>
           ) : null}
           <label className="block">
             <span className="text-sm font-semibold text-ink">Nome</span>

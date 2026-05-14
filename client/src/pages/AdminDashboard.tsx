@@ -11,8 +11,10 @@ import {
   getAdminDashboardStats,
   type AdminDashboardRecentUser,
 } from '../services/admin'
+import { useToast } from '../stores/useToast'
 
 export default function AdminDashboard() {
+  const toast = useToast()
   const [stats, setStats] = useState({
     activeUsers: 0,
     completedTrades: 0,
@@ -21,7 +23,6 @@ export default function AdminDashboard() {
     recentUsers: [] as AdminDashboardRecentUser[],
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   const metrics = [
     {
@@ -52,12 +53,11 @@ export default function AdminDashboard() {
 
   const loadStats = useCallback(async () => {
     setIsLoading(true)
-    setError(null)
     try {
       const response = await getAdminDashboardStats()
       setStats(response)
     } catch {
-      setError('Nao foi possivel carregar as metricas do dashboard.')
+      toast.error({ title: 'Erro', message: 'Nao foi possivel carregar as metricas do dashboard.' })
     } finally {
       setIsLoading(false)
     }
@@ -90,12 +90,6 @@ export default function AdminDashboard() {
           {isLoading ? 'Atualizando...' : 'Atualizar'}
         </button>
       </section>
-
-      {error ? (
-        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
-        </p>
-      ) : null}
 
       <section className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => {

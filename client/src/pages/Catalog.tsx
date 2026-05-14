@@ -39,7 +39,6 @@ export default function Catalog() {
   const [city, setCity] = useState(parsedLocation.city)
   const [books, setBooks] = useState<ApiBook[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [apiGenres, setApiGenres] = useState<ApiGenre[]>([])
   const [favoriteGenres, setFavoriteGenres] = useState<ApiGenre[]>([])
   const [states, setStates] = useState<Array<{ code: string; name: string }>>(
@@ -127,7 +126,6 @@ export default function Catalog() {
 
     async function load() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listBooks({
           q: query || undefined,
@@ -142,11 +140,10 @@ export default function Catalog() {
         setBooks(response.data)
       } catch (err) {
         if (!active) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Nao foi possivel carregar o catalogo.'
-        )
+        toast.error({
+          title: 'Erro',
+          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar o catalogo.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -251,11 +248,11 @@ export default function Catalog() {
               onChange={(event) => setCondition(event.target.value)}
               className="h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
             >
-              <option>Qualquer estado</option>
-              <option>Novo</option>
-              <option>Muito bom</option>
-              <option>Bom</option>
-              <option>Usado</option>
+              <option value="">Qualquer estado</option>
+              <option value="Novo">★★★★★ Novo</option>
+              <option value="Muito bom">★★★★☆ Muito bom</option>
+              <option value="Bom">★★★☆☆ Bom</option>
+              <option value="Usado">★★☆☆☆ Usado</option>
             </select>
           </label>
 
@@ -325,11 +322,6 @@ export default function Catalog() {
       {isLoading ? (
         <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
           Carregando catalogo...
-        </section>
-      ) : null}
-      {error ? (
-        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
         </section>
       ) : null}
 

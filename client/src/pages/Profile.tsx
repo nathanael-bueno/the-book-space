@@ -6,6 +6,7 @@ import { getMyProfile, type Profile as ProfileData } from '../services/profile'
 import { listUserReviews, type ApiReview } from '../services/reviews'
 import { getMyBooks, type ApiBook } from '../services/books'
 import { listMyTrades } from '../services/trades'
+import { useToast } from '../stores/useToast'
 
 type ProfilePageState = {
   data: ProfileData | null
@@ -26,6 +27,7 @@ type SummaryPageState = {
 }
 
 export default function Profile() {
+  const toast = useToast()
   const [profileState, setProfileState] = useState<ProfilePageState>({
     data: null,
     loading: true,
@@ -67,7 +69,8 @@ export default function Profile() {
           err instanceof ApiError
             ? err.message
             : 'Nao foi possivel carregar seu perfil.'
-        setProfileState((s) => ({ ...s, loading: false, error: message }))
+        setProfileState((s) => ({ ...s, loading: false, error: null }))
+        toast.error({ title: 'Erro', message })
       }
     }
 
@@ -95,7 +98,8 @@ export default function Profile() {
           err instanceof ApiError
             ? err.message
             : 'Nao foi possivel carregar as avaliacoes recebidas.'
-        setReviewsState((s) => ({ ...s, loading: false, error: message }))
+        setReviewsState((s) => ({ ...s, loading: false, error: null }))
+        toast.error({ title: 'Erro', message })
       }
     }
 
@@ -195,11 +199,6 @@ export default function Profile() {
 
       {isLoading ? (
         <p className="text-sm text-ink-dim">Carregando perfil...</p>
-      ) : null}
-      {error ? (
-        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep">
-          {error}
-        </p>
       ) : null}
 
       <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -347,11 +346,6 @@ export default function Profile() {
           {isLoadingReviews ? (
             <p className="text-sm text-ink-dim">Carregando avaliacoes...</p>
           ) : null}
-          {reviewsError ? (
-            <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep">
-              {reviewsError}
-            </p>
-          ) : null}
           {reviews.map((review) => (
             <article
               key={review.id}
@@ -367,7 +361,7 @@ export default function Profile() {
               </p>
             </article>
           ))}
-          {!isLoadingReviews && !reviewsError && !reviews.length ? (
+          {!isLoadingReviews && !reviews.length ? (
             <p className="py-4 text-center text-sm text-ink-muted">
               Voce ainda nao recebeu avaliacoes.
             </p>

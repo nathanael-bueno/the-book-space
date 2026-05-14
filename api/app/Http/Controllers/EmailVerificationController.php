@@ -8,6 +8,7 @@ use App\Notifications\EmailVerificationCodeNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class EmailVerificationController extends Controller
 {
@@ -60,7 +61,12 @@ class EmailVerificationController extends Controller
         $user->markEmailAsVerified();
         $record->delete();
 
-        return response()->json(['message' => 'E-mail verificado com sucesso.']);
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'message' => 'E-mail verificado com sucesso.',
+            'token'   => $token,
+        ]);
     }
 
     public function resend(Request $request): JsonResponse

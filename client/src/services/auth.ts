@@ -9,7 +9,6 @@ type LoginResponse = {
 
 type RegisterResponse = {
   message: string
-  token: string
 }
 
 type LoginStartResponse = {
@@ -84,22 +83,22 @@ export async function register(payload: {
   estado: string
   faixa_etaria: string
 }) {
-  const data = await http<RegisterResponse>('/register', {
+  return http<RegisterResponse>('/register', {
     method: 'POST',
     body: payload,
   })
-  setToken(data.token)
-  return data
 }
 
 export async function verifyEmailCode(payload: {
   email: string
   code: string
 }) {
-  return http<{ message: string }>('/email/verify', {
+  const data = await http<{ message: string; token: string }>('/email/verify', {
     method: 'POST',
     body: payload,
   })
+  setToken(data.token)
+  return data
 }
 
 export async function resendEmailCode() {

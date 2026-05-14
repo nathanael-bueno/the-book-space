@@ -11,12 +11,14 @@ import {
   saveMyFavoriteGenres,
   type ApiGenre,
 } from '../services/books'
+import { useToast } from '../stores/useToast'
 
 type Step = 'verify' | 'genres'
 
 export default function VerifyEmail() {
   const navigate = useNavigate()
   const location = useLocation()
+  const toast = useToast()
   const initialEmail =
     (location.state as { email?: string } | null)?.email ??
     localStorage.getItem('book-space.pending-verification-email') ??
@@ -28,7 +30,6 @@ export default function VerifyEmail() {
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [message, setMessage] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
   const [genres, setGenres] = useState<ApiGenre[]>([])
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const [isSavingGenres, setIsSavingGenres] = useState(false)
@@ -45,11 +46,10 @@ export default function VerifyEmail() {
       })
       .catch((error) => {
         if (!active) return
-        setErrorMessage(
-          error instanceof ApiError
-            ? error.message
-            : 'Nao foi possivel carregar as categorias.'
-        )
+        toast.error({
+          title: 'Erro',
+          message: error instanceof ApiError ? error.message : 'Nao foi possivel carregar as categorias.',
+        })
       })
 
     return () => {
@@ -61,18 +61,16 @@ export default function VerifyEmail() {
     event.preventDefault()
     setIsLoading(true)
     setMessage('')
-    setErrorMessage('')
 
     try {
       const response = await verifyEmailCode({ email, code })
       setMessage(response.message)
       setStep('genres')
     } catch (error) {
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : 'Nao foi possivel verificar.'
-      )
+      toast.error({
+        title: 'Erro',
+        message: error instanceof ApiError ? error.message : 'Nao foi possivel verificar.',
+      })
     } finally {
       setIsLoading(false)
     }
@@ -81,23 +79,21 @@ export default function VerifyEmail() {
   async function handleResendCode() {
     const normalizedEmail = email.trim()
     if (!normalizedEmail) {
-      setErrorMessage('Informe o e-mail para reenviar o codigo.')
+      toast.error({ title: 'Erro', message: 'Informe o e-mail para reenviar o codigo.' })
       return
     }
 
     setIsResending(true)
     setMessage('')
-    setErrorMessage('')
 
     try {
       const response = await resendEmailCodeByEmail(normalizedEmail)
       setMessage(response.message)
     } catch (error) {
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : 'Nao foi possivel reenviar o codigo.'
-      )
+      toast.error({
+        title: 'Erro',
+        message: error instanceof ApiError ? error.message : 'Nao foi possivel reenviar o codigo.',
+      })
     } finally {
       setIsResending(false)
     }
@@ -116,7 +112,6 @@ export default function VerifyEmail() {
     if (selectedGenres.length < 3 || selectedGenres.length > 5) return
 
     setIsSavingGenres(true)
-    setErrorMessage('')
 
     try {
       await saveMyFavoriteGenres(selectedGenres)
@@ -124,11 +119,10 @@ export default function VerifyEmail() {
       clearToken()
       navigate('/auth/login', { replace: true })
     } catch (error) {
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : 'Nao foi possivel salvar as categorias favoritas.'
-      )
+      toast.error({
+        title: 'Erro',
+        message: error instanceof ApiError ? error.message : 'Nao foi possivel salvar as categorias favoritas.',
+      })
     } finally {
       setIsSavingGenres(false)
     }
@@ -164,11 +158,6 @@ export default function VerifyEmail() {
         {message ? (
           <div className="mb-4 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs font-medium text-success">
             {message}
-          </div>
-        ) : null}
-        {errorMessage ? (
-          <div className="mb-4 rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-medium text-brand-deep">
-            {errorMessage}
           </div>
         ) : null}
 

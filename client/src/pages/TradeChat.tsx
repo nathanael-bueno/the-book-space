@@ -11,8 +11,10 @@ import {
   type ApiTrade,
   type ApiTradeMessage,
 } from '../services/trades'
+import { useToast } from '../stores/useToast'
 
 export default function TradeChat() {
+  const toast = useToast()
   const { tradeId } = useParams()
   const hasInvalidTradeId = !tradeId
   const currentUserId = useMemo(() => getCurrentUserId(), [])
@@ -21,7 +23,6 @@ export default function TradeChat() {
   const [draft, setDraft] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!tradeId) return
@@ -31,7 +32,6 @@ export default function TradeChat() {
 
     async function load() {
       setIsLoading(true)
-      setError(null)
       try {
         const [tradeResponse, messagesResponse] = await Promise.all([
           getTrade(safeTradeId),
@@ -42,11 +42,10 @@ export default function TradeChat() {
         setMessages(messagesResponse.data)
       } catch (err) {
         if (!active) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Nao foi possivel carregar o chat da troca.'
-        )
+        toast.error({
+          title: 'Erro',
+          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar o chat da troca.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -93,11 +92,10 @@ export default function TradeChat() {
       setMessages((currentMessages) => [...currentMessages, response.data])
       setDraft('')
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : 'Nao foi possivel enviar mensagem.'
-      )
+      toast.error({
+        title: 'Erro ao enviar',
+        message: err instanceof ApiError ? err.message : 'Nao foi possivel enviar mensagem.',
+      })
     } finally {
       setIsSending(false)
     }
@@ -137,12 +135,6 @@ export default function TradeChat() {
         {isLoading ? (
           <div className="p-3 text-sm text-ink-dim sm:p-3.5">
             Carregando mensagens...
-          </div>
-        ) : null}
-
-        {error ? (
-          <div className="border-t border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep sm:p-3.5">
-            {error}
           </div>
         ) : null}
 

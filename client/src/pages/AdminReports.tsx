@@ -7,12 +7,12 @@ import {
   type AdminReport,
   type AdminReportStatus,
 } from '../services/admin'
+import { useToast } from '../stores/useToast'
 
 export default function AdminReports() {
+  const toast = useToast()
   const [reports, setReports] = useState<AdminReport[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     id: string
     status: AdminReportStatus
@@ -22,14 +22,13 @@ export default function AdminReports() {
     let active = true
     async function loadData() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listAdminReports()
         if (!active) return
         setReports(response)
       } catch {
         if (!active) return
-        setError('Nao foi possivel carregar denuncias.')
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar denuncias.' })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -46,7 +45,6 @@ export default function AdminReports() {
   )
 
   async function updateStatus(id: string, status: AdminReportStatus) {
-    setError(null)
     try {
       await persistReportStatus(id, status)
       setReports((prev) =>
@@ -54,9 +52,9 @@ export default function AdminReports() {
           report.id === id ? { ...report, status } : report
         )
       )
-      setNotice('Status da denuncia atualizado.')
+      toast.success({ title: 'Status atualizado', message: 'Status da denuncia atualizado.' })
     } catch {
-      setError('Nao foi possivel atualizar o status da denuncia.')
+      toast.error({ title: 'Erro', message: 'Nao foi possivel atualizar o status da denuncia.' })
     }
   }
 
@@ -80,18 +78,8 @@ export default function AdminReports() {
           Carregando denuncias...
         </p>
       ) : null}
-      {error ? (
-        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
-        </p>
-      ) : null}
-      {notice ? (
-        <p className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
-          {notice}
-        </p>
-      ) : null}
 
-      {!isLoading && !error && !reports.length ? (
+      {!isLoading && !reports.length ? (
         <section className="ui-empty-state flex flex-col items-center gap-2">
           <AlertTriangle size={32} className="text-brand-deep" />
           <p className="text-sm font-medium text-ink">

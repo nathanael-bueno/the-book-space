@@ -5,18 +5,18 @@ import {
   listPublicInstitutions,
   type PublicInstitution,
 } from '../services/institutions'
+import { useToast } from '../stores/useToast'
 
 export default function Institutions() {
+  const toast = useToast()
   const [institutions, setInstitutions] = useState<PublicInstitution[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
 
     async function loadInstitutions() {
       setIsLoading(true)
-      setError(null)
 
       try {
         const response = await listPublicInstitutions()
@@ -24,7 +24,7 @@ export default function Institutions() {
         setInstitutions(response.data)
       } catch {
         if (!active) return
-        setError('Nao foi possivel carregar instituicoes no momento.')
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar instituicoes no momento.' })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -59,19 +59,13 @@ export default function Institutions() {
         </section>
       ) : null}
 
-      {error ? (
-        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
-        </section>
-      ) : null}
-
-      {!isLoading && !error && !institutions.length ? (
+      {!isLoading && !institutions.length ? (
         <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
           Nenhuma instituicao ativa disponivel no momento.
         </section>
       ) : null}
 
-      {!isLoading && !error && institutions.length ? (
+      {!isLoading && institutions.length ? (
         <section className="grid gap-2.5 lg:grid-cols-3">
           {institutions.map((institution) => (
           <article

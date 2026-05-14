@@ -22,7 +22,6 @@ export default function TradeProposal() {
   const [requestedBook, setRequestedBook] = useState<ApiBook | null>(null)
   const [userBooks, setUserBooks] = useState<ApiBook[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [offeredBookId, setOfferedBookId] = useState('')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -36,7 +35,6 @@ export default function TradeProposal() {
 
     async function loadData() {
       setIsLoading(true)
-      setError(null)
 
       try {
         const [bookResponse, myBooksResponse] = await Promise.all([
@@ -55,11 +53,10 @@ export default function TradeProposal() {
         setOfferedBookId(filteredBooks[0]?.id ?? '')
       } catch (err) {
         if (!active) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Nao foi possivel carregar os dados da proposta.'
-        )
+        toast.error({
+          title: 'Erro',
+          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar os dados da proposta.',
+        })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -186,12 +183,6 @@ export default function TradeProposal() {
       {isLoading ? (
         <section className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
           Carregando proposta...
-        </section>
-      ) : null}
-
-      {error ? (
-        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
         </section>
       ) : null}
 

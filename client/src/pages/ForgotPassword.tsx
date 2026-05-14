@@ -3,26 +3,27 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Mail } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { forgotPassword } from '../services/auth'
+import { useToast } from '../stores/useToast'
 
 export default function ForgotPassword() {
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sent, setSent] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setErrorMessage('')
     try {
       await forgotPassword(email)
       setIsLoading(false)
       setSent(true)
     } catch (error) {
       setIsLoading(false)
-      setErrorMessage(
-        error instanceof ApiError ? error.message : 'Nao foi possivel enviar.'
-      )
+      toast.error({
+        title: 'Erro',
+        message: error instanceof ApiError ? error.message : 'Nao foi possivel enviar.',
+      })
     }
   }
 
@@ -55,11 +56,6 @@ export default function ForgotPassword() {
 
         {!sent ? (
           <form onSubmit={handleSubmit} className="space-y-3">
-            {errorMessage ? (
-              <div className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-medium text-brand-deep">
-                {errorMessage}
-              </div>
-            ) : null}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"

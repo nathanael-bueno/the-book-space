@@ -4,6 +4,7 @@ import { Eye, EyeOff, Check } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { register, startGoogleLogin } from '../services/auth'
 import { listBrazilianStates, listCitiesByState } from '../services/locations'
+import { useToast } from '../stores/useToast'
 
 const passwordRules = [
   { label: 'Mínimo 8 caracteres', test: (p: string) => p.length >= 8 },
@@ -45,6 +46,7 @@ function GoogleIcon() {
 
 export default function Register() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -55,7 +57,6 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
   const [states, setStates] = useState<Array<{ code: string; name: string }>>(
     []
   )
@@ -76,9 +77,7 @@ export default function Register() {
         setStates(data)
       } catch {
         if (!active) return
-        setErrorMessage(
-          'Nao foi possivel carregar estados e cidades no momento.'
-        )
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar estados e cidades no momento.' })
       } finally {
         if (active) setIsLoadingStates(false)
       }
@@ -105,9 +104,7 @@ export default function Register() {
         setCity('')
       } catch {
         if (!active) return
-        setErrorMessage(
-          'Nao foi possivel carregar cidades para o estado selecionado.'
-        )
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar cidades para o estado selecionado.' })
         setCities([])
       } finally {
         if (active) setIsLoadingCities(false)
@@ -124,7 +121,6 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setErrorMessage('')
     try {
       await register({
         nome_completo: name,
@@ -137,33 +133,30 @@ export default function Register() {
       localStorage.setItem('book-space.pending-verification-email', email)
       navigate('/auth/verify-email', { replace: true, state: { email } })
     } catch (error) {
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : 'Não foi possível criar conta.'
-      )
+      toast.error({
+        title: 'Erro',
+        message: error instanceof ApiError ? error.message : 'Não foi possível criar conta.',
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
   const goNextStep = () => {
-    setErrorMessage('')
-
     if (step === 1) {
       if (!name.trim() || !email.trim()) {
-        setErrorMessage('Preencha nome e e-mail para continuar.')
+        toast.error({ title: 'Erro', message: 'Preencha nome e e-mail para continuar.' })
         return
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(email.trim())) {
-        setErrorMessage('Informe um e-mail valido.')
+        toast.error({ title: 'Erro', message: 'Informe um e-mail valido.' })
         return
       }
     }
 
     if (step === 2 && (!state || !city || !ageRange)) {
-      setErrorMessage('Preencha estado, cidade e faixa etaria para continuar.')
+      toast.error({ title: 'Erro', message: 'Preencha estado, cidade e faixa etaria para continuar.' })
       return
     }
 
@@ -171,7 +164,6 @@ export default function Register() {
   }
 
   const goPreviousStep = () => {
-    setErrorMessage('')
     setStep((current) => Math.max(1, current - 1))
   }
 
@@ -222,12 +214,6 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            {errorMessage ? (
-              <div className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-medium text-brand-deep">
-                {errorMessage}
-              </div>
-            ) : null}
-
             {step === 1 ? (
               <>
                 <div className="space-y-1.5">

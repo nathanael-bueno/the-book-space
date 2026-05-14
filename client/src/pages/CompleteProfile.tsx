@@ -4,6 +4,13 @@ import { ApiError } from '../services/http'
 import { listBrazilianStates, listCitiesByState } from '../services/locations'
 import { clearToken } from '../services/auth'
 import { getMyProfile, updateMyProfile } from '../services/profile'
+import {
+  getMyFavoriteGenres,
+  listGenres,
+  saveMyFavoriteGenres,
+  type ApiGenre,
+} from '../services/books'
+import { useToast } from '../stores/useToast'
 
 const ageRanges = [
   { value: '13-17', label: '13 a 17 anos' },
@@ -16,6 +23,7 @@ const ageRanges = [
 
 export default function CompleteProfile() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [estado, setEstado] = useState('')
   const [cidade, setCidade] = useState('')
   const [faixaEtaria, setFaixaEtaria] = useState('')
@@ -27,7 +35,8 @@ export default function CompleteProfile() {
   const [isLoadingCities, setIsLoadingCities] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [genres, setGenres] = useState<ApiGenre[]>([])
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([])
 
   useEffect(() => {
     let active = true
@@ -40,7 +49,10 @@ export default function CompleteProfile() {
         setStates(data)
       } catch {
         if (!active) return
-        setErrorMessage('Nao foi possivel carregar os estados.')
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar os estados.',
+        })
       } finally {
         if (active) setIsLoadingStates(false)
       }
@@ -50,19 +62,55 @@ export default function CompleteProfile() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadGenres() {
+      try {
+        const [genresResponse, favoritesResponse] = await Promise.all([
+          listGenres(),
+          getMyFavoriteGenres(),
+        ])
+        if (!active) return
+        setGenres(genresResponse.data)
+        setSelectedGenres(favoritesResponse.data.map((genre) => genre.id))
+      } catch {
+        if (!active) return
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar os generos favoritos.',
+        })
+      }
+    }
+
+    void loadGenres()
+
+    return () => {
+      active = false
+    }
+  }, [toast])
 
   useEffect(() => {
     let active = true
 
     async function loadProfile() {
       setIsLoading(true)
-      setErrorMessage('')
       try {
         const response = await getMyProfile()
         if (!active) return
         const profile = response.data
-        if (profile.cidade && profile.estado && profile.faixa_etaria) {
+        const favoritesResponse = await getMyFavoriteGenres()
+        if (!active) return
+        const hasFavoriteGenres = favoritesResponse.data.length >= 3
+
+        if (
+          profile.cidade &&
+          profile.estado &&
+          profile.faixa_etaria &&
+          hasFavoriteGenres
+        ) {
           navigate('/app/feed', { replace: true })
           return
         }
@@ -109,8 +157,16 @@ export default function CompleteProfile() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
+
+    if (selectedGenres.length < 3 || selectedGenres.length > 5) {
+      toast.error({
+        title: 'Generos invalidos',
+        message: 'Selecione entre 3 e 5 generos para continuar.',
+      })
+      return
+    }
+
     setIsSaving(true)
-    setErrorMessage('')
 
     try {
       await updateMyProfile({
@@ -118,13 +174,16 @@ export default function CompleteProfile() {
         cidade,
         faixa_etaria: faixaEtaria,
       })
+      await saveMyFavoriteGenres(selectedGenres)
       navigate('/app/feed', { replace: true })
     } catch (error) {
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : 'Nao foi possivel salvar seu perfil.'
-      )
+      toast.error({
+        title: 'Erro',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Nao foi possivel salvar seu perfil.',
+      })
     } finally {
       setIsSaving(false)
     }
@@ -133,6 +192,15 @@ export default function CompleteProfile() {
   const handleLogout = () => {
     clearToken()
     navigate('/auth/login', { replace: true })
+  }
+
+  function toggleGenre(genreId: string) {
+    setSelectedGenres((current) => {
+      const exists = current.includes(genreId)
+      if (exists) return current.filter((id) => id !== genreId)
+      if (current.length >= 5) return current
+      return [...current, genreId]
+    })
   }
 
   return (
@@ -158,12 +226,6 @@ export default function CompleteProfile() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-          {errorMessage ? (
-            <div className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-medium text-brand-deep">
-              {errorMessage}
-            </div>
-          ) : null}
-
           <div className="space-y-1.5">
             <label
               htmlFor="state"
@@ -246,6 +308,46 @@ export default function CompleteProfile() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-2">
+            <div>
+              <p className="block text-neutral-600 text-xs font-medium ml-0.5">
+                Generos favoritos
+              </p>
+              <p className="mt-1 text-[11px] text-neutral-500">
+                Selecione de 3 a 5 para personalizar recomendacoes.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {genres.map((genre) => {
+                const selected = selectedGenres.includes(genre.id)
+                const disabled = !selected && selectedGenres.length >= 5
+
+                return (
+                  <button
+                    key={genre.id}
+                    type="button"
+                    onClick={() => toggleGenre(genre.id)}
+                    disabled={isLoading || disabled}
+                    className={[
+                      'rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                      selected
+                        ? 'border-accent bg-accent text-white'
+                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-accent/45 hover:text-brand-deep',
+                      disabled ? 'cursor-not-allowed opacity-50' : '',
+                    ].join(' ')}
+                  >
+                    {genre.nome}
+                  </button>
+                )
+              })}
+            </div>
+
+            <p className="text-xs font-semibold text-neutral-500">
+              Selecionados: {selectedGenres.length}/5
+            </p>
           </div>
 
           <button

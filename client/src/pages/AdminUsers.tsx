@@ -7,13 +7,13 @@ import {
   type AdminUser,
   type AdminUserStatus,
 } from '../services/admin'
+import { useToast } from '../stores/useToast'
 
 export default function AdminUsers() {
+  const toast = useToast()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     id: string
     status: AdminUserStatus
@@ -23,14 +23,13 @@ export default function AdminUsers() {
     let active = true
     async function loadData() {
       setIsLoading(true)
-      setError(null)
       try {
         const response = await listAdminUsers()
         if (!active) return
         setUsers(response)
       } catch {
         if (!active) return
-        setError('Nao foi possivel carregar usuarios.')
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar usuarios.' })
       } finally {
         if (active) setIsLoading(false)
       }
@@ -52,15 +51,14 @@ export default function AdminUsers() {
   }, [search, users])
 
   async function updateStatus(id: string, status: AdminUserStatus) {
-    setError(null)
     try {
       await persistUserStatus(id, status)
       setUsers((prev) =>
         prev.map((user) => (user.id === id ? { ...user, status } : user))
       )
-      setNotice('Status do usuario atualizado.')
+      toast.success({ title: 'Status atualizado', message: 'Status do usuario atualizado.' })
     } catch {
-      setError('Nao foi possivel atualizar o status do usuario.')
+      toast.error({ title: 'Erro', message: 'Nao foi possivel atualizar o status do usuario.' })
     }
   }
 
@@ -89,18 +87,8 @@ export default function AdminUsers() {
           Carregando usuarios...
         </p>
       ) : null}
-      {error ? (
-        <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
-          {error}
-        </p>
-      ) : null}
-      {notice ? (
-        <p className="rounded-xl border border-line/45 bg-[#fbfaf7] p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
-          {notice}
-        </p>
-      ) : null}
 
-      {!isLoading && !error && !filteredUsers.length ? (
+      {!isLoading && !filteredUsers.length ? (
         <section className="ui-empty-state flex flex-col items-center gap-2">
           <Search size={32} className="text-brand-deep" aria-hidden="true" />
           <p className="text-sm font-medium text-ink">
