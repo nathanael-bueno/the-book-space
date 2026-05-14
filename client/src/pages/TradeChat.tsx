@@ -13,6 +13,23 @@ import {
 } from '../services/trades'
 import { useToast } from '../stores/useToast'
 
+function normalizeMessagesPayload(payload: unknown): ApiTradeMessage[] {
+  if (Array.isArray(payload)) {
+    return payload as ApiTradeMessage[]
+  }
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'data' in payload &&
+    Array.isArray((payload as { data: unknown }).data)
+  ) {
+    return (payload as { data: ApiTradeMessage[] }).data
+  }
+
+  return []
+}
+
 export default function TradeChat() {
   const toast = useToast()
   const { tradeId } = useParams()
@@ -39,12 +56,15 @@ export default function TradeChat() {
         ])
         if (!active) return
         setTrade(tradeResponse.data)
-        setMessages(messagesResponse.data)
+        setMessages(normalizeMessagesPayload(messagesResponse.data))
       } catch (err) {
         if (!active) return
         toast.error({
           title: 'Erro',
-          message: err instanceof ApiError ? err.message : 'Nao foi possivel carregar o chat da troca.',
+          message:
+            err instanceof ApiError
+              ? err.message
+              : 'Nao foi possivel carregar o chat da troca.',
         })
       } finally {
         if (active) setIsLoading(false)
@@ -57,7 +77,7 @@ export default function TradeChat() {
       try {
         const messagesResponse = await listTradeMessages(safeTradeId)
         if (!active) return
-        setMessages(messagesResponse.data)
+        setMessages(normalizeMessagesPayload(messagesResponse.data))
       } catch {
         // Ignora falhas temporarias de polling para nao interromper o chat.
       }
@@ -67,7 +87,7 @@ export default function TradeChat() {
       active = false
       window.clearInterval(intervalId)
     }
-  }, [tradeId])
+  }, [toast, tradeId])
 
   if (hasInvalidTradeId) {
     return (
@@ -94,7 +114,10 @@ export default function TradeChat() {
     } catch (err) {
       toast.error({
         title: 'Erro ao enviar',
-        message: err instanceof ApiError ? err.message : 'Nao foi possivel enviar mensagem.',
+        message:
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel enviar mensagem.',
       })
     } finally {
       setIsSending(false)
@@ -139,6 +162,12 @@ export default function TradeChat() {
         ) : null}
 
         <div className="space-y-2.5 bg-[#fbfaf7] p-3 sm:p-3.5">
+          {!isLoading && !messages.length ? (
+            <div className="rounded-lg border border-line/35 bg-white px-3 py-2.5 text-sm text-ink-dim">
+              Nenhuma mensagem ainda nesta troca.
+            </div>
+          ) : null}
+
           {messages.map((message) => {
             const isMine = message.id_remetente === currentUserId
             return (

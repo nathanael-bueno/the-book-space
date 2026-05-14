@@ -45,7 +45,6 @@ type SearchSuggestion = {
   cover: string
 }
 
-const SHOW_SPRINT_4_UI = false
 
 const NAV_ITEMS: SidebarItem[] = [
   {
@@ -171,10 +170,7 @@ export default function MainLayout() {
     [userRole]
   )
   const visibleAdminItems = useMemo(
-    () =>
-      SHOW_SPRINT_4_UI
-        ? ADMIN_ITEMS.filter((item) => item.roles.includes(userRole))
-        : [],
+    () => ADMIN_ITEMS.filter((item) => item.roles.includes(userRole)),
     [userRole]
   )
   const mobileNavItems = useMemo(() => {

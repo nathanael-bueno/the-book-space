@@ -1,3 +1,5 @@
+import { beginGlobalLoading, endGlobalLoading } from '../stores/loadingBus'
+
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ??
   'http://localhost:8000/api'
@@ -22,6 +24,7 @@ type RequestOptions = {
   body?: unknown
   token?: string | null
   skipRefresh?: boolean
+  trackLoading?: boolean
 }
 
 type RefreshResponse = {
@@ -50,6 +53,7 @@ async function requestTokenRefresh(
           method: 'POST',
           token: currentToken,
           skipRefresh: true,
+          trackLoading: false,
         })
         setStoredToken(data.token)
         return data.token
@@ -67,49 +71,66 @@ async function requestTokenRefresh(
 
 export async function http<T>(
   path: string,
-  { method = 'GET', body, token, skipRefresh = false }: RequestOptions = {}
+  {
+    method = 'GET',
+    body,
+    token,
+    skipRefresh = false,
+    trackLoading = true,
+  }: RequestOptions = {}
 ): Promise<T> {
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-  }
+  if (trackLoading) beginGlobalLoading()
 
-  const isFormData = body instanceof FormData
-
-  if (body !== undefined && !isFormData)
-    headers['Content-Type'] = 'application/json'
-  if (token) headers.Authorization = `Bearer ${token}`
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body:
-      body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-  })
-
-  const raw = await response.text()
-  const data = raw ? JSON.parse(raw) : null
-
-  if (!response.ok) {
-    if (response.status === 401 && !skipRefresh) {
-      const currentToken = token ?? getStoredToken()
-
-      if (currentToken && path !== '/refresh') {
-        const refreshedToken = await requestTokenRefresh(currentToken)
-
-        if (refreshedToken) {
-          return http<T>(path, {
-            method,
-            body,
-            token: refreshedToken,
-            skipRefresh: true,
-          })
-        }
-      }
+  try {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
     }
 
-    const message = data?.message ?? 'Erro ao comunicar com a API.'
-    throw new ApiError(message, response.status, data)
-  }
+    const isFormData = body instanceof FormData
 
-  return data as T
+    if (body !== undefined && !isFormData)
+      headers['Content-Type'] = 'application/json'
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers,
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? body
+            : JSON.stringify(body),
+    })
+
+    const raw = await response.text()
+    const data = raw ? JSON.parse(raw) : null
+
+    if (!response.ok) {
+      if (response.status === 401 && !skipRefresh) {
+        const currentToken = token ?? getStoredToken()
+
+        if (currentToken && path !== '/refresh') {
+          const refreshedToken = await requestTokenRefresh(currentToken)
+
+          if (refreshedToken) {
+            return http<T>(path, {
+              method,
+              body,
+              token: refreshedToken,
+              skipRefresh: true,
+              trackLoading,
+            })
+          }
+        }
+      }
+
+      const message = data?.message ?? 'Erro ao comunicar com a API.'
+      throw new ApiError(message, response.status, data)
+    }
+
+    return data as T
+  } finally {
+    if (trackLoading) endGlobalLoading()
+  }
 }
