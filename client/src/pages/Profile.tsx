@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, MessageSquare, Repeat2, Star } from 'lucide-react'
+import { ArrowLeft, BookImage, MapPin, MessageSquare, Repeat2, Star } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { getMyProfile, type Profile as ProfileData } from '../services/profile'
 import { listUserReviews, type ApiReview } from '../services/reviews'
@@ -309,19 +309,38 @@ export default function Profile() {
           {myBooks.map((book) => (
             <article
               key={book.id}
-              className="rounded-lg border border-line/35 bg-[#fbfaf7] p-3"
+              className="flex gap-3 rounded-lg border border-line/35 bg-[#fbfaf7] p-3"
             >
-              <p className="text-sm font-semibold text-ink">{book.titulo}</p>
-              <p className="mt-1 text-xs text-ink-muted">{book.autor}</p>
-              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-brand-deep">
-                {book.status}
-              </p>
-              <Link
-                to={`/app/books/${book.id}/edit`}
-                className="mt-3 inline-flex rounded-md border border-line/45 px-2.5 py-1.5 text-xs font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-              >
-                Editar livro
-              </Link>
+              <div className="h-20 w-14 shrink-0 overflow-hidden rounded-md border border-line/35 bg-white">
+                {book.fotos?.[0] ? (
+                  <img
+                    src={book.fotos[0]}
+                    alt={book.titulo}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-ink-muted">
+                    <BookImage size={20} />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-ink">
+                  {book.titulo}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-ink-muted">
+                  {book.autor}
+                </p>
+                <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-brand-deep">
+                  {book.status}
+                </p>
+                <Link
+                  to={`/app/books/${book.id}/edit`}
+                  className="mt-2 inline-flex rounded-md border border-line/45 px-2.5 py-1 text-xs font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                >
+                  Editar livro
+                </Link>
+              </div>
             </article>
           ))}
         </div>
