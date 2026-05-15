@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, RotateCcw } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function ErrorPage() {
@@ -18,7 +18,7 @@ export default function ErrorPage() {
             to="/app/feed"
             className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
           <div>

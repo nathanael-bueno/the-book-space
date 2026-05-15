@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowLeft, Image, Link2, Save } from 'lucide-react'
+import { ChevronLeft, Image, Link2, Save } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useToast } from '../stores/useToast'
 import { getPost, updatePost } from '../services/posts'
@@ -202,7 +202,7 @@ export default function EditPost() {
           onClick={() => navigate(-1)}
           className="ui-btn inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
         >
-          <ArrowLeft size={16} />
+          <ChevronLeft size={16} />
           Voltar
         </button>
         <div className="rounded-xl border border-line/45 bg-white p-6 shadow-sm">
@@ -223,7 +223,7 @@ export default function EditPost() {
           onClick={() => navigate(-1)}
           className="ui-btn inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
         >
-          <ArrowLeft size={16} />
+          <ChevronLeft size={16} />
           Voltar
         </button>
         <div className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-4 shadow-sm">
@@ -243,7 +243,7 @@ export default function EditPost() {
               onClick={() => navigate(-1)}
               className="ui-btn inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
               Voltar
             </button>
             <div>

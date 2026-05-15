@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BookImage, ImagePlus, Save, Trash2, X } from 'lucide-react'
+import { ChevronLeft, BookImage, ImagePlus, Save, Trash2, X } from 'lucide-react'
 import { useToast } from '../stores/useToast'
 import { uploadImage } from '../services/uploads'
 import {
@@ -291,7 +291,7 @@ export default function BookForm() {
             to="/app/feed"
             className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar para home
           </Link>
         </section>
@@ -308,7 +308,7 @@ export default function BookForm() {
               to={book ? `/app/books/${book.id}` : '/app/feed'}
               className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
               Voltar
             </Link>
             <div>

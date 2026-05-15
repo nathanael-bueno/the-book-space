@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Camera, MapPin, Save, UserRound } from 'lucide-react'
+import { ChevronLeft, Camera, MapPin, Save, UserRound } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { listBrazilianStates, listCitiesByState } from '../services/locations'
 import {
@@ -176,7 +176,7 @@ export default function ProfileEdit() {
               to="/app/profile"
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
             >
-              <ArrowLeft size={15} />
+              <ChevronLeft size={15} />
               Voltar
             </Link>
             <div>

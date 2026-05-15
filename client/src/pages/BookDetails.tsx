@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
-  ArrowLeft,
+  ChevronLeft,
   BookOpen,
   Edit3,
   MapPin,
@@ -137,7 +137,7 @@ export default function BookDetails() {
             to="/app/catalog"
             className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar ao catalogo
           </Link>
         </section>
@@ -161,7 +161,7 @@ export default function BookDetails() {
             to="/app/catalog"
             className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
           <div>

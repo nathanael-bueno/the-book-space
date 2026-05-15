@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft,
+  ChevronLeft,
   Bell,
   CheckCircle2,
   Gift,
@@ -118,7 +118,7 @@ export default function Notifications() {
             to="/app/feed"
             className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
           <div>

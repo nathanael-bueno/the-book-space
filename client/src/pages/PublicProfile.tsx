@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, MapPin, MessageSquare, Star } from 'lucide-react'
+import { ChevronLeft, MapPin, MessageSquare, Star } from 'lucide-react'
 import { ApiError } from '../services/http'
 import {
   getPublicProfile,
@@ -106,7 +106,7 @@ export default function PublicProfile() {
             to="/app/feed"
             className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
           <div>

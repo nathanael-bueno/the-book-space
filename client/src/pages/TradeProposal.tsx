@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  ArrowLeft,
+  ChevronLeft,
   CheckCircle2,
   MapPin,
   MessageSquareText,
@@ -127,7 +127,7 @@ export default function TradeProposal() {
             to="/app/feed"
             className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar para home
           </Link>
         </section>
@@ -172,7 +172,7 @@ export default function TradeProposal() {
             to={`/app/books/${requestedBook?.id ?? ''}`}
             className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar ao livro
           </Link>
           <div>

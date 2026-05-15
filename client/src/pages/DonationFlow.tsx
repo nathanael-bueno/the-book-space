@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, Building2, CheckCircle2 } from 'lucide-react'
 import { getMyBooks } from '../services/books'
 import {
   getDonationInstitutionById,
@@ -142,7 +142,7 @@ export default function DonationFlow() {
             to="/app/institutions"
             className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
         </section>
@@ -159,7 +159,7 @@ export default function DonationFlow() {
               to="/app/institutions"
               className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
               Voltar
             </Link>
             <div>

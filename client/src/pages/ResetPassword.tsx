@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, ArrowLeft, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Check, ChevronLeft, ShieldCheck } from 'lucide-react'
 import { useToast } from '../stores/useToast'
 import { resetPassword } from '../services/auth'
 import { ApiError } from '../services/http'
@@ -99,7 +99,7 @@ export default function ResetPassword() {
             to="/auth/login"
             className="inline-flex items-center gap-2 text-neutral-500 hover:text-brand-deep text-xs font-medium transition-colors duration-200"
           >
-            <ArrowLeft size={14} />
+            <ChevronLeft size={14} />
             Voltar
           </Link>
           <div>

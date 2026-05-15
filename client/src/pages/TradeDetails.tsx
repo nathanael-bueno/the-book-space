@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  ArrowLeft,
+  ChevronLeft,
   Check,
   CheckCircle2,
   Clock3,
@@ -173,7 +173,7 @@ export default function TradeDetails() {
             to="/app/trades"
             className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
             Voltar para trocas
           </Link>
           <div>
