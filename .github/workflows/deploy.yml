@@ -39,4 +39,9 @@ jobs:
             sudo chown -R marquin:www-data storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
 
+            echo "==> Buildando client"
+            cd ../client
+            npm ci
+            npm run build
+
             echo "==> Deploy concluído!"

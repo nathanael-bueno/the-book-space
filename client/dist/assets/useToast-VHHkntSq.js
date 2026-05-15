@@ -1,1 +1,0 @@
-import{i as e,n as t}from"./jsx-runtime-ByY1xr43.js";import{t as n}from"./index-B_J0GMCS.js";var r=e(t(),1);function i(){let e=(0,r.useContext)(n);if(!e)throw Error(`useToast must be used inside ToastProvider`);return e}export{i as t};
