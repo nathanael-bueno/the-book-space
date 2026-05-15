@@ -8,6 +8,7 @@ import {
   updateMyProfile,
   type Profile as ProfileData,
 } from '../services/profile'
+import { uploadImage } from '../services/uploads'
 import { useToast } from '../stores/useToast'
 
 const ageRanges = [
@@ -140,12 +141,20 @@ export default function ProfileEdit() {
   async function handleSave() {
     setIsSaving(true)
     try {
+      let fotoUrl: string | null | undefined = undefined
+
+      if (photoFile) {
+        const uploaded = await uploadImage(photoFile, 'avatar')
+        fotoUrl = uploaded.url
+      }
+
       const response = await updateMyProfile({
         nome_completo: nomeCompleto.trim(),
         bio: bio.trim() || null,
         cidade: cidade.trim() || null,
         estado: estado || null,
         faixa_etaria: faixaEtaria || null,
+        ...(fotoUrl !== undefined && { foto: fotoUrl }),
       })
       setProfile(response.data)
       toast.success({
