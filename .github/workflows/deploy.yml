@@ -21,7 +21,9 @@ jobs:
             cd ~/var/www/the-book-space
 
             echo "==> Atualizando código"
+            git stash
             git pull origin main
+            git stash pop || true
 
             echo "==> Instalando dependências PHP"
             cd api
