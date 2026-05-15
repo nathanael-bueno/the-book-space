@@ -1,0 +1,1 @@
+import{r as e}from"./http-P8Pur6Rk.js";import{y as t}from"./index-co_s6BzL.js";async function n(){return e(`/posts`,{token:t()})}async function r(n){return e(`/posts/${n}`,{token:t()})}async function i(n){return e(`/posts`,{method:`POST`,body:n,token:t()})}async function a(n,r){return e(`/posts/${n}`,{method:`PATCH`,body:r,token:t()})}export{a as i,r as n,n as r,i as t};

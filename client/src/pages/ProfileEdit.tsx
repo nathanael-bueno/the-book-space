@@ -20,6 +20,27 @@ const ageRanges = [
   { value: '55+', label: '55 anos ou mais' },
 ]
 
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-semibold text-ink">{label}</span>
+      <div className="mt-2">{children}</div>
+    </label>
+  )
+}
+
+const inputClass =
+  'h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent'
+
+const selectClass =
+  'h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent disabled:cursor-not-allowed disabled:opacity-60'
+
 export default function ProfileEdit() {
   const toast = useToast()
   const [profile, setProfile] = useState<ProfileData | null>(null)
@@ -29,14 +50,13 @@ export default function ProfileEdit() {
   const [cidade, setCidade] = useState('')
   const [faixaEtaria, setFaixaEtaria] = useState('')
   const [cities, setCities] = useState<string[]>([])
-  const [states, setStates] = useState<Array<{ code: string; name: string }>>(
-    []
-  )
+  const [states, setStates] = useState<Array<{ code: string; name: string }>>([])
   const [isLoadingCities, setIsLoadingCities] = useState(false)
   const [isLoadingStates, setIsLoadingStates] = useState(true)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+
   const photoObjectUrl = useMemo(
     () => (photoFile ? URL.createObjectURL(photoFile) : null),
     [photoFile]
@@ -55,7 +75,6 @@ export default function ProfileEdit() {
 
   useEffect(() => {
     let active = true
-
     async function loadStates() {
       setIsLoadingStates(true)
       try {
@@ -64,59 +83,44 @@ export default function ProfileEdit() {
         setStates(data)
       } catch {
         if (!active) return
-        toast.error({
-          title: 'Erro',
-          message: 'Nao foi possivel carregar os estados.',
-        })
+        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar os estados.' })
       } finally {
         if (active) setIsLoadingStates(false)
       }
     }
-
     loadStates()
-
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
     let active = true
-
     async function loadProfile() {
       setIsLoading(true)
       try {
         const response = await getMyProfile()
         if (!active) return
-        const profileData = response.data
-        setProfile(profileData)
-        setNomeCompleto(profileData.nome_completo ?? '')
-        setBio(profileData.bio ?? '')
-        setEstado(profileData.estado ?? '')
-        setCidade(profileData.cidade ?? '')
-        setFaixaEtaria(profileData.faixa_etaria ?? '')
+        const d = response.data
+        setProfile(d)
+        setNomeCompleto(d.nome_completo ?? '')
+        setBio(d.bio ?? '')
+        setEstado(d.estado ?? '')
+        setCidade(d.cidade ?? '')
+        setFaixaEtaria(d.faixa_etaria ?? '')
       } catch (err) {
         if (!active) return
-        const message =
-          err instanceof ApiError
-            ? err.message
-            : 'Nao foi possivel carregar seu perfil.'
+        const message = err instanceof ApiError ? err.message : 'Nao foi possivel carregar seu perfil.'
         toast.error({ title: 'Erro', message })
       } finally {
         if (active) setIsLoading(false)
       }
     }
-
     loadProfile()
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
     if (!estado) return
     let active = true
-
     async function loadCities() {
       setIsLoadingCities(true)
       try {
@@ -130,12 +134,8 @@ export default function ProfileEdit() {
         if (active) setIsLoadingCities(false)
       }
     }
-
     loadCities()
-
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [estado])
 
   async function handleSave() {
@@ -157,17 +157,10 @@ export default function ProfileEdit() {
         ...(fotoUrl !== undefined && { foto: fotoUrl }),
       })
       setProfile(response.data)
-      toast.success({
-        title: 'Perfil salvo',
-        message: response.message,
-      })
+      toast.success({ title: 'Perfil salvo', message: response.message })
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : 'Falha ao salvar perfil.'
-      toast.error({
-        title: 'Erro ao salvar',
-        message,
-      })
+      const message = err instanceof ApiError ? err.message : 'Falha ao salvar perfil.'
+      toast.error({ title: 'Erro ao salvar', message })
     } finally {
       setIsSaving(false)
     }
@@ -180,170 +173,197 @@ export default function ProfileEdit() {
         className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
       >
         <ArrowLeft size={16} />
-        Voltar
+        Voltar ao perfil
       </Link>
 
-      <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-ink">Editar perfil</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-            Atualize seus dados publicos para facilitar trocas, doacoes e
-            contato com outros leitores.
+      <div className="grid gap-3 xl:grid-cols-[1fr_260px]">
+        {/* Form */}
+        <section className="rounded-xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
+          <h1 className="text-lg font-semibold text-ink">Editar perfil</h1>
+          <p className="mt-1 text-sm text-ink-dim">
+            Suas informacoes publicas aparecem para outros usuarios no catalogo e nas trocas.
           </p>
-        </div>
-      </section>
 
-      <form className="grid gap-2.5 rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5 lg:grid-cols-[1fr_0.72fr]">
-        <section className="space-y-3">
           {isLoading ? (
-            <p className="text-sm text-ink-dim">Carregando perfil...</p>
-          ) : null}
-          <label className="block">
-            <span className="text-sm font-semibold text-ink">Nome</span>
-            <input
-              type="text"
-              value={nomeCompleto}
-              onChange={(event) => setNomeCompleto(event.target.value)}
-              className="mt-2 h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
-            />
-          </label>
+            <div className="mt-6 space-y-4 animate-pulse">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-20 rounded bg-line/40" />
+                  <div className="h-9 w-full rounded-lg bg-line/30" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-5 space-y-4">
+              <Field label="Nome completo">
+                <input
+                  type="text"
+                  value={nomeCompleto}
+                  onChange={(e) => setNomeCompleto(e.target.value)}
+                  className={inputClass}
+                  placeholder="Seu nome"
+                />
+              </Field>
 
-          <div className="block">
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
-              <Camera size={16} className="text-brand-deep" />
-              Foto de perfil
-            </span>
+              <Field label="Bio">
+                <textarea
+                  rows={4}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Conte um pouco sobre voce e seus gostos literarios..."
+                  className="w-full resize-none rounded-lg border border-line/55 bg-[#fbfaf7] px-3 py-2.5 text-sm leading-6 text-ink outline-none transition-colors focus:border-accent"
+                />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Estado">
+                  <select
+                    value={estado}
+                    onChange={(e) => {
+                      setEstado(e.target.value)
+                      setCidade('')
+                      setCities([])
+                    }}
+                    disabled={isLoadingStates}
+                    className={selectClass}
+                  >
+                    <option value="">
+                      {isLoadingStates ? 'Carregando...' : 'Selecione o estado'}
+                    </option>
+                    {states.map((s) => (
+                      <option key={s.code} value={s.code}>
+                        {s.name} ({s.code})
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="Cidade">
+                  <select
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    disabled={!estado || isLoadingCities}
+                    className={selectClass}
+                  >
+                    <option value="">
+                      {!estado
+                        ? 'Selecione um estado primeiro'
+                        : isLoadingCities
+                          ? 'Carregando...'
+                          : 'Selecione a cidade'}
+                    </option>
+                    {cities.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+
+              <Field label="Faixa etaria">
+                <select
+                  value={faixaEtaria}
+                  onChange={(e) => setFaixaEtaria(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">Selecione a faixa etaria</option>
+                  {ageRanges.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:opacity-60"
+              >
+                <Save size={15} />
+                {isSaving ? 'Salvando...' : 'Salvar perfil'}
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Foto */}
+        <section className="rounded-xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
+          <h2 className="text-base font-semibold text-ink">Foto de perfil</h2>
+          <p className="mt-1 text-xs text-ink-muted">JPG ou PNG, max 5 MB</p>
+
+          <div className="mt-4 flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="h-28 w-28 overflow-hidden rounded-2xl border border-accent/15 bg-[#f5f3ee] text-accent shadow-sm">
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Foto de perfil"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <UserRound size={44} />
+                  </div>
+                )}
+              </div>
+              <label
+                htmlFor="profile-photo-file"
+                className="absolute -bottom-2 -right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-line/55 bg-white shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+                title="Alterar foto"
+              >
+                <Camera size={14} />
+                <input
+                  id="profile-photo-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                  className="sr-only"
+                />
+              </label>
+            </div>
+
+            {photoFile && (
+              <p className="text-center text-xs text-ink-dim">
+                <span className="font-medium text-brand-deep">{photoFile.name}</span>
+                <br />
+                sera enviada ao salvar
+              </p>
+            )}
+
             <label
               htmlFor="profile-photo-file"
-              className="group mt-2 flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line/55 bg-[#fbfaf7] px-3 py-4 text-center transition-colors hover:border-accent/55 hover:bg-white"
+              className="cursor-pointer text-xs font-medium text-accent underline-offset-2 hover:underline"
             >
-              <input
-                id="profile-photo-file"
-                type="file"
-                accept="image/*"
-                onChange={(event) =>
-                  setPhotoFile(event.target.files?.[0] ?? null)
-                }
-                className="sr-only"
-              />
-              <span className="text-sm font-medium text-ink-dim group-hover:text-brand-deep">
-                Clique para enviar foto
-              </span>
+              Alterar foto
             </label>
           </div>
 
-          <label className="block">
-            <span className="text-sm font-semibold text-ink">Bio</span>
-            <textarea
-              rows={5}
-              value={bio}
-              onChange={(event) => setBio(event.target.value)}
-              className="mt-2 w-full resize-none rounded-lg border border-line/55 bg-[#fbfaf7] px-3 py-2.5 text-sm leading-6 text-ink outline-none transition-colors focus:border-accent"
-            />
-          </label>
-
-          <label className="block">
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
-              <MapPin size={16} className="text-brand-deep" />
-              Estado
-            </span>
-            <select
-              value={estado}
-              onChange={(event) => {
-                setEstado(event.target.value)
-                setCidade('')
-                setCities([])
-              }}
-              disabled={isLoadingStates}
-              className="mt-2 h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="">
-                {isLoadingStates
-                  ? 'Carregando estados...'
-                  : 'Selecione o estado'}
-              </option>
-              {states.map((stateOption) => (
-                <option key={stateOption.code} value={stateOption.code}>
-                  {stateOption.name} ({stateOption.code})
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
-              <MapPin size={16} className="text-brand-deep" />
-              Cidade
-            </span>
-            <select
-              value={cidade}
-              onChange={(event) => setCidade(event.target.value)}
-              disabled={!estado || isLoadingCities}
-              className="mt-2 h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="">
-                {!estado
-                  ? 'Selecione um estado primeiro'
-                  : isLoadingCities
-                    ? 'Carregando cidades...'
-                    : 'Selecione a cidade'}
-              </option>
-              {cities.map((cityName) => (
-                <option key={cityName} value={cityName}>
-                  {cityName}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-semibold text-ink">Faixa etaria</span>
-            <select
-              value={faixaEtaria}
-              onChange={(event) => setFaixaEtaria(event.target.value)}
-              className="mt-2 h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
-            >
-              <option value="">Selecione a faixa etaria</option>
-              {ageRanges.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || isLoading}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep"
-          >
-            <Save size={17} />
-            {isSaving ? 'Salvando...' : 'Salvar perfil'}
-          </button>
-        </section>
-
-        <aside className="rounded-xl border border-line/35 bg-[#fbfaf7] p-3 sm:p-3.5">
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-accent/15 bg-white text-accent shadow-sm">
-            {photoPreview ? (
-              <img
-                src={photoPreview}
-                alt="Previa da foto de perfil"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <UserRound size={30} />
-            )}
+          <div className="mt-6 rounded-lg border border-line/35 bg-[#fbfaf7] p-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-accent/15 bg-white text-accent">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <UserRound size={20} />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink">
+                  {nomeCompleto || 'Seu nome'}
+                </p>
+                {cidade && (
+                  <p className="flex items-center gap-1 text-xs text-ink-muted">
+                    <MapPin size={10} />
+                    {cidade}
+                  </p>
+                )}
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-ink-muted">Previa publica</p>
           </div>
-          <h2 className="mt-4 text-base font-semibold text-ink">
-            Previa publica
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-ink-dim">
-            Nome, foto, bio e cidade aparecem para outros usuarios quando eles
-            visitam seu perfil publico ou veem seus livros anunciados.
-          </p>
-        </aside>
-      </form>
+        </section>
+      </div>
     </main>
   )
 }

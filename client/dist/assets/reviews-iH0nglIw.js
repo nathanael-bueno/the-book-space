@@ -1,0 +1,1 @@
+import{r as e}from"./http-P8Pur6Rk.js";async function t(t){return e(`/users/${t}/reviews`)}export{t};
