@@ -168,21 +168,24 @@ export default function ProfileEdit() {
 
   return (
     <main className="mx-auto w-full space-y-3">
-      <Link
-        to="/app/profile"
-        className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-      >
-        <ArrowLeft size={16} />
-        Voltar ao perfil
-      </Link>
-
       <div className="grid gap-3 xl:grid-cols-[1fr_260px]">
         {/* Form */}
         <section className="rounded-xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
-          <h1 className="text-lg font-semibold text-ink">Editar perfil</h1>
-          <p className="mt-1 text-sm text-ink-dim">
-            Suas informacoes publicas aparecem para outros usuarios no catalogo e nas trocas.
-          </p>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/app/profile"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            >
+              <ArrowLeft size={15} />
+              Voltar
+            </Link>
+            <div>
+              <h1 className="text-lg font-semibold text-ink">Editar perfil</h1>
+              <p className="text-sm text-ink-dim">
+                Suas informacoes publicas aparecem para outros usuarios no catalogo e nas trocas.
+              </p>
+            </div>
+          </div>
 
           {isLoading ? (
             <div className="mt-6 space-y-4 animate-pulse">

@@ -48,13 +48,22 @@ export default function ForgotPassword() {
 
       {/* Forgot Password Card */}
       <div className="ui-auth-card relative z-10 w-full max-w-sm p-8 backdrop-blur-md">
-        <div className="flex flex-col items-center mb-8">
-          <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight">
-            Recuperar senha
-          </h1>
-          <p className="text-neutral-500 text-sm mt-1.5 font-normal text-center">
-            Informe seu e-mail para redefinir sua senha
-          </p>
+        <div className="mb-8 flex items-center gap-3">
+          <Link
+            to="/auth/login"
+            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-xs font-medium text-neutral-500 shadow-sm transition-colors duration-200 hover:text-brand-deep"
+          >
+            <ArrowLeft size={14} />
+            Voltar
+          </Link>
+          <div>
+            <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight">
+              Recuperar senha
+            </h1>
+            <p className="text-neutral-500 text-sm mt-1.5 font-normal">
+              Informe seu e-mail para redefinir sua senha
+            </p>
+          </div>
         </div>
 
         {!sent ? (
@@ -115,15 +124,6 @@ export default function ForgotPassword() {
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t border-neutral-200 text-center">
-          <Link
-            to="/auth/login"
-            className="inline-flex items-center gap-2 text-neutral-500 hover:text-brand-deep text-xs font-medium transition-colors duration-200"
-          >
-            <ArrowLeft size={14} />
-            Voltar para o login
-          </Link>
-        </div>
       </div>
     </div>
   )

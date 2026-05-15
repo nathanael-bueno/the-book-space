@@ -1,0 +1,1 @@
+import{r as e}from"./http-TwA0baVc.js";async function t(t){return e(`/users/${t}/reviews`)}export{t};

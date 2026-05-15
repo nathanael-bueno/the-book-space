@@ -94,13 +94,22 @@ export default function ResetPassword() {
 
       {/* Reset Password Card */}
       <div className="ui-auth-card relative z-10 w-full max-w-sm p-8 backdrop-blur-md">
-        <div className="flex flex-col items-center mb-8">
-          <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight">
-            Nova senha
-          </h1>
-          <p className="text-neutral-500 text-sm mt-1.5 font-normal text-center">
-            Crie uma senha forte para sua segurança
-          </p>
+        <div className="mb-8 flex items-center gap-3">
+          <Link
+            to="/auth/login"
+            className="inline-flex items-center gap-2 text-neutral-500 hover:text-brand-deep text-xs font-medium transition-colors duration-200"
+          >
+            <ArrowLeft size={14} />
+            Voltar
+          </Link>
+          <div>
+            <h1 className="text-neutral-950 text-2xl font-semibold tracking-tight">
+              Nova senha
+            </h1>
+            <p className="text-neutral-500 text-sm mt-1.5 font-normal">
+              Crie uma senha forte para sua segurança
+            </p>
+          </div>
         </div>
 
         {!done ? (
@@ -250,18 +259,6 @@ export default function ResetPassword() {
               className="ui-auth-primary-btn inline-block w-full bg-accent hover:bg-brand-deep text-white font-semibold text-sm py-2.5 transition-all duration-300 text-center"
             >
               Ir para o login
-            </Link>
-          </div>
-        )}
-
-        {!done && (
-          <div className="mt-6 pt-4 border-t border-neutral-200 text-center">
-            <Link
-              to="/auth/login"
-              className="inline-flex items-center gap-2 text-neutral-500 hover:text-brand-deep text-xs font-medium transition-colors duration-200"
-            >
-              <ArrowLeft size={14} />
-              Voltar para o login
             </Link>
           </div>
         )}

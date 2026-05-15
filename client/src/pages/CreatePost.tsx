@@ -197,23 +197,24 @@ export default function CreatePost() {
 
   return (
     <main className="mx-auto w-full space-y-3">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="ui-btn inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-      >
-        <ArrowLeft size={16} />
-        Voltar
-      </button>
-
       <section className="">
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="ui-btn inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            >
+              <ArrowLeft size={16} />
+              Voltar
+            </button>
+            <div>
             <h1 className="text-2xl font-semibold text-ink">Criar post</h1>
             <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
               Publique uma recomendação, pedido de troca ou relato de leitura
               para a comunidade.
             </p>
+            </div>
           </div>
         </div>
       </section>

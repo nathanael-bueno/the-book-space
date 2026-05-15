@@ -44,20 +44,26 @@ export default function TradeReview() {
 
   return (
     <main className="mx-auto w-full space-y-3">
-      <Link
-        to={`/app/trades/${tradeId ?? ''}`}
-        className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-      >
-        <ArrowLeft size={16} />
-        Voltar para detalhes
-      </Link>
-
       <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
         <form onSubmit={handleSubmit}>
-          <h1 className="text-2xl font-semibold text-ink">Como foi a troca?</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-            Avalie a experiencia com o outro leitor e deixe um comentario breve.
-          </p>
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/app/trades/${tradeId ?? ''}`}
+              className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            >
+              <ArrowLeft size={16} />
+              Voltar para detalhes
+            </Link>
+            <div>
+              <h1 className="text-2xl font-semibold text-ink">
+                Como foi a troca?
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+                Avalie a experiencia com o outro leitor e deixe um comentario
+                breve.
+              </p>
+            </div>
+          </div>
 
           <div className="mt-5 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
             <p className="text-sm font-semibold text-ink">

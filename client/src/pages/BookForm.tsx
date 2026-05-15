@@ -301,17 +301,17 @@ export default function BookForm() {
 
   return (
     <main className="mx-auto w-full space-y-3">
-      <Link
-        to={book ? `/app/books/${book.id}` : '/app/feed'}
-        className="mb-5 inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-      >
-        <ArrowLeft size={16} />
-        Voltar
-      </Link>
-
       <section className="">
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="flex items-center gap-3">
+            <Link
+              to={book ? `/app/books/${book.id}` : '/app/feed'}
+              className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            >
+              <ArrowLeft size={16} />
+              Voltar
+            </Link>
+            <div>
             <h1 className="text-2xl font-semibold text-ink">
               {isEditing ? 'Atualize os dados do livro' : 'Cadastre um livro'}
             </h1>
@@ -319,6 +319,7 @@ export default function BookForm() {
               Informe os dados principais para que outros leitores encontrem o
               exemplar certo.
             </p>
+            </div>
           </div>
         </div>
       </section>

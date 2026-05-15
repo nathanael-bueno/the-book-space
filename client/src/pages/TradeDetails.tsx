@@ -167,21 +167,22 @@ export default function TradeDetails() {
 
   return (
     <main className="mx-auto w-full space-y-3">
-      <Link
-        to="/app/trades"
-        className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-      >
-        <ArrowLeft size={16} />
-        Voltar para trocas
-      </Link>
-
       <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-ink">Status da troca</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-            Veja a etapa atual da proposta e avance para o chat quando precisar
-            alinhar a entrega.
-          </p>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/app/trades"
+            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+          >
+            <ArrowLeft size={16} />
+            Voltar para trocas
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold text-ink">Status da troca</h1>
+            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
+              Veja a etapa atual da proposta e avance para o chat quando
+              precisar alinhar a entrega.
+            </p>
+          </div>
         </div>
         <Link
           to={`/app/trades/${trade.id}/chat`}
