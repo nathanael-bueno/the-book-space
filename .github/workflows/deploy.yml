@@ -21,9 +21,8 @@ jobs:
             cd ~/var/www/the-book-space
 
             echo "==> Atualizando código"
-            git stash
-            git pull origin main
-            git stash pop || true
+            git fetch origin
+            git reset --hard origin/main
 
             echo "==> Instalando dependências PHP"
             cd api
@@ -39,10 +38,5 @@ jobs:
             echo "==> Ajustando permissões"
             sudo chown -R marquin:www-data storage bootstrap/cache
             sudo chmod -R 775 storage bootstrap/cache
-
-            echo "==> Buildando client"
-            cd ../client
-            npm ci
-            npm run build
 
             echo "==> Deploy concluído!"
