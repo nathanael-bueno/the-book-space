@@ -144,6 +144,7 @@ export default function MainLayout() {
   const [isSearching, setIsSearching] = useState(false)
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isSidebarProfileMenuOpen, setIsSidebarProfileMenuOpen] =
     useState(false)
@@ -327,6 +328,19 @@ export default function MainLayout() {
     }
   }, [location.pathname])
 
+  useEffect(() => {
+    if (!isMobileSidebarOpen) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsMobileSidebarOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMobileSidebarOpen])
+
   function handleLogout() {
     clearToken()
     setIsProfileMenuOpen(false)
@@ -498,68 +512,191 @@ export default function MainLayout() {
         </div>
       </aside>
 
+      <div
+        className={[
+          'fixed inset-0 z-40 bg-black/30 transition-opacity lg:hidden',
+          isMobileSidebarOpen
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0',
+        ].join(' ')}
+        onClick={() => setIsMobileSidebarOpen(false)}
+        aria-hidden={!isMobileSidebarOpen}
+      />
+
+      <aside
+        className={[
+          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#fcfbf9] p-4 shadow-xl transition-transform duration-300 lg:hidden',
+          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        ].join(' ')}
+        aria-hidden={!isMobileSidebarOpen}
+      >
+        <div className="mb-4 inline-flex items-center justify-between">
+          <Link
+            to="/app/feed"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="inline-flex items-center text-sm font-semibold text-ink"
+          >
+            The Book Space
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="inline-flex h-9 w-10 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+            aria-label="Fechar sidebar"
+          >
+            <PanelLeftClose size={17} />
+          </button>
+        </div>
+
+        <nav className="space-y-1.5">
+          {visibleNavItems.map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.to, item.exact)
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className={[
+                  'ui-sidebar-item inline-flex h-9 w-full items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-accent text-white shadow-sm shadow-accent/15'
+                    : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep',
+                ].join(' ')}
+                title={item.label}
+              >
+                <Icon size={16} />
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {visibleAdminItems.length ? (
+          <>
+            <div className="my-5 h-px bg-line/45" />
+            <nav className="space-y-1.5">
+              {visibleAdminItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.to)
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className={[
+                      'ui-sidebar-item inline-flex h-9 w-full items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-accent text-white shadow-sm shadow-accent/15'
+                        : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep',
+                    ].join(' ')}
+                    title={item.label}
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </>
+        ) : null}
+
+        <div className="mt-auto pt-5">
+          <div className="mb-3 h-px bg-line/45" />
+          <div className="space-y-2">
+            <Link
+              to="/app/settings"
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+            >
+              <Settings size={16} />
+              Configuracoes
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+            >
+              <LogOut size={16} />
+              Sair
+            </button>
+          </div>
+        </div>
+      </aside>
+
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="grid grid-cols-1 gap-3 bg-[#fcfbf9] px-4 py-2.5 lg:grid-cols-[1fr_auto] lg:items-center">
-          <form className="relative block" onSubmit={handleSearch}>
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-ink-muted">
-              <Search size={16} />
-            </span>
-            <input
-              type="search"
-              value={isSearchFocused ? query : initialQuery}
-              onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => {
-                setIsSearchFocused(true)
-                setQuery(initialQuery)
-              }}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
-              placeholder="Buscar por titulo, autor ou ISBN"
-              className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-10 pr-14 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
-            />
+          <div className="flex items-center gap-2">
             <button
-              type="submit"
-              className="absolute inset-y-0 right-1 my-1 inline-flex w-10 items-center justify-center rounded-md text-ink-muted transition-colors hover:text-brand-deep"
-              aria-label="Buscar"
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-line/45 bg-white text-ink-muted transition-colors hover:border-accent/35 hover:text-brand-deep lg:hidden"
+              aria-label="Abrir sidebar"
             >
-              <Search size={16} />
+              <PanelLeftOpen size={17} />
             </button>
 
-            {isSearchFocused && query.trim() ? (
-              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl border border-line/45 bg-white shadow-lg">
-                {suggestions.length
-                  ? suggestions.map((book) => (
-                      <button
-                        key={book.id}
-                        type="button"
-                        onMouseDown={() => navigate(`/app/books/${book.id}`)}
-                        className="block w-full border-b border-line/25 px-3 py-2.5 text-left last:border-b-0 hover:bg-[#fbfaf7]"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={book.cover}
-                            alt={`Capa do livro ${book.title}`}
-                            className="h-12 w-9 rounded-md border border-line/35 object-cover"
-                            loading="lazy"
-                          />
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-ink">
-                              {book.title}
-                            </p>
-                            <p className="truncate text-xs text-ink-muted">
-                              {book.author} · {book.city} · {book.isbn}
-                            </p>
+            <form className="relative block flex-1" onSubmit={handleSearch}>
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-ink-muted">
+                <Search size={16} />
+              </span>
+              <input
+                type="search"
+                value={isSearchFocused ? query : initialQuery}
+                onChange={(event) => setQuery(event.target.value)}
+                onFocus={() => {
+                  setIsSearchFocused(true)
+                  setQuery(initialQuery)
+                }}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
+                placeholder="Buscar por titulo, autor ou ISBN"
+                className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-10 pr-14 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+              />
+              <button
+                type="submit"
+                className="absolute inset-y-0 right-1 my-1 inline-flex w-10 items-center justify-center rounded-md text-ink-muted transition-colors hover:text-brand-deep"
+                aria-label="Buscar"
+              >
+                <Search size={16} />
+              </button>
+
+              {isSearchFocused && query.trim() ? (
+                <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-xl border border-line/45 bg-white shadow-lg">
+                  {suggestions.length
+                    ? suggestions.map((book) => (
+                        <button
+                          key={book.id}
+                          type="button"
+                          onMouseDown={() => navigate(`/app/books/${book.id}`)}
+                          className="block w-full border-b border-line/25 px-3 py-2.5 text-left last:border-b-0 hover:bg-[#fbfaf7]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={book.cover}
+                              alt={`Capa do livro ${book.title}`}
+                              className="h-12 w-9 rounded-md border border-line/35 object-cover"
+                              loading="lazy"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-ink">
+                                {book.title}
+                              </p>
+                              <p className="truncate text-xs text-ink-muted">
+                                {book.author} · {book.city} · {book.isbn}
+                              </p>
+                            </div>
                           </div>
+                        </button>
+                      ))
+                    : !isSearching && (
+                        <div className="px-3 py-3 text-sm text-ink-dim">
+                          Nenhum livro encontrado para essa busca.
                         </div>
-                      </button>
-                    ))
-                  : !isSearching && (
-                      <div className="px-3 py-3 text-sm text-ink-dim">
-                        Nenhum livro encontrado para essa busca.
-                      </div>
-                    )}
-              </div>
-            ) : null}
-          </form>
+                      )}
+                </div>
+              ) : null}
+            </form>
+          </div>
 
           <div className="flex items-center justify-end gap-2">
             <Link
