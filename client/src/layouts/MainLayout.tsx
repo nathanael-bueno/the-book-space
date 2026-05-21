@@ -184,17 +184,6 @@ export default function MainLayout() {
     () => ADMIN_ITEMS.filter((item) => item.roles.includes(userRole)),
     [userRole]
   )
-  const mobileNavItems = useMemo(() => {
-    const baseItems = visibleNavItems.slice(0, 4)
-    const adminEntry = visibleAdminItems[0]
-
-    if (adminEntry) {
-      return [...baseItems, adminEntry]
-    }
-
-    return [...baseItems, visibleNavItems[4]].filter(Boolean)
-  }, [visibleAdminItems, visibleNavItems])
-
   const isActive = (to: string, exact?: boolean) => {
     if (exact) return location.pathname === to
     return location.pathname === to || location.pathname.startsWith(`${to}/`)
@@ -339,6 +328,17 @@ export default function MainLayout() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMobileSidebarOpen])
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
   }, [isMobileSidebarOpen])
 
   function handleLogout() {
@@ -625,7 +625,7 @@ export default function MainLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="grid grid-cols-1 gap-3 bg-[#fcfbf9] px-4 py-2.5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <header className="grid grid-cols-1 gap-2 bg-[#fcfbf9] px-3 py-2.5 sm:px-4 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -698,13 +698,13 @@ export default function MainLayout() {
             </form>
           </div>
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
             <Link
               to="/app/books/new"
-              className="ui-btn inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors duration-200 hover:bg-brand-deep"
+              className="ui-btn inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-2.5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors duration-200 hover:bg-brand-deep sm:gap-2 sm:px-3"
             >
               <Plus size={16} />
-              Novo livro
+              <span className="hidden sm:inline">Novo livro</span>
             </Link>
             <Link
               to="/app/notifications"
@@ -760,7 +760,7 @@ export default function MainLayout() {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-hidden bg-[#fcfbf9] px-4 py-3 pb-20 sm:px-5 sm:py-4 sm:pb-24 lg:pb-4">
+        <main className="min-w-0 flex-1 overflow-hidden bg-[#fcfbf9] px-4 py-3 sm:px-5 sm:py-4">
           <div
             className="h-full overflow-y-auto bg-white p-5 sm:p-6"
             style={{
@@ -773,31 +773,6 @@ export default function MainLayout() {
           </div>
         </main>
       </div>
-
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line/45 bg-white/95 px-2 py-2 backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1">
-          {mobileNavItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.to, item.exact)
-
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={[
-                  'inline-flex h-12 flex-col items-center justify-center rounded-lg text-[11px] font-semibold transition-colors',
-                  active
-                    ? 'bg-accent text-white shadow-sm shadow-accent/15'
-                    : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep',
-                ].join(' ')}
-              >
-                <Icon size={16} />
-                <span className="mt-1 truncate px-1">{item.label}</span>
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
     </div>
   )
 }
