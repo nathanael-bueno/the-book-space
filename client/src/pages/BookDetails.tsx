@@ -154,7 +154,7 @@ export default function BookDetails() {
   const canPropose = !isOwner && book.status === 'disponivel'
 
   return (
-    <main className="mx-auto w-full space-y-4">
+    <main className="mx-auto w-full max-w-6xl space-y-5">
       <section>
         <div className="space-y-1">
           <Link
@@ -168,15 +168,15 @@ export default function BookDetails() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[320px_1fr] xl:gap-8">
         {/* Coluna da imagem */}
         <div className="space-y-3">
-          <div className="overflow-hidden rounded-2xl border border-line/35 bg-[#fbfaf7] shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-line/30 bg-[#fbfaf7]">
             <div className="aspect-[3/4] w-full overflow-hidden">
               <img
                 src={cover}
                 alt={`Capa do livro ${book.titulo}`}
-                className="h-full w-full object-cover transition-all duration-300"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
@@ -189,10 +189,10 @@ export default function BookDetails() {
                   type="button"
                   onClick={() => setActivePhoto(index)}
                   className={[
-                    'h-16 w-12 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all',
+                    'h-16 w-12 flex-shrink-0 overflow-hidden rounded-lg border transition-all',
                     index === activePhoto
-                      ? 'border-accent shadow-sm'
-                      : 'border-line/35 opacity-60 hover:opacity-100',
+                      ? 'border-accent'
+                      : 'border-line/30 opacity-60 hover:opacity-100',
                   ].join(' ')}
                 >
                   <img
@@ -207,27 +207,27 @@ export default function BookDetails() {
         </div>
 
         {/* Coluna das informações */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Header */}
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${status.className}`}
+                className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${status.className}`}
               >
                 {status.label}
               </span>
               {book.genre ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-accent/25 bg-accent/8 px-2.5 py-0.5 text-xs font-semibold text-accent">
+                <span className="inline-flex items-center gap-1 rounded-md border border-accent/25 bg-accent/8 px-2.5 py-0.5 text-xs font-semibold text-accent">
                   <Tag size={10} />
                   {book.genre.nome}
                 </span>
               ) : null}
             </div>
 
-            <h1 className="mt-3 text-3xl font-bold leading-tight text-ink">
+            <h1 className="mt-3 text-2xl font-semibold leading-tight text-ink sm:text-3xl">
               {book.titulo}
             </h1>
-            <p className="mt-1 text-base text-ink-muted">{book.autor}</p>
+            <p className="mt-1 text-base text-ink-dim">{book.autor}</p>
 
             {book.isbn ? (
               <p className="mt-1 text-xs text-ink-ghost">ISBN: {book.isbn}</p>
@@ -235,8 +235,8 @@ export default function BookDetails() {
           </div>
 
           {/* Metadata cards */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-line/25 bg-[#fbfaf7] px-3 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
                 Conservacao
               </p>
@@ -244,7 +244,7 @@ export default function BookDetails() {
                 {book.estado_conservacao}
               </p>
             </div>
-            <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-3">
+            <div className="rounded-xl border border-line/25 bg-[#fbfaf7] px-3 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
                 Localização
               </p>
@@ -253,7 +253,7 @@ export default function BookDetails() {
                 {book.cidade ?? 'Nao informado'}
               </p>
             </div>
-            <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-3">
+            <div className="rounded-xl border border-line/25 bg-[#fbfaf7] px-3 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
                 Dono
               </p>
@@ -276,18 +276,18 @@ export default function BookDetails() {
           </div>
 
           {/* Descrição */}
-          <div className="rounded-xl border border-line/35 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-line/25 bg-white p-4">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-muted">
               <BookOpen size={14} />
               Sobre o livro
             </h2>
-            <p className="mt-3 text-sm leading-7 text-ink-dim">
+            <p className="mt-3 text-sm leading-6 text-ink-dim">
               {book.descricao ?? 'Nenhuma descricao informada pelo dono.'}
             </p>
           </div>
 
           {/* Ações */}
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap gap-2 border-t border-line/20 pt-3">
             {canPropose ? (
               <Link
                 to={`/app/books/${book.id}/trade`}
