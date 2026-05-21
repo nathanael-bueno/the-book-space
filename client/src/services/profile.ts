@@ -12,6 +12,7 @@ export type Profile = {
   id: string
   nome_completo: string
   email: string
+  auth_provider?: string | null
   bio: string | null
   cidade: string | null
   estado?: string | null

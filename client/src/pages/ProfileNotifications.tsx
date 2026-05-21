@@ -85,40 +85,35 @@ export default function ProfileNotifications() {
   }
 
   return (
-    <main className="mx-auto w-full space-y-3">
-      <section className="rounded-xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
+    <main className="mx-auto w-full space-y-4">
+      <section className="py-1">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="space-y-1">
             <Link
               to="/app/profile"
-              className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
             >
               <ChevronLeft size={16} />
-              Voltar ao perfil
+              Voltar
             </Link>
-            <div>
-              <h1 className="text-2xl font-semibold text-ink">
-                Preferencias de notificacao
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-ink-dim">
-                Controle os alertas sobre trocas, interacoes sociais e doacoes.
-              </p>
-            </div>
+            <h1 className="text-2xl font-semibold text-ink">
+              Preferencias de notificacao
+            </h1>
           </div>
-          <span className="inline-flex h-8 items-center justify-center rounded-md border border-line/45 bg-[#fbfaf7] px-3 text-sm font-semibold text-brand-deep">
+          <span className="inline-flex h-8 items-center justify-center rounded-md border border-line/35 bg-transparent px-2.5 text-sm font-semibold text-ink-dim">
             {activeCount} ativos
           </span>
         </div>
       </section>
 
-      <section className="space-y-2.5">
+      <section className="space-y-2">
         {isLoading ? (
-          <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          <p className="rounded-lg border border-line/30 bg-white p-3 text-sm text-ink-dim">
             Carregando preferencias...
           </p>
         ) : null}
         {error ? (
-          <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          <p className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep">
             {error}
           </p>
         ) : null}
@@ -126,7 +121,7 @@ export default function ProfileNotifications() {
           type="button"
           onClick={() => togglePreference('tradeUpdates')}
           disabled={isLoading || isSaving}
-          className="flex w-full items-center justify-between rounded-xl border border-line/45 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-accent/35"
+          className="flex w-full items-center justify-between rounded-lg border border-line/30 bg-white px-4 py-3 text-left transition-colors hover:border-accent/35"
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-ink">
             <Bell size={16} />
@@ -147,7 +142,7 @@ export default function ProfileNotifications() {
           type="button"
           onClick={() => togglePreference('socialLikes')}
           disabled={isLoading || isSaving}
-          className="flex w-full items-center justify-between rounded-xl border border-line/45 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-accent/35"
+          className="flex w-full items-center justify-between rounded-lg border border-line/30 bg-white px-4 py-3 text-left transition-colors hover:border-accent/35"
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-ink">
             <Bell size={16} />
@@ -168,7 +163,7 @@ export default function ProfileNotifications() {
           type="button"
           onClick={() => togglePreference('socialComments')}
           disabled={isLoading || isSaving}
-          className="flex w-full items-center justify-between rounded-xl border border-line/45 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-accent/35"
+          className="flex w-full items-center justify-between rounded-lg border border-line/30 bg-white px-4 py-3 text-left transition-colors hover:border-accent/35"
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-ink">
             <Bell size={16} />
@@ -189,7 +184,7 @@ export default function ProfileNotifications() {
           type="button"
           onClick={() => togglePreference('donationUpdates')}
           disabled={isLoading || isSaving}
-          className="flex w-full items-center justify-between rounded-xl border border-line/45 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-accent/35"
+          className="flex w-full items-center justify-between rounded-lg border border-line/30 bg-white px-4 py-3 text-left transition-colors hover:border-accent/35"
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-ink">
             <Bell size={16} />
@@ -210,7 +205,7 @@ export default function ProfileNotifications() {
           type="button"
           onClick={() => togglePreference('emailEnabled')}
           disabled={isLoading || isSaving}
-          className="flex w-full items-center justify-between rounded-xl border border-line/45 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-accent/35"
+          className="flex w-full items-center justify-between rounded-lg border border-line/30 bg-white px-4 py-3 text-left transition-colors hover:border-accent/35"
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-ink">
             <Mail size={16} />
@@ -228,7 +223,7 @@ export default function ProfileNotifications() {
         </button>
       </section>
 
-      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+      <section className="rounded-lg border border-line/30 bg-white p-3">
         <p className="inline-flex items-center gap-2 text-sm text-ink-dim">
           <Check
             size={16}

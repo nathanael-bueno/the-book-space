@@ -20,6 +20,7 @@ class StoreTradeRequest extends FormRequest
         return [
             'id_livro_solicitado' => 'required|uuid|exists:books,id',
             'id_livro_oferecido' => 'required|uuid|exists:books,id|different:id_livro_solicitado',
+            'id_instituicao_intermediaria' => 'nullable|uuid|exists:institutions,id',
             'mensagem' => 'nullable|string|max:1200',
         ];
     }

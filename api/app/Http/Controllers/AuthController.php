@@ -33,9 +33,11 @@ class AuthController extends Controller
         ]);
 
         EmailVerificationController::sendCode($user);
+        $token = JWTAuth::fromUser($user);
 
         return response()->json([
             'message' => 'Usuario cadastrado com sucesso. Verifique seu e-mail para ativar a conta.',
+            'token'   => $token,
             'user'    => $user,
         ], 201);
     }

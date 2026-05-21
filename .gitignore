@@ -2,3 +2,7 @@
 caixa_preta/
 *.xlsx
 *.csv
+node_modules/
+package-lock.json
+package.json
+api/composer.phar

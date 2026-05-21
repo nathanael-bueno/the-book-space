@@ -5,10 +5,8 @@ import { ChevronLeft, MessageSquareText, Send } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { getCurrentUserId } from '../services/auth'
 import {
-  getTrade,
   listTradeMessages,
   sendTradeMessage,
-  type ApiTrade,
   type ApiTradeMessage,
 } from '../services/trades'
 import { useToast } from '../stores/useToast'
@@ -35,7 +33,6 @@ export default function TradeChat() {
   const { tradeId } = useParams()
   const hasInvalidTradeId = !tradeId
   const currentUserId = useMemo(() => getCurrentUserId(), [])
-  const [trade, setTrade] = useState<ApiTrade | null>(null)
   const [messages, setMessages] = useState<ApiTradeMessage[]>([])
   const [draft, setDraft] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -50,12 +47,8 @@ export default function TradeChat() {
     async function load() {
       setIsLoading(true)
       try {
-        const [tradeResponse, messagesResponse] = await Promise.all([
-          getTrade(safeTradeId),
-          listTradeMessages(safeTradeId),
-        ])
+        const messagesResponse = await listTradeMessages(safeTradeId)
         if (!active) return
-        setTrade(tradeResponse.data)
         setMessages(normalizeMessagesPayload(messagesResponse.data))
       } catch (err) {
         if (!active) return
@@ -127,24 +120,15 @@ export default function TradeChat() {
   return (
     <main className="mx-auto w-full space-y-3">
       <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="space-y-1">
           <Link
             to={`/app/trades/${tradeId ?? ''}`}
-            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
             <ChevronLeft size={16} />
-            Voltar para detalhes
+            Voltar
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-ink">Chat da troca</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              Conversa com{' '}
-              {trade?.proponent?.id === currentUserId
-                ? trade?.recipient?.nome_completo
-                : trade?.proponent?.nome_completo}
-              .
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-ink">Chat da troca</h1>
         </div>
       </section>
 

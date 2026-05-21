@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft,
@@ -16,6 +16,14 @@ import {
   markNotificationAsRead,
   type ApiNotification,
 } from '../services/notifications'
+
+type NotificationsCache = {
+  data: ApiNotification[]
+  fetchedAt: number
+}
+
+const NOTIFICATIONS_CACHE_TTL_MS = 45_000
+let notificationsCache: NotificationsCache | null = null
 
 const iconByType: Record<string, typeof Repeat2> = {
   troca: Repeat2,
@@ -59,13 +67,30 @@ export default function Notifications() {
 
   useEffect(() => {
     let active = true
-    async function loadNotifications() {
-      setIsLoading(true)
+    const cached = notificationsCache
+    const hasFreshCache =
+      cached !== null &&
+      Date.now() - cached.fetchedAt < NOTIFICATIONS_CACHE_TTL_MS
+
+    if (hasFreshCache) {
+      queueMicrotask(() => {
+        if (!active || !cached) return
+        setNotifications(cached.data)
+        setIsLoading(false)
+      })
+    }
+
+    async function loadNotifications(showLoader: boolean) {
+      if (showLoader) setIsLoading(true)
       setError(null)
       try {
         const response = await listNotifications()
         if (!active) return
         setNotifications(response.data)
+        notificationsCache = {
+          data: response.data,
+          fetchedAt: Date.now(),
+        }
       } catch (err) {
         if (!active) return
         const message =
@@ -74,19 +99,16 @@ export default function Notifications() {
             : 'Nao foi possivel carregar as notificacoes.'
         setError(message)
       } finally {
-        if (active) setIsLoading(false)
+        if (active && showLoader) setIsLoading(false)
       }
     }
-    loadNotifications()
+
+    void loadNotifications(!hasFreshCache)
+
     return () => {
       active = false
     }
   }, [])
-
-  const unreadCount = useMemo(
-    () => notifications.filter((item) => !item.lida_em).length,
-    [notifications]
-  )
 
   async function handleNotificationAction(notification: ApiNotification) {
     const target = resolveActionTo(notification)
@@ -111,36 +133,31 @@ export default function Notifications() {
   }
 
   return (
-    <main className="mx-auto w-full space-y-3">
+    <main className="mx-auto w-full space-y-4">
       <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="space-y-1">
           <Link
             to="/app/feed"
-            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
             <ChevronLeft size={16} />
             Voltar
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-ink">Notificacoes</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              {unreadCount} novas atualizacoes sobre trocas, interacoes e doacoes.
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-ink">Notificacoes</h1>
         </div>
-        <span className="inline-flex h-9 items-center justify-center rounded-lg border border-line/45 bg-[#fbfaf7] px-3 text-sm font-semibold text-brand-deep">
+        <span className="inline-flex h-8 items-center justify-center rounded-md border border-line/35 bg-transparent px-2.5 text-sm font-semibold text-ink-dim">
           {notifications.length} no total
         </span>
       </section>
 
-      <section className="space-y-2.5">
+      <section className="space-y-2">
         {isLoading ? (
-          <p className="rounded-xl border border-line/45 bg-white p-3 text-sm text-ink-dim shadow-sm sm:p-3.5">
+          <p className="rounded-lg border border-line/35 bg-white p-3 text-sm text-ink-dim">
             Carregando notificacoes...
           </p>
         ) : null}
         {error ? (
-          <p className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          <p className="rounded-lg border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep">
             {error}
           </p>
         ) : null}
@@ -151,48 +168,48 @@ export default function Notifications() {
           return (
             <article
               key={item.id}
-              className={`rounded-xl border border-line/45 bg-white p-3 shadow-sm transition-colors sm:p-3.5 ${
-                unread ? 'border-accent/30 bg-white' : 'border-line/45 bg-white'
+              className={`rounded-lg border bg-white p-3 transition-colors ${
+                unread ? 'border-accent/25' : 'border-line/35'
               }`}
             >
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex gap-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 gap-2.5">
                   <div
-                    className={`flex h-9 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm ${
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
                       unread
-                        ? 'border-accent/20 bg-[#fbfaf7] text-accent'
-                        : 'border-line/35 bg-white text-brand-deep'
+                        ? 'border-accent/20 bg-accent/5 text-accent'
+                        : 'border-line/35 bg-[#fbfaf7] text-ink-muted'
                     }`}
                   >
-                    <Icon size={21} />
+                    <Icon size={16} />
                   </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
                         {item.tipo}
                       </p>
                       {unread ? (
-                        <span className="h-2 w-2 rounded-full bg-accent" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                       ) : null}
                     </div>
-                    <h2 className="mt-1 text-base font-semibold text-ink">
+                    <h2 className="mt-1 truncate text-sm font-semibold text-ink">
                       {item.titulo}
                     </h2>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-dim">
+                    <p className="mt-1.5 text-sm leading-5 text-ink-dim">
                       {item.descricao ?? 'Sem detalhes adicionais.'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-2.5 sm:flex-col sm:items-end">
-                  <span className="text-sm font-medium text-ink-muted">
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <span className="text-xs font-medium text-ink-muted">
                     {toRelativeTime(item.created_at)}
                   </span>
                   <button
                     type="button"
                     onClick={() => handleNotificationAction(item)}
                     disabled={isMarkingId === item.id}
-                    className="inline-flex h-9 items-center justify-center rounded-lg border border-line/55 bg-white px-3 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+                    className="inline-flex h-8 items-center justify-center rounded-md border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
                   >
                     {isMarkingId === item.id ? (
                       <span className="inline-flex items-center gap-2">
@@ -217,20 +234,6 @@ export default function Notifications() {
             <p className="text-sm">Novas atualizacoes aparecerao aqui.</p>
           </section>
         ) : null}
-      </section>
-
-      <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
-        <div className="flex items-start gap-2.5">
-          <div>
-            <h2 className="text-base font-semibold text-ink">
-              Preferencias ativas
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-ink-dim">
-              Voce recebe alertas para novas propostas, respostas de troca,
-              curtidas, comentarios e confirmacoes de doacao.
-            </p>
-          </div>
-        </div>
       </section>
     </main>
   )

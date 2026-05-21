@@ -1,5 +1,5 @@
-import { MapPin, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { MapPin, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import InstitutionModal from '../components/admin/InstitutionModal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -19,6 +19,12 @@ export default function AdminInstitutions() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [openMenu, setOpenMenu] = useState<{
+    id: string
+    top: number
+    left: number
+  } | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   const [form, setForm] = useState({
     name: '',
     city: '',
@@ -51,6 +57,17 @@ export default function AdminInstitutions() {
     return () => {
       active = false
     }
+  }, [])
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenu(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
 
   function resetForm() {
@@ -106,14 +123,9 @@ export default function AdminInstitutions() {
       return
     }
 
-    const newInstitution: AdminInstitution = {
-      id: crypto.randomUUID(),
-      ...payload,
-    }
-
     try {
-      await persistInstitutionCreate(payload)
-      setInstitutions((prev) => [newInstitution, ...prev])
+      const createdInstitution = await persistInstitutionCreate(payload)
+      setInstitutions((prev) => [createdInstitution, ...prev])
       toast.success({
         title: 'Instituicao criada',
         message: 'Instituicao criada com sucesso.',
@@ -200,17 +212,27 @@ export default function AdminInstitutions() {
       ) : null}
 
       {!isLoading && institutions.length ? (
-        <section className="overflow-hidden rounded-xl border border-line/45 bg-white shadow-sm">
+        <section className="rounded-xl border border-line/45 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="w-full border-collapse text-sm">
               <thead className="bg-[#fbfaf7]">
                 <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="px-3 py-2.5 font-semibold">Nome</th>
-                  <th className="px-3 py-2.5 font-semibold">Cidade</th>
-                  <th className="px-3 py-2.5 font-semibold">Contato</th>
-                  <th className="px-3 py-2.5 font-semibold">Tipo</th>
-                  <th className="px-3 py-2.5 font-semibold">Status</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Nome
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Cidade
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Contato
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Tipo
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Status
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                     Acoes
                   </th>
                 </tr>
@@ -221,21 +243,25 @@ export default function AdminInstitutions() {
                     key={institution.id}
                     className="border-t border-line/35 align-middle"
                   >
-                    <td className="px-3 py-3 font-medium text-ink">
-                      {institution.name}
+                    <td className="px-4 py-3 font-medium text-ink">
+                      <p className="max-w-[260px] truncate">
+                        {institution.name}
+                      </p>
                     </td>
-                    <td className="px-3 py-3 text-ink-dim">
+                    <td className="px-4 py-3 text-ink-dim">
                       {institution.city}
                     </td>
-                    <td className="px-3 py-3 text-ink-dim">
-                      {institution.contact}
+                    <td className="px-4 py-3 text-ink-dim">
+                      <p className="max-w-[260px] truncate">
+                        {institution.contact}
+                      </p>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <span className="inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium text-brand-deep">
                         {institution.pointType}
                       </span>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <span
                         className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
                           institution.status === 'Ativa'
@@ -246,23 +272,34 @@ export default function AdminInstitutions() {
                         {institution.status}
                       </span>
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-wrap justify-end gap-2">
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end">
                         <button
                           type="button"
-                          onClick={() => onEdit(institution)}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                          onClick={(event) => {
+                            const rect =
+                              event.currentTarget.getBoundingClientRect()
+                            const menuWidth = 168
+                            const spaceRight = window.innerWidth - rect.right
+                            const left =
+                              spaceRight >= menuWidth + 12
+                                ? rect.right + 8
+                                : rect.left - menuWidth - 8
+
+                            setOpenMenu((current) =>
+                              current?.id === institution.id
+                                ? null
+                                : {
+                                    id: institution.id,
+                                    top: rect.top + rect.height + 6,
+                                    left,
+                                  }
+                            )
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line/45 bg-white text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                          aria-label="Abrir ações da instituição"
                         >
-                          <Pencil size={14} />
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(institution.id)}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-                        >
-                          <Trash2 size={14} />
-                          Excluir
+                          <MoreVertical size={15} />
                         </button>
                       </div>
                     </td>
@@ -272,6 +309,41 @@ export default function AdminInstitutions() {
             </table>
           </div>
         </section>
+      ) : null}
+
+      {openMenu ? (
+        <div
+          ref={menuRef}
+          className="fixed z-40 w-44 overflow-hidden rounded-lg border border-line/45 bg-white p-1 shadow-lg"
+          style={{ top: openMenu.top, left: openMenu.left }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const institution = institutions.find(
+                (item) => item.id === openMenu.id
+              )
+              if (!institution) return
+              onEdit(institution)
+              setOpenMenu(null)
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+          >
+            <Pencil size={14} />
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmDeleteId(openMenu.id)
+              setOpenMenu(null)
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+          >
+            <Trash2 size={14} />
+            Excluir
+          </button>
+        </div>
       ) : null}
 
       <InstitutionModal

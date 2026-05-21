@@ -25,6 +25,7 @@ import {
   type ApiGenre,
 } from '../services/books'
 import { useToast } from '../stores/useToast'
+import BookCard from '../components/books/BookCard'
 
 export default function Catalog() {
   const navigate = useNavigate()
@@ -226,7 +227,7 @@ export default function Catalog() {
           <div>
             <h1 className="text-2xl font-semibold text-ink">Catalogo</h1>
             <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              Encontre livros para troca com filtros por genero, estado e
+              Descubra livros para troca com filtros por genero, conservacao e
               localizacao.
             </p>
           </div>
@@ -342,29 +343,24 @@ export default function Catalog() {
         {books.map((book) => {
           const isOwner = book.id_usuario_dono === currentUserId
           const isMenuOpen = openMenuId === book.id
-
           return (
             <div
               key={book.id}
               className="group relative overflow-hidden rounded-xl border border-line/45 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-md"
             >
               <Link to={`/app/books/${book.id}`} className="block">
-                <div className="aspect-[3/4] w-full bg-canvas/35">
-                  <img
-                    src={book.fotos?.[0] ?? ''}
-                    alt={`Capa do livro ${book.titulo}`}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                    loading="lazy"
+                <div className="transition-transform duration-300 group-hover:scale-[1.02]">
+                  <BookCard
+                    title={book.titulo}
+                    cover={book.fotos?.[0]}
+                    coverAlt={`Capa do livro ${book.titulo}`}
+                    metadata={[
+                      book.autor,
+                      book.estado_conservacao || 'Estado nao informado',
+                      book.cidade ?? 'Localizacao nao informada',
+                    ]}
+                    status={book.status}
                   />
-                </div>
-                <div className="border-t border-line/25 bg-white p-3">
-                  <h2 className="text-sm font-semibold leading-snug text-ink">
-                    {book.titulo}
-                  </h2>
-                  <p className="mt-1 text-xs text-ink-muted">{book.autor}</p>
-                  <p className="mt-2 text-[11px] font-semibold text-brand-deep">
-                    {book.cidade ?? 'Sem cidade'}
-                  </p>
                 </div>
               </Link>
 

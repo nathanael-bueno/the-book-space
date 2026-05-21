@@ -15,6 +15,7 @@ export const ProfileEdit = lazy(() => import('../pages/ProfileEdit'))
 export const ProfileNotifications = lazy(
   () => import('../pages/ProfileNotifications')
 )
+export const Settings = lazy(() => import('../pages/Settings'))
 export const PublicProfile = lazy(() => import('../pages/PublicProfile'))
 export const SocialFeed = lazy(() => import('../pages/SocialFeed'))
 export const TradeChat = lazy(() => import('../pages/TradeChat'))

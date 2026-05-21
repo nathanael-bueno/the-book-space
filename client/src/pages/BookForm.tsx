@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, BookImage, ImagePlus, Save, Trash2, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  BookImage,
+  ImagePlus,
+  Save,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useToast } from '../stores/useToast'
 import { uploadImage } from '../services/uploads'
 import {
@@ -203,9 +210,21 @@ export default function BookForm() {
     setIsSaving(true)
     setError(null)
 
+    if (!titulo.trim() || !autor.trim()) {
+      setIsSaving(false)
+      setError('Preencha titulo e autor para continuar.')
+      return
+    }
+
     if (!selectedGenreId) {
       setIsSaving(false)
       setError('Selecione um genero para continuar.')
+      return
+    }
+
+    if (!estado.trim() || !uf || !cidade) {
+      setIsSaving(false)
+      setError('Selecione estado de conservacao, UF e cidade.')
       return
     }
 
@@ -300,47 +319,53 @@ export default function BookForm() {
   }
 
   return (
-    <main className="mx-auto w-full space-y-3">
+    <main className="mx-auto w-full space-y-4 pb-16 lg:pb-0">
       <section className="">
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              to={book ? `/app/books/${book.id}` : '/app/feed'}
-              className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
-            >
-              <ChevronLeft size={16} />
-              Voltar
-            </Link>
-            <div>
-            <h1 className="text-2xl font-semibold text-ink">
-              {isEditing ? 'Atualize os dados do livro' : 'Cadastre um livro'}
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              Informe os dados principais para que outros leitores encontrem o
-              exemplar certo.
-            </p>
-            </div>
-          </div>
+        <div className="space-y-1">
+          <Link
+            to={book ? `/app/books/${book.id}` : '/app/feed'}
+            className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+          >
+            <ChevronLeft size={16} />
+            Voltar
+          </Link>
+          <h1 className="text-2xl font-semibold text-ink">
+            {isEditing ? 'Editar livro' : 'Cadastrar livro'}
+          </h1>
         </div>
       </section>
 
       <form
+        id="book-form"
         key={bookId ?? 'new-book'}
         onSubmit={handleSubmit}
         className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
       >
+        {error ? (
+          <section className="mb-3 rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2.5 text-sm font-semibold text-brand-deep">
+            {error}
+          </section>
+        ) : null}
+
+        <div className="mb-3 flex justify-end lg:hidden">
+          <button
+            type="submit"
+            disabled={isSaving || isDeleting || uploadingCount > 0}
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
+          >
+            <Save size={14} />
+            {isSaving ? 'Salvando...' : isEditing ? 'Salvar' : 'Cadastrar'}
+          </button>
+        </div>
+
         <div className="grid gap-2.5 lg:grid-cols-[1fr_0.75fr]">
           <section>
-            {error ? (
-              <p className="mt-3 rounded-lg border border-brand-deep/25 bg-brand-deep/5 px-3 py-2 text-xs font-semibold text-brand-deep">
-                {error}
-              </p>
-            ) : null}
+            <h2 className="text-sm font-semibold text-ink">Dados do livro</h2>
 
             <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  Titulo
+                  Titulo <span className="text-danger">*</span>
                 </span>
                 <input
                   value={titulo}
@@ -352,7 +377,7 @@ export default function BookForm() {
 
               <label className="space-y-1.5">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  Autor
+                  Autor <span className="text-danger">*</span>
                 </span>
                 <input
                   value={autor}
@@ -376,7 +401,7 @@ export default function BookForm() {
 
               <label className="space-y-1.5">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  Genero
+                  Genero <span className="text-danger">*</span>
                 </span>
                 <select
                   value={selectedGenreId}
@@ -394,7 +419,7 @@ export default function BookForm() {
 
               <label className="space-y-1.5">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  Estado
+                  Estado <span className="text-danger">*</span>
                 </span>
                 <select
                   value={estado}
@@ -409,57 +434,64 @@ export default function BookForm() {
                 </select>
               </label>
 
-              <label className="space-y-1.5 sm:col-span-2">
-                <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  UF
-                </span>
-                <select
-                  value={uf}
-                  onChange={(event) => {
-                    setUf(event.target.value)
-                    setCidade('')
-                    setCities([])
-                  }}
-                  disabled={isLoadingStates}
-                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <option value="">
-                    {isLoadingStates
-                      ? 'Carregando estados...'
-                      : 'Selecione a UF'}
-                  </option>
-                  {states.map((stateOption) => (
-                    <option key={stateOption.code} value={stateOption.code}>
-                      {stateOption.name} ({stateOption.code})
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <section className="sm:col-span-2 rounded-lg border border-line/35 bg-[#fbfaf7] p-2.5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Localizacao
+                </p>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                      UF <span className="text-danger">*</span>
+                    </span>
+                    <select
+                      value={uf}
+                      onChange={(event) => {
+                        setUf(event.target.value)
+                        setCidade('')
+                        setCities([])
+                      }}
+                      disabled={isLoadingStates}
+                      className="h-9 w-full rounded-lg border border-line/45 bg-white px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="">
+                        {isLoadingStates
+                          ? 'Carregando estados...'
+                          : 'Selecione a UF'}
+                      </option>
+                      {states.map((stateOption) => (
+                        <option key={stateOption.code} value={stateOption.code}>
+                          {stateOption.name} ({stateOption.code})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-              <label className="space-y-1.5 sm:col-span-2">
-                <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                  Cidade
-                </span>
-                <select
-                  value={cidade}
-                  onChange={(event) => setCidade(event.target.value)}
-                  disabled={!uf || isLoadingCities}
-                  className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <option value="">
-                    {!uf
-                      ? 'Selecione a UF primeiro'
-                      : isLoadingCities
-                        ? 'Carregando cidades...'
-                        : 'Selecione a cidade'}
-                  </option>
-                  {cities.map((cityName) => (
-                    <option key={cityName} value={cityName}>
-                      {cityName}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <label className="space-y-1.5">
+                    <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                      Cidade <span className="text-danger">*</span>
+                    </span>
+                    <select
+                      value={cidade}
+                      onChange={(event) => setCidade(event.target.value)}
+                      disabled={!uf || isLoadingCities}
+                      className="h-9 w-full rounded-lg border border-line/45 bg-white px-3.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="">
+                        {!uf
+                          ? 'Selecione a UF primeiro'
+                          : isLoadingCities
+                            ? 'Carregando cidades...'
+                            : 'Selecione a cidade'}
+                      </option>
+                      {cities.map((cityName) => (
+                        <option key={cityName} value={cityName}>
+                          {cityName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </section>
 
               <label className="space-y-1.5 sm:col-span-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
@@ -537,6 +569,11 @@ export default function BookForm() {
               <p className="mt-2 text-xs text-ink-muted">
                 JPG, PNG ou WEBP. A primeira foto e a capa.
               </p>
+              {photos.length > 0 ? (
+                <span className="mt-2 inline-flex w-fit rounded-md border border-accent/25 bg-accent/10 px-2 py-1 text-[11px] font-semibold text-brand-deep">
+                  Capa atual: Foto 1
+                </span>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-2.5">
@@ -569,6 +606,24 @@ export default function BookForm() {
           </aside>
         </div>
       </form>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line/35 bg-white/95 px-4 py-2 backdrop-blur lg:hidden">
+        <button
+          type="submit"
+          form="book-form"
+          disabled={isSaving || isDeleting || uploadingCount > 0}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Save size={16} />
+          {uploadingCount > 0
+            ? 'Enviando fotos...'
+            : isSaving
+              ? 'Salvando...'
+              : isEditing
+                ? 'Salvar alteracoes'
+                : 'Cadastrar livro'}
+        </button>
+      </div>
     </main>
   )
 }

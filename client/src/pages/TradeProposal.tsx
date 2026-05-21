@@ -167,20 +167,15 @@ export default function TradeProposal() {
   return (
     <main className="mx-auto w-full space-y-3">
       <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="space-y-1">
           <Link
             to={`/app/books/${requestedBook?.id ?? ''}`}
-            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
             <ChevronLeft size={16} />
-            Voltar ao livro
+            Voltar
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-ink">Propor troca</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              Selecione um livro seu e envie uma mensagem para iniciar a troca.
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-ink">Propor troca</h1>
         </div>
       </section>
 

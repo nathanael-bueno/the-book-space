@@ -21,6 +21,24 @@ export type ApiPost = {
     autor: string
     fotos?: string[] | null
   } | null
+  likes_count?: number
+  comments_count?: number
+  liked_by_me?: boolean
+  latest_comments?: ApiPostComment[]
+}
+
+export type ApiPostComment = {
+  id: string
+  id_post: string
+  id_usuario: string
+  conteudo: string
+  created_at: string
+  updated_at: string
+  author?: {
+    id: string
+    nome_completo: string
+    foto?: string | null
+  }
 }
 
 type PostEnvelope = {
@@ -30,6 +48,14 @@ type PostEnvelope = {
 
 type PaginatedPosts = {
   data: ApiPost[]
+}
+
+type CommentsEnvelope = {
+  data: ApiPostComment[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
 }
 
 export async function listPosts() {
@@ -74,4 +100,38 @@ export async function deletePost(postId: string) {
     method: 'DELETE',
     token: getToken(),
   })
+}
+
+export async function likePost(postId: string) {
+  return http<{ message: string }>(`/posts/${postId}/likes`, {
+    method: 'POST',
+    token: getToken(),
+  })
+}
+
+export async function unlikePost(postId: string) {
+  return http<{ message: string }>(`/posts/${postId}/likes`, {
+    method: 'DELETE',
+    token: getToken(),
+  })
+}
+
+export async function listPostComments(postId: string, perPage = 20, page = 1) {
+  return http<CommentsEnvelope>(
+    `/posts/${postId}/comments?per_page=${perPage}&page=${page}`,
+    {
+      token: getToken(),
+    }
+  )
+}
+
+export async function createPostComment(postId: string, conteudo: string) {
+  return http<{ message: string; data: ApiPostComment }>(
+    `/posts/${postId}/comments`,
+    {
+      method: 'POST',
+      body: { conteudo },
+      token: getToken(),
+    }
+  )
 }

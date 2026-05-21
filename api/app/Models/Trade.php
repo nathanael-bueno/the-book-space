@@ -26,6 +26,7 @@ class Trade extends Model
         'id_livro_oferecido',
         'id_usuario_proponente',
         'id_usuario_destinatario',
+        'id_instituicao_intermediaria',
         'status',
         'mensagem',
         'responded_at',
@@ -62,6 +63,11 @@ class Trade extends Model
     public function recipient(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_usuario_destinatario');
+    }
+
+    public function intermediaryInstitution(): BelongsTo
+    {
+        return $this->belongsTo(Institution::class, 'id_instituicao_intermediaria');
     }
 
     public function messages(): HasMany

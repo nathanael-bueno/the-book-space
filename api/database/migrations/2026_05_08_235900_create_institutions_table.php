@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('telefone', 40)->nullable();
             $table->text('necessidades')->nullable();
             $table->string('status', 30)->default('ativa');
+            $table->string('tipo_ponto', 30)->default('doacao');
             $table->timestamps();
         });
     }

@@ -157,6 +157,16 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail, CanRe
         return $this->hasMany(Post::class, 'id_usuario');
     }
 
+    public function postLikes(): HasMany
+    {
+        return $this->hasMany(PostLike::class, 'id_usuario');
+    }
+
+    public function postComments(): HasMany
+    {
+        return $this->hasMany(PostComment::class, 'id_usuario');
+    }
+
     public function donations(): HasMany
     {
         return $this->hasMany(Donation::class, 'id_usuario');

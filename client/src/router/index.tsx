@@ -27,6 +27,7 @@ import {
   PublicProfile,
   Register,
   ResetPassword,
+  Settings,
   SocialFeed,
   TradeChat,
   TradeDetails,
@@ -134,6 +135,10 @@ export const router = createBrowserRouter([
       {
         path: 'profile/notifications',
         element: withSuspense(ProfileNotifications),
+      },
+      {
+        path: 'settings',
+        element: withSuspense(Settings),
       },
       {
         path: 'admin',

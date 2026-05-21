@@ -71,6 +71,16 @@ async function apiSend(
   await http<{ message: string }>(path, { method, body, token })
 }
 
+async function apiSendWithData<T>(
+  method: 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+  path: string,
+  body?: unknown
+): Promise<T> {
+  const token = getToken()
+  const response = await http<ApiData<T>>(path, { method, body, token })
+  return response.data
+}
+
 function toClientInstitutionStatus(value: string): AdminInstitutionStatus {
   return value.toLowerCase() === 'pendente' ? 'Pendente' : 'Ativa'
 }
@@ -117,11 +127,20 @@ export async function persistInstitutionCreate(payload: {
   status: AdminInstitutionStatus
   pointType: AdminPointType
 }) {
-  await apiSend('POST', '/admin/institutions', {
-    ...payload,
-    status: toApiInstitutionStatus(payload.status),
-    pointType: toApiPointType(payload.pointType),
-  })
+  const data = await apiSendWithData<AdminInstitution>(
+    'POST',
+    '/admin/institutions',
+    {
+      ...payload,
+      status: toApiInstitutionStatus(payload.status),
+      pointType: toApiPointType(payload.pointType),
+    }
+  )
+  return {
+    ...data,
+    status: toClientInstitutionStatus(data.status),
+    pointType: toClientPointType(data.pointType),
+  }
 }
 
 export async function persistInstitutionUpdate(
@@ -160,7 +179,7 @@ export async function persistGenreCreate(payload: {
   name: string
   category: string
 }) {
-  await apiSend('POST', '/admin/genres', payload)
+  return apiSendWithData<AdminGenre>('POST', '/admin/genres', payload)
 }
 
 export async function persistGenreUpdate(

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Building2, CheckCircle2, Clock3 } from 'lucide-react'
+import { Building2 } from 'lucide-react'
 import { ApiError } from '../services/http'
 import { getMyBooks, type ApiBook } from '../services/books'
+import { StatusBadge } from '../components/ui/StatusBadge'
 
 function formatDate(isoDate?: string) {
   if (!isoDate) return 'Data nao informada'
@@ -73,8 +74,8 @@ export default function DonationsHistory() {
               Historico de doacoes
             </h1>
             <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              Acompanhe livros enviados para instituicoes e o andamento de cada
-              solicitacao.
+              Acompanhe as doacoes finalizadas e mantenha um historico da sua
+              contribuicao com instituicoes parceiras.
             </p>
           </div>
         </div>
@@ -92,39 +93,23 @@ export default function DonationsHistory() {
           </p>
         ) : null}
         {donationItems.map((donation) => {
-          const isDone = donation.status === 'Concluida'
-
           return (
             <article
               key={donation.id}
-              className="grid gap-2.5 rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center sm:p-3.5"
+              className="grid gap-2 rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center"
             >
-              <div className="flex items-start gap-2.5">
-                <div className="flex h-9 w-11 shrink-0 items-center justify-center rounded-lg border border-accent/15 bg-[#fbfaf7] text-brand-deep">
-                  <Building2 size={21} />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-ink">
-                    {donation.institution}
-                  </h2>
-                  <p className="mt-1 text-sm text-ink-dim">{donation.book}</p>
-                  <p className="mt-2 text-xs font-medium text-ink-muted">
-                    {donation.date}
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink">
+                  {donation.book}
+                </p>
+                <p className="mt-1 text-xs text-ink-dim">
+                  {donation.institution}
+                </p>
+                <p className="mt-1.5 text-xs text-ink-muted">
+                  Registro confirmado em {donation.date}.
+                </p>
               </div>
-
-              <span
-                className={[
-                  'inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold',
-                  isDone
-                    ? 'border-accent/25 bg-white text-brand-deep'
-                    : 'border-line/45 bg-white text-ink-dim',
-                ].join(' ')}
-              >
-                {isDone ? <CheckCircle2 size={16} /> : <Clock3 size={16} />}
-                {donation.status}
-              </span>
+              <StatusBadge status="doado" className="w-fit" />
             </article>
           )
         })}

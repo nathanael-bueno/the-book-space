@@ -123,7 +123,6 @@ export default function ForgotPassword() {
             </button>
           </div>
         )}
-
       </div>
     </div>
   )

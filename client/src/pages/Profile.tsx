@@ -36,6 +36,33 @@ type SummaryPageState = {
   donations: number
 }
 
+function getBookStatusPresentation(status?: string) {
+  const normalized = (status ?? '').trim().toLowerCase()
+  if (normalized === 'disponivel') {
+    return {
+      label: 'Disponivel',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    }
+  }
+  if (normalized === 'reservado') {
+    return {
+      label: 'Reservado',
+      className: 'border-amber-200 bg-amber-50 text-amber-700',
+    }
+  }
+  if (normalized === 'doado') {
+    return {
+      label: 'Doado',
+      className: 'border-brand-deep/20 bg-[#fbfaf7] text-brand-deep',
+    }
+  }
+
+  return {
+    label: status || 'Sem status',
+    className: 'border-line/40 bg-white text-ink-muted',
+  }
+}
+
 export default function Profile() {
   const toast = useToast()
   const [profileState, setProfileState] = useState<ProfilePageState>({
@@ -77,7 +104,7 @@ export default function Profile() {
           err instanceof ApiError
             ? err.message
             : 'Nao foi possivel carregar seu perfil.'
-        setProfileState((s) => ({ ...s, loading: false, error: null }))
+        setProfileState((s) => ({ ...s, loading: false, error: message }))
         toast.error({ title: 'Erro', message })
       }
     }
@@ -106,7 +133,7 @@ export default function Profile() {
           err instanceof ApiError
             ? err.message
             : 'Nao foi possivel carregar as avaliacoes recebidas.'
-        setReviewsState((s) => ({ ...s, loading: false, error: null }))
+        setReviewsState((s) => ({ ...s, loading: false, error: message }))
         toast.error({ title: 'Erro', message })
       }
     }
@@ -184,12 +211,23 @@ export default function Profile() {
   }
 
   return (
-    <main className="mx-auto w-full space-y-3">
+    <main className="mx-auto w-full space-y-5">
+      <section className="space-y-1">
+        <Link
+          to="/app/feed"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+        >
+          <span className="text-base leading-none">‹</span>
+          Voltar
+        </Link>
+        <h1 className="text-2xl font-semibold text-ink">Meu perfil</h1>
+      </section>
+
       {/* Hero */}
-      <section className="rounded-xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <section className="rounded-xl border border-line/35 bg-white p-5 sm:p-6">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-accent/15 bg-[#f5f3ee] text-accent shadow-sm">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-line/30 bg-[#f5f3ee] text-accent">
               {profile?.foto ? (
                 <img
                   src={profile.foto}
@@ -203,7 +241,7 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="min-w-0 space-y-1">
+            <div className="min-w-0 space-y-2">
               <h1 className="text-xl font-semibold text-ink">
                 {profile?.nome_completo ?? '-'}
               </h1>
@@ -233,6 +271,11 @@ export default function Profile() {
                   {profile.bio}
                 </p>
               )}
+              {!profile?.bio && (
+                <p className="pt-1 text-sm leading-6 text-ink-dim">
+                  Adicione uma bio para apresentar melhor seu perfil.
+                </p>
+              )}
             </div>
           </div>
 
@@ -246,26 +289,44 @@ export default function Profile() {
         </div>
       </section>
 
+      {profileState.error && (
+        <section className="rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep shadow-sm sm:p-3.5">
+          {profileState.error}
+        </section>
+      )}
+
       {/* Stats */}
-      <section className="grid grid-cols-3 gap-2.5">
-        <article className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-4">
-          <p className="text-2xl font-bold text-ink">{myBooks.length}</p>
-          <p className="mt-0.5 text-xs font-medium text-ink-muted">Livros</p>
+      <section className="grid grid-cols-3 gap-2">
+        <article className="rounded-xl border border-line/30 bg-white p-3 sm:p-4">
+          <p className="text-3xl font-bold leading-none text-ink">
+            {myBooks.length}
+          </p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            Livros
+          </p>
         </article>
-        <article className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-4">
-          <p className="text-2xl font-bold text-ink">{completedTradesCount}</p>
-          <p className="mt-0.5 text-xs font-medium text-ink-muted">Trocas</p>
+        <article className="rounded-xl border border-line/30 bg-white p-3 sm:p-4">
+          <p className="text-3xl font-bold leading-none text-ink">
+            {completedTradesCount}
+          </p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            Trocas
+          </p>
         </article>
-        <article className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-4">
-          <p className="text-2xl font-bold text-ink">{donationsCount}</p>
-          <p className="mt-0.5 text-xs font-medium text-ink-muted">Doacoes</p>
+        <article className="rounded-xl border border-line/30 bg-white p-3 sm:p-4">
+          <p className="text-3xl font-bold leading-none text-ink">
+            {donationsCount}
+          </p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            Doacoes
+          </p>
         </article>
       </section>
 
       {/* Main content */}
-      <div className="grid gap-2.5 xl:grid-cols-[1fr_280px]">
+      <div className="grid gap-3 xl:grid-cols-[1fr_270px]">
         {/* Livros */}
-        <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-4">
+        <section className="rounded-xl border border-line/30 bg-white p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-ink">Meus livros</h2>
             <Link
@@ -281,7 +342,7 @@ export default function Profile() {
             {myBooks.map((book) => (
               <article
                 key={book.id}
-                className="flex gap-3 rounded-lg border border-line/35 bg-[#fbfaf7] p-3"
+                className="flex gap-3 rounded-lg border border-line/25 bg-[#fbfaf7] p-3"
               >
                 <div className="h-16 w-11 shrink-0 overflow-hidden rounded-md border border-line/35 bg-white">
                   {book.fotos?.[0] ? (
@@ -303,12 +364,16 @@ export default function Profile() {
                   <p className="mt-0.5 truncate text-xs text-ink-muted">
                     {book.autor}
                   </p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-deep">
-                    {book.status}
+                  <p className="mt-1">
+                    <span
+                      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold normal-case ${getBookStatusPresentation(book.status).className}`}
+                    >
+                      {getBookStatusPresentation(book.status).label}
+                    </span>
                   </p>
                   <Link
                     to={`/app/books/${book.id}/edit`}
-                    className="mt-2 inline-flex rounded-md border border-line/45 px-2 py-0.5 text-xs font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                    className="mt-2 inline-flex rounded-md border border-line/35 px-2 py-1 text-xs font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
                   >
                     Editar
                   </Link>
@@ -318,7 +383,7 @@ export default function Profile() {
           </div>
 
           {!myBooks.length && (
-            <p className="py-8 text-center text-sm text-ink-muted">
+            <p className="ui-empty-state py-8 text-center text-sm text-ink-muted">
               Voce ainda nao cadastrou livros.
             </p>
           )}
@@ -327,7 +392,7 @@ export default function Profile() {
         {/* Sidebar */}
         <div className="space-y-2.5">
           {/* Acessos rapidos */}
-          <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-4">
+          <section className="rounded-xl border border-line/30 bg-white p-3 sm:p-4">
             <h2 className="text-base font-semibold text-ink">Atalhos</h2>
             <nav className="mt-3 space-y-1.5">
               <Link
@@ -355,7 +420,7 @@ export default function Profile() {
           </section>
 
           {/* Avaliacoes */}
-          <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-4">
+          <section className="rounded-xl border border-line/30 bg-white p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-ink">Avaliacoes</h2>
               {ratingLabel && (
@@ -370,6 +435,11 @@ export default function Profile() {
               {isLoadingReviews && (
                 <p className="text-sm text-ink-dim">Carregando...</p>
               )}
+              {reviewsState.error && (
+                <p className="text-sm font-medium text-brand-deep">
+                  {reviewsState.error}
+                </p>
+              )}
               {reviews.map((review) => (
                 <article
                   key={review.id}
@@ -380,7 +450,10 @@ export default function Profile() {
                       {review.reviewer?.nome_completo ?? 'Usuario'}
                     </p>
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
-                      <Star size={11} className="fill-amber-400 text-amber-400" />
+                      <Star
+                        size={11}
+                        className="fill-amber-400 text-amber-400"
+                      />
                       {Number(review.nota).toFixed(1)}
                     </span>
                   </div>

@@ -68,6 +68,7 @@ class ProfileController extends Controller
             'faixa_etaria' => $user->faixa_etaria,
             'nota' => $user->nota,
             'status' => $user->status,
+            'auth_provider' => $user->auth_provider ?? 'email',
             'email_verified_at' => $user->email_verified_at,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,

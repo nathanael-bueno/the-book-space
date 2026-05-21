@@ -1,5 +1,12 @@
-import { Ban, CheckCircle2, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {
+  Ban,
+  CheckCircle2,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import GenreModal from '../components/admin/GenreModal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -25,6 +32,12 @@ export default function AdminGenres() {
   const [createName, setCreateName] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [openMenu, setOpenMenu] = useState<{
+    id: string
+    top: number
+    left: number
+  } | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   function getApiMessage(err: unknown, fallback: string): string {
     return err instanceof ApiError ? err.message : fallback
@@ -53,6 +66,17 @@ export default function AdminGenres() {
       active = false
     }
   }, [toast])
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenu(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   function resetForm() {
     setEditingId(null)
@@ -99,8 +123,8 @@ export default function AdminGenres() {
     }
 
     try {
-      await persistGenreCreate(payload)
-      setGenres((prev) => [{ id: crypto.randomUUID(), ...payload }, ...prev])
+      const createdGenre = await persistGenreCreate(payload)
+      setGenres((prev) => [createdGenre, ...prev])
       toast.success({
         title: 'Genero criado',
         message: 'Genero criado com sucesso.',
@@ -200,14 +224,18 @@ export default function AdminGenres() {
       ) : null}
 
       {!isLoading && genres.length ? (
-        <section className="overflow-hidden rounded-xl border border-line/45 bg-white shadow-sm">
+        <section className="rounded-xl border border-line/45 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="w-full border-collapse text-sm">
               <thead className="bg-[#fbfaf7]">
                 <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="px-3 py-2.5 font-semibold">Genero</th>
-                  <th className="px-3 py-2.5 font-semibold">Status</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Genero
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Status
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                     Acoes
                   </th>
                 </tr>
@@ -220,10 +248,10 @@ export default function AdminGenres() {
                       key={genre.id}
                       className="border-t border-line/35 align-middle"
                     >
-                      <td className="px-3 py-3 font-medium text-ink">
-                        {genre.name}
+                      <td className="px-4 py-3 font-medium text-ink">
+                        <p className="max-w-[340px] truncate">{genre.name}</p>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <span
                           className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
                             isInactive ? 'text-ink-dim' : 'text-accent'
@@ -232,35 +260,34 @@ export default function AdminGenres() {
                           {isInactive ? 'Desativado' : 'Ativo'}
                         </span>
                       </td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap justify-end gap-2">
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end">
                           <button
                             type="button"
-                            onClick={() => onEdit(genre)}
-                            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                            onClick={(event) => {
+                              const rect =
+                                event.currentTarget.getBoundingClientRect()
+                              const menuWidth = 168
+                              const spaceRight = window.innerWidth - rect.right
+                              const left =
+                                spaceRight >= menuWidth + 12
+                                  ? rect.right + 8
+                                  : rect.left - menuWidth - 8
+
+                              setOpenMenu((current) =>
+                                current?.id === genre.id
+                                  ? null
+                                  : {
+                                      id: genre.id,
+                                      top: rect.top + rect.height + 6,
+                                      left,
+                                    }
+                              )
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line/45 bg-white text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                            aria-label="Abrir ações do gênero"
                           >
-                            <Pencil size={14} />
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleGenreStatus(genre.id)}
-                            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-                          >
-                            {isInactive ? (
-                              <CheckCircle2 size={14} />
-                            ) : (
-                              <Ban size={14} />
-                            )}
-                            {isInactive ? 'Ativar' : 'Desativar'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(genre.id)}
-                            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line/45 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-                          >
-                            <Trash2 size={14} />
-                            Excluir
+                            <MoreVertical size={15} />
                           </button>
                         </div>
                       </td>
@@ -271,6 +298,54 @@ export default function AdminGenres() {
             </table>
           </div>
         </section>
+      ) : null}
+
+      {openMenu ? (
+        <div
+          ref={menuRef}
+          className="fixed z-40 w-44 overflow-hidden rounded-lg border border-line/45 bg-white p-1 shadow-lg"
+          style={{ top: openMenu.top, left: openMenu.left }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const genre = genres.find((item) => item.id === openMenu.id)
+              if (!genre) return
+              onEdit(genre)
+              setOpenMenu(null)
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+          >
+            <Pencil size={14} />
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              toggleGenreStatus(openMenu.id)
+              setOpenMenu(null)
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+          >
+            {inactiveGenreIds.has(openMenu.id) ? (
+              <CheckCircle2 size={14} />
+            ) : (
+              <Ban size={14} />
+            )}
+            {inactiveGenreIds.has(openMenu.id) ? 'Ativar' : 'Desativar'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmDeleteId(openMenu.id)
+              setOpenMenu(null)
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+          >
+            <Trash2 size={14} />
+            Excluir
+          </button>
+        </div>
       ) : null}
 
       <GenreModal

@@ -1,5 +1,5 @@
-import { Ban, Search, ShieldBan, UserX } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Ban, MoreVertical, Search, ShieldBan, UserX } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import {
   listAdminUsers,
@@ -14,10 +14,16 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [openMenu, setOpenMenu] = useState<{
+    id: string
+    top: number
+    left: number
+  } | null>(null)
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     id: string
     status: AdminUserStatus
   } | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     let active = true
@@ -41,6 +47,17 @@ export default function AdminUsers() {
     return () => {
       active = false
     }
+  }, [])
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenu(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
 
   const filteredUsers = useMemo(() => {
@@ -107,76 +124,160 @@ export default function AdminUsers() {
         </section>
       ) : null}
 
-      <section className="space-y-2.5">
-        {filteredUsers.map((user) => (
-          <article
-            key={user.id}
-            className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-2.5">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
-                  ID {user.id}
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-ink">
-                  {user.name}
-                </h2>
-                <p className="mt-1 text-sm text-ink-muted">{user.email}</p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  Reputacao: {user.reputation.toFixed(1)}
-                </p>
-              </div>
+      <section className="rounded-xl border border-line/45 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line/35 bg-[#fbfaf7] text-left">
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  ID
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Nome
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Email
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Reputacao
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Status
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Acoes
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => (
+                <tr
+                  key={user.id}
+                  className="border-b border-line/25 align-middle last:border-b-0"
+                >
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-ink">
+                    {user.id}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="max-w-[240px] truncate font-semibold text-ink">
+                      {user.name}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="max-w-[300px] truncate text-ink-dim">
+                      {user.email}
+                    </p>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-ink-dim">
+                    {user.reputation.toFixed(1)}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span
+                      className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
+                        user.status === 'Ativo'
+                          ? 'text-accent'
+                          : user.status === 'Suspenso'
+                            ? 'text-brand-deep'
+                            : 'text-ink-dim'
+                      }`}
+                    >
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          const rect =
+                            event.currentTarget.getBoundingClientRect()
+                          const menuWidth = 160
+                          const spaceRight = window.innerWidth - rect.right
+                          const left =
+                            spaceRight >= menuWidth + 12
+                              ? rect.right + 8
+                              : rect.left - menuWidth - 8
 
-              <span
-                className={`inline-flex rounded-md border border-line/45 bg-[#fbfaf7] px-2 py-0.5 text-xs font-medium ${
-                  user.status === 'Ativo'
-                    ? 'text-accent'
-                    : user.status === 'Suspenso'
-                      ? 'text-brand-deep'
-                      : 'text-ink-dim'
-                }`}
-              >
-                {user.status}
-              </span>
-            </div>
-
-            <div className="mt-2.5 flex flex-wrap gap-2 border-t border-line/35 pt-2.5">
-              <button
-                type="button"
-                onClick={() =>
-                  setPendingStatusChange({ id: user.id, status: 'Suspenso' })
-                }
-                disabled={user.status === 'Banido'}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <UserX size={16} />
-                Suspender
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setPendingStatusChange({ id: user.id, status: 'Banido' })
-                }
-                disabled={user.status === 'Banido'}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Ban size={16} />
-                Banir
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setPendingStatusChange({ id: user.id, status: 'Ativo' })
-                }
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-deep"
-              >
-                <ShieldBan size={16} />
-                Reativar
-              </button>
-            </div>
-          </article>
-        ))}
+                          setOpenMenu((current) =>
+                            current?.id === user.id
+                              ? null
+                              : {
+                                  id: user.id,
+                                  top: rect.top + rect.height + 6,
+                                  left,
+                                }
+                          )
+                        }}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line/45 bg-white text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                        aria-label="Abrir ações do usuário"
+                      >
+                        <MoreVertical size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
+
+      {openMenu ? (
+        <div
+          ref={menuRef}
+          className="fixed z-40 w-40 overflow-hidden rounded-lg border border-line/45 bg-white p-1 shadow-lg"
+          style={{ top: openMenu.top, left: openMenu.left }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setPendingStatusChange({
+                id: openMenu.id,
+                status: 'Suspenso',
+              })
+              setOpenMenu(null)
+            }}
+            disabled={
+              users.find((user) => user.id === openMenu.id)?.status === 'Banido'
+            }
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <UserX size={14} />
+            Suspender
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingStatusChange({
+                id: openMenu.id,
+                status: 'Banido',
+              })
+              setOpenMenu(null)
+            }}
+            disabled={
+              users.find((user) => user.id === openMenu.id)?.status === 'Banido'
+            }
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Ban size={14} />
+            Banir
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingStatusChange({
+                id: openMenu.id,
+                status: 'Ativo',
+              })
+              setOpenMenu(null)
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+          >
+            <ShieldBan size={14} />
+            Reativar
+          </button>
+        </div>
+      ) : null}
 
       <ConfirmDialog
         open={Boolean(pendingStatusChange)}

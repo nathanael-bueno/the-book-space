@@ -18,6 +18,7 @@ import {
   type ApiTradeBook,
 } from '../services/trades'
 import { useToast } from '../stores/useToast'
+import SharedBookCard from '../components/books/BookCard'
 
 const timeline = [
   { key: 'pendente', label: 'Proposta enviada', text: 'A troca foi criada.' },
@@ -33,38 +34,28 @@ const statusStep: Record<ApiTrade['status'], number> = {
   cancelada: 0,
 }
 
-function BookCard({ book, label }: { book?: ApiTradeBook; label: string }) {
+function TradeBookCard({
+  book,
+  label,
+}: {
+  book?: ApiTradeBook
+  label: string
+}) {
   return (
-    <article className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+    <article className="space-y-2 rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
       <p className="text-xs font-semibold uppercase tracking-wide text-brand-deep">
         {label}
       </p>
-      <div className="mt-4 flex gap-2.5">
-        <div className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-line/35 bg-[#fbfaf7] text-brand-deep">
-          {book?.fotos?.[0] ? (
-            <img
-              src={book.fotos[0]}
-              alt={`Capa do livro ${book.titulo}`}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-[11px] font-medium text-ink-muted">
-              Sem capa
-            </span>
-          )}
-        </div>
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-ink">
-            {book?.titulo ?? 'Titulo indisponivel'}
-          </h2>
-          <p className="mt-1 text-sm text-ink-muted">
-            {book?.autor ?? 'Autor indisponivel'}
-          </p>
-          <p className="mt-3 text-sm leading-6 text-ink-dim">
-            {book?.estado_conservacao ?? 'Estado nao informado'}
-          </p>
-        </div>
-      </div>
+      <SharedBookCard
+        title={book?.titulo ?? 'Titulo indisponivel'}
+        cover={book?.fotos?.[0]}
+        coverAlt={`Capa do livro ${book?.titulo ?? 'indisponivel'}`}
+        metadata={[
+          book?.autor ?? 'Autor indisponivel',
+          book?.estado_conservacao ?? 'Estado nao informado',
+        ]}
+        status="disponivel"
+      />
     </article>
   )
 }
@@ -168,21 +159,15 @@ export default function TradeDetails() {
   return (
     <main className="mx-auto w-full space-y-3">
       <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="space-y-1">
           <Link
             to="/app/trades"
-            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
             <ChevronLeft size={16} />
-            Voltar para trocas
+            Voltar
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-ink">Status da troca</h1>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
-              Veja a etapa atual da proposta e avance para o chat quando
-              precisar alinhar a entrega.
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold text-ink">Status da troca</h1>
         </div>
         <Link
           to={`/app/trades/${trade.id}/chat`}
@@ -232,8 +217,8 @@ export default function TradeDetails() {
       </section>
 
       <section className="grid gap-2.5 lg:grid-cols-2">
-        <BookCard book={trade.requested_book} label="Livro solicitado" />
-        <BookCard book={trade.offered_book} label="Livro oferecido" />
+        <TradeBookCard book={trade.requested_book} label="Livro solicitado" />
+        <TradeBookCard book={trade.offered_book} label="Livro oferecido" />
       </section>
 
       <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">

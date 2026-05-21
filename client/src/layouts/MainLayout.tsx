@@ -45,6 +45,11 @@ type SearchSuggestion = {
   cover: string
 }
 
+type SidebarProfile = {
+  name: string
+  email: string
+}
+
 const NAV_ITEMS: SidebarItem[] = [
   {
     to: '/app/feed',
@@ -140,8 +145,14 @@ export default function MainLayout() {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [isSidebarProfileMenuOpen, setIsSidebarProfileMenuOpen] =
+    useState(false)
+  const [sidebarProfile, setSidebarProfile] = useState<SidebarProfile | null>(
+    null
+  )
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const sidebarProfileMenuRef = useRef<HTMLDivElement | null>(null)
   const userRole = useMemo<UserRole>(() => {
     const token = getToken()
     if (!token) return 'usuario'
@@ -195,6 +206,12 @@ export default function MainLayout() {
         !profileMenuRef.current.contains(event.target as Node)
       ) {
         setIsProfileMenuOpen(false)
+      }
+      if (
+        sidebarProfileMenuRef.current &&
+        !sidebarProfileMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsSidebarProfileMenuOpen(false)
       }
     }
 
@@ -263,6 +280,11 @@ export default function MainLayout() {
         const incomplete =
           !profile.cidade || !profile.estado || !profile.faixa_etaria
 
+        setSidebarProfile({
+          name: profile.nome_completo ?? 'Usuario',
+          email: profile.email ?? '',
+        })
+
         if (incomplete) {
           navigate('/auth/complete-profile', { replace: true })
         }
@@ -308,6 +330,7 @@ export default function MainLayout() {
   function handleLogout() {
     clearToken()
     setIsProfileMenuOpen(false)
+    setIsSidebarProfileMenuOpen(false)
     navigate('/auth/login', { replace: true })
   }
 
@@ -411,6 +434,68 @@ export default function MainLayout() {
             </nav>
           </>
         ) : null}
+
+        <div className="mt-auto pt-5">
+          <div className="mb-3 h-px bg-line/45" />
+          <div className="relative" ref={sidebarProfileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsSidebarProfileMenuOpen((prev) => !prev)}
+              className={[
+                'ui-sidebar-item inline-flex w-full items-center rounded-lg text-sm font-medium text-ink-muted transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep',
+                isSidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3',
+                isSidebarCollapsed ? 'h-9' : 'h-auto py-2',
+              ].join(' ')}
+              title="Perfil"
+              aria-label="Menu de perfil"
+              aria-haspopup="menu"
+              aria-expanded={isSidebarProfileMenuOpen}
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f3f0ea] text-xs font-semibold text-brand-deep">
+                {(sidebarProfile?.name?.trim()?.[0] ?? 'U').toUpperCase()}
+              </span>
+              {!isSidebarCollapsed ? (
+                <span className="min-w-0 text-left">
+                  <span className="block truncate text-sm font-semibold text-ink">
+                    {sidebarProfile?.name ?? 'Usuario'}
+                  </span>
+                  <span className="block truncate text-xs font-medium text-ink-muted">
+                    {sidebarProfile?.email ?? ''}
+                  </span>
+                </span>
+              ) : null}
+            </button>
+
+            {isSidebarProfileMenuOpen ? (
+              <div
+                role="menu"
+                className={[
+                  'absolute bottom-[calc(100%+6px)] z-30 w-44 overflow-hidden rounded-xl border border-line/45 bg-white p-1 shadow-lg',
+                  isSidebarCollapsed ? 'left-0' : 'left-0 right-0 w-full',
+                ].join(' ')}
+              >
+                <Link
+                  to="/app/settings"
+                  role="menuitem"
+                  onClick={() => setIsSidebarProfileMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                >
+                  <Settings size={16} />
+                  Configuracoes
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                >
+                  <LogOut size={16} />
+                  Sair
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -498,7 +583,7 @@ export default function MainLayout() {
                 </span>
               ) : null}
             </Link>
-            <div className="relative" ref={profileMenuRef}>
+            <div className="relative lg:hidden" ref={profileMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen((prev) => !prev)}
@@ -516,12 +601,12 @@ export default function MainLayout() {
                   className="absolute right-0 z-30 mt-2 w-44 overflow-hidden rounded-xl border border-line/45 bg-white p-1 shadow-lg"
                 >
                   <Link
-                    to="/app/profile"
+                    to="/app/settings"
                     role="menuitem"
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
                   >
-                    <UserCircle2 size={16} />
-                    Perfil
+                    <Settings size={16} />
+                    Configuracoes
                   </Link>
                   <button
                     type="button"

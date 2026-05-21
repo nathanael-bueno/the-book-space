@@ -50,7 +50,9 @@ export default function ProfileEdit() {
   const [cidade, setCidade] = useState('')
   const [faixaEtaria, setFaixaEtaria] = useState('')
   const [cities, setCities] = useState<string[]>([])
-  const [states, setStates] = useState<Array<{ code: string; name: string }>>([])
+  const [states, setStates] = useState<Array<{ code: string; name: string }>>(
+    []
+  )
   const [isLoadingCities, setIsLoadingCities] = useState(false)
   const [isLoadingStates, setIsLoadingStates] = useState(true)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -83,13 +85,18 @@ export default function ProfileEdit() {
         setStates(data)
       } catch {
         if (!active) return
-        toast.error({ title: 'Erro', message: 'Nao foi possivel carregar os estados.' })
+        toast.error({
+          title: 'Erro',
+          message: 'Nao foi possivel carregar os estados.',
+        })
       } finally {
         if (active) setIsLoadingStates(false)
       }
     }
     loadStates()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [])
 
   useEffect(() => {
@@ -108,14 +115,19 @@ export default function ProfileEdit() {
         setFaixaEtaria(d.faixa_etaria ?? '')
       } catch (err) {
         if (!active) return
-        const message = err instanceof ApiError ? err.message : 'Nao foi possivel carregar seu perfil.'
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel carregar seu perfil.'
         toast.error({ title: 'Erro', message })
       } finally {
         if (active) setIsLoading(false)
       }
     }
     loadProfile()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [])
 
   useEffect(() => {
@@ -135,7 +147,9 @@ export default function ProfileEdit() {
       }
     }
     loadCities()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [estado])
 
   async function handleSave() {
@@ -159,7 +173,8 @@ export default function ProfileEdit() {
       setProfile(response.data)
       toast.success({ title: 'Perfil salvo', message: response.message })
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Falha ao salvar perfil.'
+      const message =
+        err instanceof ApiError ? err.message : 'Falha ao salvar perfil.'
       toast.error({ title: 'Erro ao salvar', message })
     } finally {
       setIsSaving(false)
@@ -171,20 +186,15 @@ export default function ProfileEdit() {
       <div className="grid gap-3 xl:grid-cols-[1fr_260px]">
         {/* Form */}
         <section className="rounded-xl border border-line/45 bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-3">
+          <div className="space-y-1">
             <Link
               to="/app/profile"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 py-2 text-sm font-medium text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft size={16} />
               Voltar
             </Link>
-            <div>
-              <h1 className="text-lg font-semibold text-ink">Editar perfil</h1>
-              <p className="text-sm text-ink-dim">
-                Suas informacoes publicas aparecem para outros usuarios no catalogo e nas trocas.
-              </p>
-            </div>
+            <h1 className="text-2xl font-semibold text-ink">Editar perfil</h1>
           </div>
 
           {isLoading ? (
@@ -256,7 +266,9 @@ export default function ProfileEdit() {
                           : 'Selecione a cidade'}
                     </option>
                     {cities.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
                   </select>
                 </Field>
@@ -270,7 +282,9 @@ export default function ProfileEdit() {
                 >
                   <option value="">Selecione a faixa etaria</option>
                   {ageRanges.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -326,7 +340,9 @@ export default function ProfileEdit() {
 
             {photoFile && (
               <p className="text-center text-xs text-ink-dim">
-                <span className="font-medium text-brand-deep">{photoFile.name}</span>
+                <span className="font-medium text-brand-deep">
+                  {photoFile.name}
+                </span>
                 <br />
                 sera enviada ao salvar
               </p>
@@ -344,7 +360,11 @@ export default function ProfileEdit() {
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-accent/15 bg-white text-accent">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={photoPreview}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
                     <UserRound size={20} />

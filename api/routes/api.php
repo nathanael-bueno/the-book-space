@@ -16,7 +16,9 @@ use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TradeController;
@@ -81,6 +83,10 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function
     Route::post('/posts', [PostController::class, 'store']);
     Route::patch('/posts/{post}', [PostController::class, 'update']);
     Route::delete('/posts/{post}', [PostController::class, 'destroy']);
+    Route::post('/posts/{post}/likes', [PostLikeController::class, 'store']);
+    Route::delete('/posts/{post}/likes', [PostLikeController::class, 'destroy']);
+    Route::get('/posts/{post}/comments', [PostCommentController::class, 'index']);
+    Route::post('/posts/{post}/comments', [PostCommentController::class, 'store']);
 
     // Donations
     Route::get('/donations', [DonationController::class, 'index']);

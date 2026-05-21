@@ -22,6 +22,7 @@ class InstitutionController extends Controller
                 'email_contato',
                 'telefone',
                 'necessidades',
+                'tipo_ponto',
             ]);
 
         return response()->json([
@@ -32,6 +33,7 @@ class InstitutionController extends Controller
                 'contact' => $institution->email_contato,
                 'phone' => $institution->telefone,
                 'needs' => $institution->necessidades,
+                'pointType' => $institution->tipo_ponto,
             ]),
             'meta' => [
                 'current_page' => $institutions->currentPage(),
@@ -56,6 +58,7 @@ class InstitutionController extends Controller
                 'contact' => $institution->email_contato,
                 'phone' => $institution->telefone,
                 'needs' => $institution->necessidades,
+                'pointType' => $institution->tipo_ponto,
             ],
         ]);
     }
