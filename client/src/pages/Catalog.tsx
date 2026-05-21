@@ -145,7 +145,11 @@ export default function Catalog() {
         })
 
         if (!active) return
-        setBooks(response.data)
+        const tradeableBooks = response.data.filter(
+          (book) => book.id_usuario_dono !== currentUserId
+        )
+
+        setBooks(tradeableBooks)
       } catch (err) {
         if (!active) return
         toast.error({
@@ -164,7 +168,7 @@ export default function Catalog() {
     return () => {
       active = false
     }
-  }, [query, condition, locationTerm, selectedGenreId])
+  }, [query, condition, locationTerm, selectedGenreId, currentUserId])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
