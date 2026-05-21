@@ -2,11 +2,7 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout'
 import ErrorPage from '../pages/ErrorPage'
 import {
-  AdminDashboard,
-  AdminGenres,
   AdminInstitutions,
-  AdminReports,
-  AdminUsers,
   BookDetails,
   BookForm,
   Catalog,
@@ -14,7 +10,6 @@ import {
   CreatePost,
   EditPost,
   DonationFlow,
-  DonationsHistory,
   ForgotPassword,
   GoogleAuthCallback,
   Institutions,
@@ -23,7 +18,6 @@ import {
   Notifications,
   Profile,
   ProfileEdit,
-  ProfileNotifications,
   PublicProfile,
   Register,
   ResetPassword,
@@ -117,10 +111,6 @@ export const router = createBrowserRouter([
         element: withSuspense(DonationFlow),
       },
       {
-        path: 'donations',
-        element: withSuspense(DonationsHistory),
-      },
-      {
         path: 'users/:userId',
         element: withSuspense(PublicProfile),
       },
@@ -133,36 +123,16 @@ export const router = createBrowserRouter([
         element: withSuspense(ProfileEdit),
       },
       {
-        path: 'profile/notifications',
-        element: withSuspense(ProfileNotifications),
-      },
-      {
         path: 'settings',
         element: withSuspense(Settings),
       },
       {
         path: 'admin',
-        element: withSuspense(AdminDashboard),
-      },
-      {
-        path: 'admin/painel',
-        element: withSuspense(AdminDashboard),
+        element: <Navigate to="/app/admin/institutions" replace />,
       },
       {
         path: 'admin/institutions',
         element: withSuspense(AdminInstitutions),
-      },
-      {
-        path: 'admin/reports',
-        element: withSuspense(AdminReports),
-      },
-      {
-        path: 'admin/users',
-        element: withSuspense(AdminUsers),
-      },
-      {
-        path: 'admin/genres',
-        element: withSuspense(AdminGenres),
       },
     ],
   },

@@ -4,7 +4,6 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   Building2,
-  HandHeart,
   PanelLeftClose,
   PanelLeftOpen,
   PenSquare,
@@ -13,8 +12,6 @@ import {
   Search,
   LogOut,
   Settings,
-  Shield,
-  Users,
 } from 'lucide-react'
 import { clearToken, getToken } from '../services/auth'
 import { listBooks } from '../services/books'
@@ -75,44 +72,13 @@ const NAV_ITEMS: SidebarItem[] = [
     icon: Building2,
     roles: ['administrador', 'usuario'],
   },
-  {
-    to: '/app/donations',
-    label: 'Doacoes',
-    icon: HandHeart,
-    roles: ['administrador', 'usuario'],
-  },
 ]
 
 const ADMIN_ITEMS: SidebarItem[] = [
   {
-    to: '/app/admin/painel',
-    label: 'Painel',
-    icon: Shield,
-    exact: true,
-    roles: ['administrador'],
-  },
-  {
     to: '/app/admin/institutions',
     label: 'Instituicoes',
     icon: Building2,
-    roles: ['administrador'],
-  },
-  {
-    to: '/app/admin/reports',
-    label: 'Denuncias',
-    icon: Bell,
-    roles: ['administrador'],
-  },
-  {
-    to: '/app/admin/users',
-    label: 'Usuarios',
-    icon: Users,
-    roles: ['administrador'],
-  },
-  {
-    to: '/app/admin/genres',
-    label: 'Generos',
-    icon: Settings,
     roles: ['administrador'],
   },
 ]

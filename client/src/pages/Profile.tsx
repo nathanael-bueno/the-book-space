@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   BookImage,
   BookPlus,
-  Bell,
-  Gift,
   MapPin,
   Pencil,
   Repeat2,
@@ -401,20 +399,6 @@ export default function Profile() {
               >
                 <Repeat2 size={15} />
                 Historico de trocas
-              </Link>
-              <Link
-                to="/app/donations"
-                className="flex items-center gap-2.5 rounded-lg border border-line/45 px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-              >
-                <Gift size={15} />
-                Historico de doacoes
-              </Link>
-              <Link
-                to="/app/profile/notifications"
-                className="flex items-center gap-2.5 rounded-lg border border-line/45 px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-              >
-                <Bell size={15} />
-                Preferencias de notificacao
               </Link>
             </nav>
           </section>
