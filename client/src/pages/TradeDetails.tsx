@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
+  Building2,
   ChevronLeft,
   Check,
   CheckCircle2,
@@ -13,6 +14,7 @@ import { ApiError } from '../services/http'
 import { getCurrentUserId } from '../services/auth'
 import {
   getTrade,
+  updateTradeIntermediation,
   updateTradeStatus,
   type ApiTrade,
   type ApiTradeBook,
@@ -131,6 +133,27 @@ export default function TradeDetails() {
     }
   }
 
+  async function runIntermediationAction(action: 'aceitar' | 'recusar') {
+    if (!trade) return
+    setIsSaving(true)
+    try {
+      const response = await updateTradeIntermediation(trade.id, action)
+      setTrade(response.data)
+      toast.success({
+        title: 'Intermediacao atualizada',
+        message: response.message,
+      })
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel atualizar a intermediacao.'
+      toast.error({ title: 'Erro na acao', message })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="mx-auto w-full space-y-3">
@@ -155,6 +178,13 @@ export default function TradeDetails() {
   const isProponent = trade.id_usuario_proponente === currentUserId
   const isRecipient = trade.id_usuario_destinatario === currentUserId
   const canReview = trade.status === 'concluida'
+  const hasIntermediation = Boolean(trade.id_instituicao_intermediadora)
+  const isIntermediationPending = trade.status_intermediacao === 'pendente'
+  const hasAcceptedIntermediation = isProponent
+    ? trade.intermediacao_aceita_proponente
+    : trade.intermediacao_aceita_destinatario
+  const needsMyIntermediationDecision =
+    hasIntermediation && isIntermediationPending && !hasAcceptedIntermediation
 
   return (
     <main className="mx-auto w-full space-y-3">
@@ -220,6 +250,50 @@ export default function TradeDetails() {
         <TradeBookCard book={trade.requested_book} label="Livro solicitado" />
         <TradeBookCard book={trade.offered_book} label="Livro oferecido" />
       </section>
+
+      {hasIntermediation ? (
+        <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
+          <h2 className="border-l-4 border-brand-deep pl-3 text-base font-semibold text-ink">
+            Intermediacao por instituicao
+          </h2>
+          <div className="mt-3 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
+            <p className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
+              <Building2 size={16} className="text-brand-deep" />
+              {trade.intermediary_institution?.nome ?? 'Instituicao parceira'}
+            </p>
+            <p className="mt-1 text-sm text-ink-dim">
+              {trade.intermediary_institution?.cidade ?? 'Cidade nao informada'}
+            </p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              Status da intermediacao:{' '}
+              {trade.status_intermediacao ?? 'nao_aplicavel'}
+            </p>
+          </div>
+
+          {needsMyIntermediationDecision ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => runIntermediationAction('aceitar')}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:opacity-60"
+              >
+                <Check size={16} />
+                Aceitar intermediacao
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => runIntermediationAction('recusar')}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-line/55 bg-white px-4 text-sm font-semibold text-ink-dim shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep disabled:opacity-60"
+              >
+                <X size={16} />
+                Recusar intermediacao
+              </button>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5">
         <h2 className="border-l-4 border-brand-deep pl-3 text-base font-semibold text-ink">

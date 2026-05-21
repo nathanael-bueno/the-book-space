@@ -13,7 +13,10 @@ return new class extends Migration {
             $table->uuid('id_livro_oferecido');
             $table->uuid('id_usuario_proponente');
             $table->uuid('id_usuario_destinatario');
-            $table->uuid('id_instituicao_intermediaria')->nullable();
+            $table->uuid('id_instituicao_intermediadora')->nullable();
+            $table->boolean('intermediacao_aceita_proponente')->default(false);
+            $table->boolean('intermediacao_aceita_destinatario')->default(false);
+            $table->string('status_intermediacao', 30)->default('nao_aplicavel');
             $table->string('status', 30)->default('pendente');
             $table->text('mensagem')->nullable();
             $table->timestamp('responded_at')->nullable();
@@ -25,7 +28,7 @@ return new class extends Migration {
             $table->foreign('id_livro_oferecido')->references('id')->on('books')->cascadeOnDelete();
             $table->foreign('id_usuario_proponente')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('id_usuario_destinatario')->references('id')->on('users')->cascadeOnDelete();
-            $table->foreign('id_instituicao_intermediaria')->references('id')->on('institutions')->nullOnDelete();
+            $table->foreign('id_instituicao_intermediadora')->references('id')->on('institutions')->nullOnDelete();
         });
     }
 

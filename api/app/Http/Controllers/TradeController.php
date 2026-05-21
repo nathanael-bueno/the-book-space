@@ -92,7 +92,9 @@ class TradeController extends Controller
             }
 
             $intermediaryInstitutionId = $this->resolveIntermediaryInstitutionId(
-                $payload['id_instituicao_intermediaria'] ?? null
+                $payload['id_instituicao_intermediadora'] ?? null,
+                $requestedBook->cidade,
+                $offeredBook->cidade
             );
 
             return Trade::create([
@@ -100,7 +102,10 @@ class TradeController extends Controller
                 'id_livro_oferecido' => $offeredBook->id,
                 'id_usuario_proponente' => $user->id,
                 'id_usuario_destinatario' => $requestedBook->id_usuario_dono,
-                'id_instituicao_intermediaria' => $intermediaryInstitutionId,
+                'id_instituicao_intermediadora' => $intermediaryInstitutionId,
+                'intermediacao_aceita_proponente' => $intermediaryInstitutionId !== null,
+                'intermediacao_aceita_destinatario' => false,
+                'status_intermediacao' => $intermediaryInstitutionId ? 'pendente' : 'nao_aplicavel',
                 'mensagem' => $payload['mensagem'] ?? null,
                 'status' => Trade::STATUS_PENDENTE,
             ]);
@@ -169,6 +174,69 @@ class TradeController extends Controller
 
         return response()->json([
             'message' => 'Status da troca atualizado com sucesso.',
+            'data' => $trade,
+        ]);
+    }
+
+    public function updateIntermediation(Request $request, Trade $trade): JsonResponse
+    {
+        $user = auth()->user();
+        if (!$this->isParticipant($trade, (string) $user->id)) {
+            return response()->json(['message' => 'Voce nao tem acesso a esta troca.'], 403);
+        }
+
+        $payload = $request->validate([
+            'acao' => 'required|string|in:aceitar,recusar',
+        ]);
+
+        if (!$trade->id_instituicao_intermediadora) {
+            return response()->json(['message' => 'Esta troca nao possui intermediacao ativa.'], 422);
+        }
+
+        $isProponent = (string) $trade->id_usuario_proponente === (string) $user->id;
+        $isRecipient = (string) $trade->id_usuario_destinatario === (string) $user->id;
+        $action = (string) $payload['acao'];
+
+        DB::transaction(function () use ($trade, $isProponent, $isRecipient, $action): void {
+            $lockedTrade = Trade::query()
+                ->whereKey($trade->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (!$lockedTrade->id_instituicao_intermediadora) {
+                abort(422, 'Esta troca nao possui intermediacao ativa.');
+            }
+
+            if ($action === 'recusar') {
+                $lockedTrade->id_instituicao_intermediadora = null;
+                $lockedTrade->intermediacao_aceita_proponente = false;
+                $lockedTrade->intermediacao_aceita_destinatario = false;
+                $lockedTrade->status_intermediacao = 'nao_aplicavel';
+                $lockedTrade->save();
+                return;
+            }
+
+            if ($isProponent) {
+                $lockedTrade->intermediacao_aceita_proponente = true;
+            }
+
+            if ($isRecipient) {
+                $lockedTrade->intermediacao_aceita_destinatario = true;
+            }
+
+            $lockedTrade->status_intermediacao =
+                $lockedTrade->intermediacao_aceita_proponente && $lockedTrade->intermediacao_aceita_destinatario
+                    ? 'confirmada'
+                    : 'pendente';
+
+            $lockedTrade->save();
+        });
+
+        $trade->refresh();
+        $trade->load(self::INDEX_RELATIONS);
+
+        return response()->json([
+            'message' => 'Intermediacao atualizada com sucesso.',
             'data' => $trade,
         ]);
     }
@@ -392,7 +460,11 @@ class TradeController extends Controller
         return [$requestedBook, $offeredBook];
     }
 
-    private function resolveIntermediaryInstitutionId(?string $institutionId): ?string
+    private function resolveIntermediaryInstitutionId(
+        ?string $institutionId,
+        ?string $requestedBookCity,
+        ?string $offeredBookCity
+    ): ?string
     {
         if (!$institutionId) {
             return null;
@@ -410,6 +482,22 @@ class TradeController extends Controller
 
         if ($institution->tipo_ponto !== 'troca') {
             abort(422, 'A instituicao selecionada nao atende trocas.');
+        }
+
+        $normalizedInstitutionCity = mb_strtolower(trim((string) $institution->cidade));
+        $normalizedRequestedBookCity = mb_strtolower(trim((string) ($requestedBookCity ?? '')));
+        $normalizedOfferedBookCity = mb_strtolower(trim((string) ($offeredBookCity ?? '')));
+
+        if (
+            $normalizedInstitutionCity !== '' &&
+            $normalizedRequestedBookCity !== '' &&
+            $normalizedOfferedBookCity !== '' &&
+            (
+                $normalizedInstitutionCity !== $normalizedRequestedBookCity ||
+                $normalizedInstitutionCity !== $normalizedOfferedBookCity
+            )
+        ) {
+            abort(422, 'A instituicao intermediadora precisa estar na mesma cidade dos dois livros.');
         }
 
         return $institutionId;

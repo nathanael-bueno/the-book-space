@@ -30,10 +30,25 @@ export type ApiTrade = {
   confirmado_destinatario_at: string | null
   created_at?: string
   updated_at?: string
+  id_instituicao_intermediadora?: string | null
+  intermediacao_aceita_proponente?: boolean
+  intermediacao_aceita_destinatario?: boolean
+  status_intermediacao?:
+    | 'nao_aplicavel'
+    | 'pendente'
+    | 'confirmada'
+    | 'cancelada'
   requested_book?: ApiTradeBook
   offered_book?: ApiTradeBook
   proponent?: ApiUserLite
   recipient?: ApiUserLite
+  intermediary_institution?: {
+    id: string
+    nome: string
+    cidade: string
+    tipo_ponto?: string
+    status?: string
+  } | null
 }
 
 export type ApiTradeMessage = {
@@ -71,11 +86,23 @@ export async function getTrade(tradeId: string) {
 export async function createTrade(payload: {
   id_livro_solicitado: string
   id_livro_oferecido: string
+  id_instituicao_intermediadora?: string
   mensagem?: string
 }) {
   return http<TradeEnvelope>('/trades', {
     method: 'POST',
     body: payload,
+    token: getToken(),
+  })
+}
+
+export async function updateTradeIntermediation(
+  tradeId: string,
+  action: 'aceitar' | 'recusar'
+) {
+  return http<TradeEnvelope>(`/trades/${tradeId}/intermediacao`, {
+    method: 'PATCH',
+    body: { acao: action },
     token: getToken(),
   })
 }

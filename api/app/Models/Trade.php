@@ -26,7 +26,10 @@ class Trade extends Model
         'id_livro_oferecido',
         'id_usuario_proponente',
         'id_usuario_destinatario',
-        'id_instituicao_intermediaria',
+        'id_instituicao_intermediadora',
+        'intermediacao_aceita_proponente',
+        'intermediacao_aceita_destinatario',
+        'status_intermediacao',
         'status',
         'mensagem',
         'responded_at',
@@ -37,6 +40,8 @@ class Trade extends Model
     protected function casts(): array
     {
         return [
+            'intermediacao_aceita_proponente' => 'boolean',
+            'intermediacao_aceita_destinatario' => 'boolean',
             'responded_at' => 'datetime',
             'confirmado_proponente_at' => 'datetime',
             'confirmado_destinatario_at' => 'datetime',
@@ -67,7 +72,7 @@ class Trade extends Model
 
     public function intermediaryInstitution(): BelongsTo
     {
-        return $this->belongsTo(Institution::class, 'id_instituicao_intermediaria');
+        return $this->belongsTo(Institution::class, 'id_instituicao_intermediadora');
     }
 
     public function messages(): HasMany

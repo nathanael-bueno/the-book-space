@@ -12,6 +12,10 @@ import {
 import { getCurrentUserId } from '../services/auth'
 import { getBook, getMyBooks, type ApiBook } from '../services/books'
 import { ApiError } from '../services/http'
+import {
+  listPublicInstitutions,
+  type PublicInstitution,
+} from '../services/institutions'
 import { createTrade } from '../services/trades'
 import { useToast } from '../stores/useToast'
 
@@ -23,6 +27,9 @@ export default function TradeProposal() {
   const [userBooks, setUserBooks] = useState<ApiBook[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [offeredBookId, setOfferedBookId] = useState('')
+  const [institutions, setInstitutions] = useState<PublicInstitution[]>([])
+  const [useIntermediation, setUseIntermediation] = useState(false)
+  const [intermediaryInstitutionId, setIntermediaryInstitutionId] = useState('')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,10 +44,12 @@ export default function TradeProposal() {
       setIsLoading(true)
 
       try {
-        const [bookResponse, myBooksResponse] = await Promise.all([
-          getBook(safeBookId),
-          getMyBooks(),
-        ])
+        const [bookResponse, myBooksResponse, institutionsResponse] =
+          await Promise.all([
+            getBook(safeBookId),
+            getMyBooks(),
+            listPublicInstitutions(),
+          ])
 
         if (!active) return
 
@@ -51,6 +60,7 @@ export default function TradeProposal() {
         setRequestedBook(bookResponse.data)
         setUserBooks(filteredBooks)
         setOfferedBookId(filteredBooks[0]?.id ?? '')
+        setInstitutions(institutionsResponse.data)
       } catch (err) {
         if (!active) return
         toast.error({
@@ -76,6 +86,20 @@ export default function TradeProposal() {
     () => userBooks.find((item) => item.id === offeredBookId),
     [offeredBookId, userBooks]
   )
+
+  const availableInstitutions = (() => {
+    if (!offeredBook?.cidade || !requestedBook?.cidade) return institutions
+
+    const offeredCity = offeredBook.cidade.toLowerCase().trim()
+    const requestedCity = requestedBook.cidade.toLowerCase().trim()
+
+    const filtered = institutions.filter((institution) => {
+      const city = institution.city.toLowerCase().trim()
+      return city === offeredCity && city === requestedCity
+    })
+
+    return filtered.length ? filtered : institutions
+  })()
 
   const currentUserId = useMemo(() => getCurrentUserId(), [])
   const isOwnRequestedBook =
@@ -140,12 +164,19 @@ export default function TradeProposal() {
 
     if (!requestedBook || !offeredBookId || isProposalBlocked) return
 
+    const effectiveIntermediaryInstitutionId =
+      intermediaryInstitutionId || availableInstitutions[0]?.id || ''
+
     setIsSubmitting(true)
 
     try {
       const response = await createTrade({
         id_livro_solicitado: requestedBook.id,
         id_livro_oferecido: offeredBookId,
+        id_instituicao_intermediadora:
+          useIntermediation && effectiveIntermediaryInstitutionId
+            ? effectiveIntermediaryInstitutionId
+            : undefined,
         mensagem: message.trim() || undefined,
       })
       setSubmitted(true)
@@ -313,6 +344,56 @@ export default function TradeProposal() {
             ) : null}
 
             {!blockReason ? (
+              <label className="flex items-center gap-2 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
+                <input
+                  type="checkbox"
+                  checked={useIntermediation}
+                  onChange={(event) => {
+                    const checked = event.target.checked
+                    setUseIntermediation(checked)
+                    if (!checked) setIntermediaryInstitutionId('')
+                    if (checked && availableInstitutions[0]) {
+                      setIntermediaryInstitutionId(availableInstitutions[0].id)
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-line/55 text-accent focus:ring-accent/30"
+                />
+                <span className="text-sm font-medium text-ink">
+                  Intermediar por instituicao parceira (mais garantia)
+                </span>
+              </label>
+            ) : null}
+
+            {!blockReason && useIntermediation ? (
+              <label className="block">
+                <span className="text-sm font-semibold text-ink">
+                  Instituicao intermediadora
+                </span>
+                <select
+                  value={
+                    intermediaryInstitutionId ||
+                    availableInstitutions[0]?.id ||
+                    ''
+                  }
+                  onChange={(event) =>
+                    setIntermediaryInstitutionId(event.target.value)
+                  }
+                  disabled={!availableInstitutions.length || submitted}
+                  className="mt-2 h-9 w-full rounded-lg border border-line/55 bg-white px-3 text-sm font-medium text-ink shadow-sm outline-none transition-colors focus:border-accent"
+                >
+                  {!availableInstitutions.length ? (
+                    <option value="">Nenhuma instituicao disponivel</option>
+                  ) : null}
+                  {availableInstitutions.map((institution) => (
+                    <option key={institution.id} value={institution.id}>
+                      {institution.name} - {institution.city}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            {!blockReason ? (
               <label className="block">
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
                   <MessageSquareText size={16} className="text-brand-deep" />
@@ -332,7 +413,12 @@ export default function TradeProposal() {
             {!blockReason ? (
               <button
                 type="submit"
-                disabled={!offeredBookId || submitted || isSubmitting}
+                disabled={
+                  !offeredBookId ||
+                  submitted ||
+                  isSubmitting ||
+                  (useIntermediation && !availableInstitutions.length)
+                }
                 className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep sm:w-auto"
               >
                 <Send size={17} />

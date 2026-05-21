@@ -69,6 +69,7 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function
     Route::get('/trades/{trade}', [TradeController::class, 'show']);
     Route::post('/trades', [TradeController::class, 'store']);
     Route::patch('/trades/{trade}/status', [TradeController::class, 'updateStatus']);
+    Route::patch('/trades/{trade}/intermediacao', [TradeController::class, 'updateIntermediation']);
     Route::get('/trades/{trade}/messages', [TradeMessageController::class, 'index']);
     Route::post('/trades/{trade}/messages', [TradeMessageController::class, 'store']);
     Route::post('/trades/{trade}/reviews', [ReviewController::class, 'store']);

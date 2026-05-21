@@ -82,6 +82,12 @@ export default function TradesHistory() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={trade.status} />
+                    {trade.id_instituicao_intermediadora ? (
+                      <span className="inline-flex items-center rounded-lg border border-line/35 bg-white px-2.5 py-1 text-xs font-semibold text-ink-dim">
+                        Intermediacao:{' '}
+                        {trade.status_intermediacao ?? 'pendente'}
+                      </span>
+                    ) : null}
                     <span className="text-sm text-ink-muted">
                       Atualizada em{' '}
                       {trade.updated_at
