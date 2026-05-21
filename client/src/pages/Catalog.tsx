@@ -225,7 +225,9 @@ export default function Catalog() {
       <section className="">
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-ink">Catalogo</h1>
+            <h1 className="text-2xl font-semibold text-ink">
+              Trocas Disponiveis
+            </h1>
             <p className="mt-1 max-w-2xl text-sm leading-5 text-ink-dim">
               Descubra livros para troca com filtros por genero, conservacao e
               localizacao.

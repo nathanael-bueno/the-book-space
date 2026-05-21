@@ -58,7 +58,7 @@ const NAV_ITEMS: SidebarItem[] = [
   },
   {
     to: '/app/catalog',
-    label: 'Explorar livros',
+    label: 'Trocas Disponiveis',
     icon: Search,
     roles: ['administrador', 'usuario'],
   },
