@@ -154,7 +154,7 @@ export default function BookDetails() {
   const canPropose = !isOwner && book.status === 'disponivel'
 
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-5">
+    <main className="mx-auto w-full space-y-5">
       <section>
         <div className="space-y-1">
           <Link
