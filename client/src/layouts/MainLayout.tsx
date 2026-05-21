@@ -15,7 +15,6 @@ import {
   Settings,
   Shield,
   Users,
-  UserCircle2,
 } from 'lucide-react'
 import { clearToken, getToken } from '../services/auth'
 import { listBooks } from '../services/books'
@@ -142,17 +141,16 @@ export default function MainLayout() {
   const [query, setQuery] = useState(initialQuery)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isSidebarProfileMenuOpen, setIsSidebarProfileMenuOpen] =
     useState(false)
   const [sidebarProfile, setSidebarProfile] = useState<SidebarProfile | null>(
     null
   )
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
-  const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const sidebarProfileMenuRef = useRef<HTMLDivElement | null>(null)
   const userRole = useMemo<UserRole>(() => {
     const token = getToken()
@@ -191,12 +189,6 @@ export default function MainLayout() {
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsProfileMenuOpen(false)
-      }
       if (
         sidebarProfileMenuRef.current &&
         !sidebarProfileMenuRef.current.contains(event.target as Node)
@@ -293,6 +285,30 @@ export default function MainLayout() {
   }, [navigate])
 
   useEffect(() => {
+    if (!isMobileSidebarOpen) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsMobileSidebarOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMobileSidebarOpen])
+
+  useEffect(() => {
+    if (!isMobileSearchOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isMobileSearchOpen])
+
+  useEffect(() => {
     let active = true
 
     async function loadNotificationsSummary() {
@@ -320,19 +336,6 @@ export default function MainLayout() {
   useEffect(() => {
     if (!isMobileSidebarOpen) return
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setIsMobileSidebarOpen(false)
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isMobileSidebarOpen])
-
-  useEffect(() => {
-    if (!isMobileSidebarOpen) return
-
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
@@ -343,7 +346,6 @@ export default function MainLayout() {
 
   function handleLogout() {
     clearToken()
-    setIsProfileMenuOpen(false)
     setIsSidebarProfileMenuOpen(false)
     navigate('/auth/login', { replace: true })
   }
@@ -625,8 +627,8 @@ export default function MainLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="grid grid-cols-1 gap-2 bg-[#fcfbf9] px-3 py-2.5 sm:px-4 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-3">
-          <div className="flex items-center gap-2">
+        <header className="flex items-center justify-between gap-2 bg-[#fcfbf9] px-3 py-2.5 sm:px-4 lg:grid lg:grid-cols-[1fr_auto] lg:items-center lg:gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(true)}
@@ -636,7 +638,23 @@ export default function MainLayout() {
               <PanelLeftOpen size={17} />
             </button>
 
-            <form className="relative block flex-1" onSubmit={handleSearch}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileSearchOpen(true)
+                setIsSearchFocused(true)
+                setQuery(initialQuery)
+              }}
+              className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-lg border border-line/45 bg-white text-ink-muted transition-colors hover:border-accent/35 hover:text-brand-deep lg:hidden"
+              aria-label="Abrir busca"
+            >
+              <Search size={16} />
+            </button>
+
+            <form
+              className="relative hidden flex-1 lg:block"
+              onSubmit={handleSearch}
+            >
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-ink-muted">
                 <Search size={16} />
               </span>
@@ -698,14 +716,7 @@ export default function MainLayout() {
             </form>
           </div>
 
-          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
-            <Link
-              to="/app/books/new"
-              className="ui-btn inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent px-2.5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors duration-200 hover:bg-brand-deep sm:gap-2 sm:px-3"
-            >
-              <Plus size={16} />
-              <span className="hidden sm:inline">Novo livro</span>
-            </Link>
+          <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
             <Link
               to="/app/notifications"
               className="ui-btn relative inline-flex h-9 w-10 items-center justify-center rounded-lg border border-line/45 bg-white text-ink-muted transition-colors duration-200 hover:border-accent/35 hover:text-brand-deep"
@@ -720,45 +731,98 @@ export default function MainLayout() {
                 </span>
               ) : null}
             </Link>
-            <div className="relative lg:hidden" ref={profileMenuRef}>
-              <button
-                type="button"
-                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                className="ui-btn inline-flex h-9 w-10 items-center justify-center rounded-lg border border-line/45 bg-white text-ink-muted transition-colors duration-200 hover:border-accent/35 hover:text-brand-deep"
-                aria-label="Menu de perfil"
-                aria-haspopup="menu"
-                aria-expanded={isProfileMenuOpen}
-              >
-                <UserCircle2 size={18} />
-              </button>
-
-              {isProfileMenuOpen ? (
-                <div
-                  role="menu"
-                  className="absolute right-0 z-30 mt-2 w-44 overflow-hidden rounded-xl border border-line/45 bg-white p-1 shadow-lg"
-                >
-                  <Link
-                    to="/app/settings"
-                    role="menuitem"
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
-                  >
-                    <Settings size={16} />
-                    Configuracoes
-                  </Link>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
-                  >
-                    <LogOut size={16} />
-                    Sair
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            <Link
+              to="/app/books/new"
+              className="ui-btn inline-flex h-9 w-10 items-center justify-center gap-1.5 rounded-lg bg-accent px-2.5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors duration-200 hover:bg-brand-deep sm:w-auto sm:gap-2 sm:px-3"
+            >
+              <Plus size={16} />
+              <span className="hidden sm:inline">Novo livro</span>
+            </Link>
           </div>
         </header>
+
+        <div
+          className={[
+            'fixed inset-0 z-50 bg-black/40 p-4 transition-opacity lg:hidden',
+            isMobileSearchOpen
+              ? 'pointer-events-auto opacity-100'
+              : 'pointer-events-none opacity-0',
+          ].join(' ')}
+          onClick={() => {
+            setIsMobileSearchOpen(false)
+            setIsSearchFocused(false)
+          }}
+          aria-hidden={!isMobileSearchOpen}
+        >
+          <div
+            className="mx-auto mt-14 w-full max-w-xl rounded-xl border border-line/45 bg-white p-3 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <form className="relative" onSubmit={handleSearch}>
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-ink-muted">
+                <Search size={16} />
+              </span>
+              <input
+                autoFocus
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar por titulo, autor ou ISBN"
+                className="h-10 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-10 pr-24 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileSearchOpen(false)
+                  setIsSearchFocused(false)
+                }}
+                className="absolute inset-y-0 right-1 my-1 inline-flex items-center justify-center rounded-md px-3 text-xs font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+              >
+                Fechar
+              </button>
+            </form>
+
+            {query.trim() ? (
+              <div className="mt-2 overflow-hidden rounded-xl border border-line/45 bg-white">
+                {suggestions.length
+                  ? suggestions.map((book) => (
+                      <button
+                        key={book.id}
+                        type="button"
+                        onMouseDown={() => {
+                          navigate(`/app/books/${book.id}`)
+                          setIsMobileSearchOpen(false)
+                          setIsSearchFocused(false)
+                        }}
+                        className="block w-full border-b border-line/25 px-3 py-2.5 text-left last:border-b-0 hover:bg-[#fbfaf7]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={book.cover}
+                            alt={`Capa do livro ${book.title}`}
+                            className="h-12 w-9 rounded-md border border-line/35 object-cover"
+                            loading="lazy"
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-ink">
+                              {book.title}
+                            </p>
+                            <p className="truncate text-xs text-ink-muted">
+                              {book.author} · {book.city} · {book.isbn}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  : !isSearching && (
+                      <div className="px-3 py-3 text-sm text-ink-dim">
+                        Nenhum livro encontrado para essa busca.
+                      </div>
+                    )}
+              </div>
+            ) : null}
+          </div>
+        </div>
 
         <main className="min-w-0 flex-1 overflow-hidden bg-[#fcfbf9] px-4 py-3 sm:px-5 sm:py-4">
           <div
