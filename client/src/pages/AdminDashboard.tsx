@@ -189,9 +189,7 @@ export default function AdminDashboard() {
                   <p className="truncate text-sm font-semibold text-ink">
                     {index + 1}. {item.institutionName}
                   </p>
-                  <p className="text-xs text-ink-muted">
-                    Doacoes concluidas
-                  </p>
+                  <p className="text-xs text-ink-muted">Doacoes concluidas</p>
                 </div>
                 <p className="text-sm font-semibold text-brand-deep">
                   {item.totalDonations.toLocaleString('pt-BR')}

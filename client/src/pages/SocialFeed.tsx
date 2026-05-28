@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
-  CalendarDays,
   Edit,
-  Filter,
   Heart,
   MessageCircle,
+  MoreHorizontal,
   PenSquare,
   Send,
   Trash2,
-  UserRound,
 } from 'lucide-react'
 import ReportDialog from '../components/ui/ReportDialog'
 import { getCurrentUserId } from '../services/auth'
@@ -29,6 +27,24 @@ import {
 } from '../services/posts'
 import { listGenres, type ApiGenre } from '../services/books'
 import { useToast } from '../stores/useToast'
+
+function toRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const seconds = Math.floor(diff / 1000)
+  if (seconds < 60) return 'agora mesmo'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `há ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `há ${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `há ${days}d`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 5) return `há ${weeks} sem`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `há ${months} mes${months > 1 ? 'es' : ''}`
+  const years = Math.floor(days / 365)
+  return `há ${years} ano${years > 1 ? 's' : ''}`
+}
 
 export default function SocialFeed() {
   const navigate = useNavigate()
@@ -60,6 +76,12 @@ export default function SocialFeed() {
     target: string
     title: string
   } | null>(null)
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>(
+    {}
+  )
+  const CONTENT_LIMIT = 280
 
   useEffect(() => {
     function syncFollowedUsers() {
@@ -76,6 +98,16 @@ export default function SocialFeed() {
         syncFollowedUsers
       )
     }
+  }, [])
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuPostId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
 
   useEffect(() => {
@@ -330,26 +362,39 @@ export default function SocialFeed() {
         </Link>
       </section>
 
-      <section className="rounded-xl border border-line/35 bg-white p-3 shadow-sm sm:p-3.5">
-        <label className="block">
-          <span className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-deep">
-            <Filter size={14} />
-            Filtrar recomendacoes por genero
-          </span>
-          <select
-            value={selectedGenreId}
-            onChange={(event) => setSelectedGenreId(event.target.value)}
-            className="h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
+      {genres.length > 0 ? (
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filtrar por gênero"
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedGenreId('')}
+            className={`h-7 rounded-full px-3.5 text-xs font-semibold transition-colors ${
+              selectedGenreId === ''
+                ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                : 'bg-white border border-line/40 text-ink-muted hover:border-accent/35 hover:text-brand-deep'
+            }`}
           >
-            <option value="">Todos os generos</option>
-            {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>
-                {genre.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-      </section>
+            Todos
+          </button>
+          {genres.map((genre) => (
+            <button
+              key={genre.id}
+              type="button"
+              onClick={() => setSelectedGenreId(genre.id)}
+              className={`h-7 rounded-full px-3.5 text-xs font-semibold transition-colors ${
+                selectedGenreId === genre.id
+                  ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                  : 'bg-white border border-line/40 text-ink-muted hover:border-accent/35 hover:text-brand-deep'
+              }`}
+            >
+              {genre.nome}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <section className="space-y-3">
         {isLoading ? (
@@ -362,8 +407,8 @@ export default function SocialFeed() {
           const postAuthor =
             post.author?.nome_completo ?? 'Leitor da comunidade'
           const postDate = post.created_at
-            ? new Date(post.created_at).toLocaleDateString('pt-BR')
-            : null
+            ? toRelativeTime(post.created_at)
+            : 'agora mesmo'
           const isOwner =
             Boolean(currentUserId) && post.id_usuario === currentUserId
 
@@ -373,15 +418,23 @@ export default function SocialFeed() {
               className="rounded-xl border border-line/35 bg-white p-3 shadow-sm sm:p-4"
             >
               <header className="flex items-start gap-3 border-b border-line/20 pb-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line/35 bg-[#fbfaf7] text-ink-muted">
-                  <UserRound size={15} />
-                </div>
+                <Link
+                  to={`/app/profile/${post.id_usuario}`}
+                  className="shrink-0"
+                  aria-label={`Ver perfil de ${postAuthor}`}
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f0ea] text-sm font-semibold text-brand-deep">
+                    {postAuthor[0].toUpperCase()}
+                  </span>
+                </Link>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-ink">{postAuthor}</p>
-                  <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-ink-muted">
-                    <CalendarDays size={13} />
-                    {postDate ? `Publicado em ${postDate}` : 'Publicado agora'}
-                  </p>
+                  <Link
+                    to={`/app/profile/${post.id_usuario}`}
+                    className="text-sm font-semibold text-ink transition-colors hover:text-brand-deep"
+                  >
+                    {postAuthor}
+                  </Link>
+                  <p className="mt-0.5 text-xs text-ink-muted">{postDate}</p>
                 </div>
               </header>
 
@@ -389,9 +442,35 @@ export default function SocialFeed() {
                 <h2 className="text-base font-semibold leading-tight text-ink">
                   {post.titulo}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-ink-dim">
-                  {post.conteudo}
-                </p>
+                {(() => {
+                  const isLong = post.conteudo.length > CONTENT_LIMIT
+                  const isExpanded = Boolean(expandedPosts[post.id])
+                  const text =
+                    isLong && !isExpanded
+                      ? post.conteudo.slice(0, CONTENT_LIMIT).trimEnd() + '…'
+                      : post.conteudo
+                  return (
+                    <>
+                      <p className="mt-2 text-sm leading-6 text-ink-dim">
+                        {text}
+                      </p>
+                      {isLong ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedPosts((prev) => ({
+                              ...prev,
+                              [post.id]: !isExpanded,
+                            }))
+                          }
+                          className="mt-1 text-xs font-semibold text-brand-deep transition-colors hover:text-accent"
+                        >
+                          {isExpanded ? 'Ver menos' : 'Ver mais'}
+                        </button>
+                      ) : null}
+                    </>
+                  )
+                })()}
               </div>
 
               {post.imagem_url ? (
@@ -404,69 +483,107 @@ export default function SocialFeed() {
                 </div>
               ) : null}
 
-              <div className="mt-3 space-y-2 border-t border-line/25 pt-3">
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-                <button
-                  type="button"
-                  onClick={() =>
-                    void onToggleLike(post.id, Boolean(post.liked_by_me))
-                  }
-                  className={`inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold transition-colors sm:min-w-[96px] sm:w-auto ${
-                    post.liked_by_me
-                      ? 'border-accent/35 bg-[#eef7f4] text-accent'
-                      : 'border-line/35 bg-white text-ink hover:border-accent/35 hover:text-brand-deep'
-                  }`}
-                >
-                  <Heart
-                    size={14}
-                    className={post.liked_by_me ? 'fill-current' : ''}
-                  />
-                  {post.likes_count ?? 0}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void onToggleComments(post)}
-                  className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-line/35 bg-white px-2.5 text-xs font-semibold text-ink transition-colors hover:border-accent/35 hover:text-brand-deep sm:min-w-[96px] sm:w-auto"
-                >
-                  <MessageCircle size={14} />
-                  {post.comments_count ?? 0}
-                </button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
+              <div className="mt-3 border-t border-line/25 pt-2.5">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() =>
-                      setReportTarget({
-                        target: `[POST:${post.id}] ${post.titulo}`,
-                        title: post.titulo,
-                      })
+                      void onToggleLike(post.id, Boolean(post.liked_by_me))
                     }
-                    className="inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-[11px] font-semibold text-ink-muted transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-colors ${
+                      post.liked_by_me
+                        ? 'text-accent hover:bg-[#eef7f4]'
+                        : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep'
+                    }`}
                   >
-                    <AlertTriangle size={12} />
-                    Denunciar
+                    <Heart
+                      size={15}
+                      className={post.liked_by_me ? 'fill-current' : ''}
+                    />
+                    <span>{post.likes_count ?? 0}</span>
                   </button>
-                  {isOwner ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/app/posts/${post.id}/edit`)}
-                        className="inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-[11px] font-semibold text-ink-muted transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                  <button
+                    type="button"
+                    onClick={() => void onToggleComments(post)}
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-colors ${
+                      isCommentsOpen[post.id]
+                        ? 'text-brand-deep hover:bg-[#f3f0ea]'
+                        : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep'
+                    }`}
+                  >
+                    <MessageCircle size={15} />
+                    <span>{post.comments_count ?? 0}</span>
+                  </button>
+
+                  <div
+                    className="relative ml-auto"
+                    ref={openMenuPostId === post.id ? menuRef : undefined}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenMenuPostId((prev) =>
+                          prev === post.id ? null : post.id
+                        )
+                      }
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                      aria-label="Mais opções"
+                    >
+                      <MoreHorizontal size={15} />
+                    </button>
+
+                    {openMenuPostId === post.id ? (
+                      <div
+                        role="menu"
+                        className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-[152px] overflow-hidden rounded-xl border border-line/45 bg-white py-1 shadow-lg"
                       >
-                        <Edit size={12} />
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void onDeletePost(post)}
-                        className="inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-[11px] font-semibold text-brand-deep transition-colors hover:bg-brand-deep/10"
-                      >
-                        <Trash2 size={12} />
-                        Excluir
-                      </button>
-                    </>
-                  ) : null}
+                        {!isOwner ? (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenMenuPostId(null)
+                              setReportTarget({
+                                target: `[POST:${post.id}] ${post.titulo}`,
+                                title: post.titulo,
+                              })
+                            }}
+                            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                          >
+                            <AlertTriangle size={14} />
+                            Denunciar post
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setOpenMenuPostId(null)
+                                navigate(`/app/posts/${post.id}/edit`)
+                              }}
+                              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
+                            >
+                              <Edit size={14} />
+                              Editar post
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setOpenMenuPostId(null)
+                                void onDeletePost(post)
+                              }}
+                              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-brand-deep transition-colors hover:bg-brand-deep/8"
+                            >
+                              <Trash2 size={14} />
+                              Excluir post
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -476,37 +593,44 @@ export default function SocialFeed() {
                     Comentarios
                   </p>
 
-                  <div className="space-y-2">
-                  {(commentsByPost[post.id] ?? post.latest_comments ?? []).map(
-                    (comment) => (
-                      <article
-                        key={comment.id}
-                        className="rounded-md border border-line/30 bg-white px-2.5 py-2"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs font-semibold text-ink">
-                            {comment.author?.nome_completo ??
-                              'Leitor da comunidade'}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setReportTarget({
-                                target: `[COMENTARIO:${comment.id}] ${comment.conteudo.slice(0, 90)}`,
-                                title: `Comentario de ${comment.author?.nome_completo ?? 'usuario'}`,
-                              })
-                            }
-                            className="inline-flex h-6 items-center justify-center rounded-md px-1.5 text-[11px] font-semibold text-ink-muted transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
-                          >
-                            Denunciar
-                          </button>
+                  <div className="space-y-3">
+                    {(
+                      commentsByPost[post.id] ??
+                      post.latest_comments ??
+                      []
+                    ).map((comment) => {
+                      const commentAuthor =
+                        comment.author?.nome_completo ?? 'Leitor da comunidade'
+                      return (
+                        <div key={comment.id} className="flex gap-2.5">
+                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f3f0ea] text-xs font-semibold text-brand-deep">
+                            {commentAuthor[0].toUpperCase()}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-xs font-semibold text-ink">
+                                {commentAuthor}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setReportTarget({
+                                    target: `[COMENTARIO:${comment.id}] ${comment.conteudo.slice(0, 90)}`,
+                                    title: `Comentario de ${commentAuthor}`,
+                                  })
+                                }
+                                className="shrink-0 text-[10px] font-semibold text-ink-ghost transition-colors hover:text-brand-deep"
+                              >
+                                Denunciar
+                              </button>
+                            </div>
+                            <p className="mt-0.5 text-sm leading-5 text-ink-dim">
+                              {comment.conteudo}
+                            </p>
+                          </div>
                         </div>
-                        <p className="mt-1 text-sm text-ink-dim">
-                          {comment.conteudo}
-                        </p>
-                      </article>
-                    )
-                  )}
+                      )
+                    })}
                   </div>
                   {(commentsPageByPost[post.id] ?? 1) <
                   (commentsLastPageByPost[post.id] ?? 1) ? (

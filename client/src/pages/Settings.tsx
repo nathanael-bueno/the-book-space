@@ -1019,7 +1019,7 @@ function TabConta() {
               }
             />
 
-                {showDeleteConfirm && (
+            {showDeleteConfirm && (
               <div className="mt-3 space-y-3 rounded-lg border border-danger/30 bg-white p-4">
                 <p className="text-xs text-danger">
                   Para confirmar, digite{' '}
@@ -1093,9 +1093,9 @@ export default function Settings() {
   const activeTabMeta = TABS.find((t) => t.id === activeTab)
 
   return (
-    <main className="mx-auto w-full">
+    <main className="mx-auto w-full max-w-6xl py-4 sm:py-8">
       {/* Page header */}
-      <div className="mb-5 space-y-1">
+      <div className="mb-8 space-y-1">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -1108,13 +1108,13 @@ export default function Settings() {
         <h1 className="text-2xl font-semibold text-ink">Configuracoes</h1>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[176px_1fr] lg:gap-0">
+      <div className="flex flex-col gap-8 lg:flex-row">
         {/* Sidebar nav */}
         <nav
           aria-label="Secoes de configuracoes"
-          className="mb-4 lg:mb-0 lg:border-r lg:border-line/20 lg:pr-5"
+          className="w-full shrink-0 lg:w-64"
         >
-          <div className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5">
+          <div className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:gap-1.5 lg:pb-0">
             {TABS.map(({ id, label, icon: Icon }) => {
               const isActive = activeTab === id
               return (
@@ -1122,14 +1122,14 @@ export default function Settings() {
                   key={id}
                   type="button"
                   onClick={() => setTab(id)}
-                  className={`group inline-flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors lg:w-full ${
+                  className={`group flex shrink-0 items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-all lg:w-full ${
                     isActive
-                      ? 'bg-accent/10 font-semibold text-brand-deep'
-                      : 'font-medium text-ink-dim hover:bg-[#f3f0ea] hover:text-ink'
+                      ? 'bg-accent/10 font-bold text-brand-deep shadow-sm shadow-accent/5'
+                      : 'font-medium text-ink-dim hover:bg-surface-alt hover:text-ink'
                   }`}
                 >
                   <Icon
-                    size={15}
+                    size={18}
                     className={
                       isActive
                         ? 'text-accent'
@@ -1144,14 +1144,19 @@ export default function Settings() {
 
           {/* Active tab summary — visible only on desktop */}
           {activeTabMeta && (
-            <p className="mt-4 hidden px-3 text-xs text-ink-muted lg:block">
-              {activeTabMeta.description}
-            </p>
+            <div className="mt-6 hidden border-t border-line/20 pt-6 px-1 lg:block">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted/50">
+                Sobre esta secao
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+                {activeTabMeta.description}
+              </p>
+            </div>
           )}
         </nav>
 
         {/* Content panel */}
-        <section className="min-w-0 lg:pl-7">
+        <section className="min-w-0 flex-1 lg:border-l lg:border-line/20 lg:pl-10">
           {activeTab === 'perfil' && <TabPerfil />}
           {activeTab === 'notificacoes' && <TabNotificacoes />}
           {activeTab === 'generos' && <TabGeneros />}

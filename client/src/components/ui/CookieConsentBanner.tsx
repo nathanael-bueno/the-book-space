@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 const COOKIE_CONSENT_KEY = 'tbs_cookie_consent_v1'
 
@@ -7,20 +7,20 @@ type CookieChoice = 'accepted' | 'essential_only'
 function persistChoice(choice: CookieChoice) {
   try {
     window.localStorage.setItem(COOKIE_CONSENT_KEY, choice)
-  } catch {}
+  } catch {
+    return
+  }
 }
 
 export default function CookieConsentBanner() {
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
+  const [isVisible, setIsVisible] = useState(() => {
     try {
       const saved = window.localStorage.getItem(COOKIE_CONSENT_KEY)
-      setIsVisible(!saved)
+      return !saved
     } catch {
-      setIsVisible(true)
+      return true
     }
-  }, [])
+  })
 
   if (!isVisible) return null
 

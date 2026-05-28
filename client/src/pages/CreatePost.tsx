@@ -250,17 +250,31 @@ export default function CreatePost() {
             </select>
           </label>
 
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-ink">Conteúdo</span>
+          <div className="grid gap-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-semibold text-ink">Conteúdo</span>
+              <span
+                className={`text-xs tabular-nums transition-colors ${
+                  conteudo.length > 2800
+                    ? 'font-semibold text-danger'
+                    : conteudo.length > 2400
+                      ? 'font-semibold text-amber-500'
+                      : 'text-ink-muted'
+                }`}
+              >
+                {conteudo.length} / 3000
+              </span>
+            </div>
             <textarea
               value={conteudo}
               onChange={(event) => setConteudo(event.target.value)}
               required
+              maxLength={3000}
               rows={8}
               placeholder="Escreva sua recomendação, dúvida ou convite..."
               className="resize-none rounded-lg border border-line/55 bg-[#fbfaf7] px-3 py-2.5 text-sm leading-6 text-ink outline-none transition-colors placeholder:text-ink-muted focus:border-accent/55 focus:bg-white"
             />
-          </label>
+          </div>
 
           {/* Imagem */}
           <div className="grid gap-2">

@@ -10,10 +10,7 @@ import {
   getPublicProfile,
   type Profile as ProfileData,
 } from '../services/profile'
-import {
-  listUserReviews,
-  type ApiReview,
-} from '../services/reviews'
+import { listUserReviews, type ApiReview } from '../services/reviews'
 import { useToast } from '../stores/useToast'
 
 export default function PublicProfile() {

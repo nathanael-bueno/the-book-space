@@ -637,7 +637,7 @@ export default function MainLayout() {
                 }}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
                 placeholder="Buscar por titulo, autor ou ISBN"
-                className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] px-10 pr-14 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                className="h-9 w-full rounded-lg border border-line/45 bg-[#fbfaf7] !pl-10 !pr-14 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
               />
               <button
                 type="submit"

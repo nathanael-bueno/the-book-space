@@ -68,9 +68,16 @@ textarea {
   background-color: var(--color-surface-alt);
   padding: 0.5rem 0.85rem;
   font-size: 0.875rem;
+  line-height: 1.25rem;
   color: var(--color-ink);
   border-radius: var(--radius-control) !important;
   transition: all 0.2s ease-in-out;
+}
+
+/* Garante que inputs com altura fixa (h-9, etc) centralizem o texto corretamente */
+input[class*='h-'] {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 select {

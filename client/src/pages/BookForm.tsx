@@ -230,7 +230,9 @@ export default function BookForm() {
   }
 
   function removeTradeOption(optionToRemove: string) {
-    setTradeOptions((prev) => prev.filter((option) => option !== optionToRemove))
+    setTradeOptions((prev) =>
+      prev.filter((option) => option !== optionToRemove)
+    )
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -546,7 +548,9 @@ export default function BookForm() {
                 <div className="flex gap-2">
                   <input
                     value={tradeOptionInput}
-                    onChange={(event) => setTradeOptionInput(event.target.value)}
+                    onChange={(event) =>
+                      setTradeOptionInput(event.target.value)
+                    }
                     onKeyDown={(event) => {
                       if (event.key !== 'Enter') return
                       event.preventDefault()
@@ -580,7 +584,8 @@ export default function BookForm() {
                   </div>
                 ) : (
                   <p className="text-xs text-ink-muted">
-                    Sem restricao de titulos. Qualquer livro disponivel pode ser ofertado.
+                    Sem restricao de titulos. Qualquer livro disponivel pode ser
+                    ofertado.
                   </p>
                 )}
               </section>

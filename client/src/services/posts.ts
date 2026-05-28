@@ -63,7 +63,10 @@ type CommentsEnvelope = {
   total: number
 }
 
-export async function listPosts(params?: { id_genero?: string; per_page?: number }) {
+export async function listPosts(params?: {
+  id_genero?: string
+  per_page?: number
+}) {
   const search = new URLSearchParams()
   if (params?.id_genero) search.set('id_genero', params.id_genero)
   if (params?.per_page) search.set('per_page', String(params.per_page))

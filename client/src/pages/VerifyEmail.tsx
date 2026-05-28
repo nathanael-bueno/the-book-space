@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import {
-  resendEmailCodeByEmail,
-  verifyEmailCode,
-} from '../services/auth'
+import { resendEmailCodeByEmail, verifyEmailCode } from '../services/auth'
 import { ApiError } from '../services/http'
 import {
   listGenres,
@@ -136,8 +133,8 @@ export default function VerifyEmail() {
     try {
       const response = await resendEmailCodeByEmail(normalizedEmail)
       setMessage(response.message)
-      saveTimer()                      // Reseta o timestamp no localStorage
-      setTimeLeft(CODE_DURATION)       // Atualiza o estado local
+      saveTimer() // Reseta o timestamp no localStorage
+      setTimeLeft(CODE_DURATION) // Atualiza o estado local
     } catch (error) {
       toast.error({
         title: 'Erro',
