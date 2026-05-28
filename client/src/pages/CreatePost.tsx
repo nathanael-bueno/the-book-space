@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
-import { Link2, Send, ChevronLeft, Image, X, UploadCloud } from 'lucide-react'
+import { BookOpen, Send, ChevronLeft, Image, X, UploadCloud } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../stores/useToast'
 import { createPost } from '../services/posts'
@@ -196,7 +196,7 @@ export default function CreatePost() {
   }
 
   return (
-    <main className="mx-auto w-full space-y-3">
+    <main className="mx-auto w-full max-w-2xl space-y-4">
       <section className="">
         <div className="space-y-1">
           <button
@@ -213,24 +213,38 @@ export default function CreatePost() {
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-xl border border-line/45 bg-white p-3 shadow-sm sm:p-3.5"
+        className="rounded-xl border border-line/45 bg-white p-5 shadow-sm sm:p-6"
       >
-        <div className="grid gap-2.5">
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-ink">Título</span>
+        <div className="grid gap-5">
+          <div className="grid gap-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-semibold text-ink">Título</span>
+              <span
+                className={`text-xs tabular-nums transition-colors ${
+                  titulo.length > 90
+                    ? 'font-semibold text-danger'
+                    : titulo.length > 70
+                      ? 'font-semibold text-amber-500'
+                      : 'text-ink-muted'
+                }`}
+              >
+                {titulo.length} / 100
+              </span>
+            </div>
             <input
               value={titulo}
               onChange={(event) => setTitulo(event.target.value)}
               type="text"
               required
+              maxLength={100}
               placeholder="Ex.: Quem topa ler Machado este mês?"
               className="h-9 rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-muted focus:border-accent/55 focus:bg-white"
             />
-          </label>
+          </div>
 
           <label className="grid gap-2">
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
-              <Link2 size={16} className="text-brand-deep" />
+              <BookOpen size={16} className="text-brand-deep" />
               Livro vinculado
             </span>
             <select
@@ -416,7 +430,14 @@ export default function CreatePost() {
           )}
         </div>
 
-        <div className="mt-5 flex justify-end">
+        <div className="mt-2 flex items-center justify-between border-t border-line/25 pt-5">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="btn-secondary h-9 px-4 text-sm"
+          >
+            Cancelar
+          </button>
           <button
             type="submit"
             disabled={
@@ -426,18 +447,18 @@ export default function CreatePost() {
               !conteudo.trim() ||
               Boolean(imageError)
             }
-            className="ui-btn inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white shadow-sm shadow-accent/15 transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-primary h-9 px-6 text-sm"
           >
             {isSubmitting ? (
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 {isUploadingImage
-                  ? `Enviando imagem... ${uploadProgress}%`
+                  ? `Enviando... ${uploadProgress}%`
                   : 'Publicando...'}
               </>
             ) : (
               <>
-                <Send size={17} />
+                <Send size={15} />
                 Publicar
               </>
             )}

@@ -5,93 +5,85 @@ function VoidIllustration() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 1104.84 711.05"
+      viewBox="0 0 860.13137 571.14799"
       className="mx-auto mb-8 h-48 w-auto opacity-90 sm:h-64"
     >
       <path
-        fill="var(--color-accent)"
-        opacity=".1"
-        d="M1010.5 500.5c0 82.8-156.5 150-349.5 150s-349.5-67.2-349.5-150 156.5-150 349.5-150 349.5 67.2 349.5 150z"
+        d="M605.66974,324.95306c-7.66934-12.68446-16.7572-26.22768-30.98954-30.36953-16.482-4.7965-33.4132,4.73193-47.77473,14.13453a1392.15692,1392.15692,0,0,0-123.89338,91.28311l.04331.49238q46.22556-3.1878,92.451-6.37554c22.26532-1.53546,45.29557-3.2827,64.97195-13.8156,7.46652-3.99683,14.74475-9.33579,23.20555-9.70782,10.51175-.46217,19.67733,6.87923,26.8802,14.54931,42.60731,45.371,54.937,114.75409,102.73817,154.61591A1516.99453,1516.99453,0,0,0,605.66974,324.95306Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#f2f2f2"
       />
       <path
-        fill="#3F3D56"
-        d="M661 500.5c0 41.4-78.3 75-174.7 75s-174.7-33.6-174.7-75 78.3-75 174.7-75 174.7 33.6 174.7 75z"
-        opacity=".1"
+        d="M867.57068,709.78146c-4.71167-5.94958-6.6369-7.343-11.28457-13.34761q-56.7644-73.41638-106.70791-151.79237-33.92354-53.23-64.48275-108.50439-14.54864-26.2781-28.29961-52.96872-10.67044-20.6952-20.8646-41.63793c-1.94358-3.98782-3.8321-7.99393-5.71122-12.00922-4.42788-9.44232-8.77341-18.93047-13.43943-28.24449-5.31686-10.61572-11.789-21.74485-21.55259-28.877a29.40493,29.40493,0,0,0-15.31855-5.89458c-7.948-.51336-15.28184,2.76855-22.17568,6.35295-50.43859,26.301-97.65922,59.27589-140.3696,96.79771A730.77816,730.77816,0,0,0,303.32241,496.24719c-1.008,1.43927-3.39164.06417-2.37419-1.38422q6.00933-8.49818,12.25681-16.81288A734.817,734.817,0,0,1,500.80465,303.06436q18.24824-11.82581,37.18269-22.54245c6.36206-3.60275,12.75188-7.15967,19.25136-10.49653,6.37146-3.27274,13.13683-6.21547,20.41563-6.32547,24.7701-.385,37.59539,27.66695,46.40506,46.54248q4.15283,8.9106,8.40636,17.76626,16.0748,33.62106,33.38729,66.628,10.68453,20.379,21.83683,40.51955,34.7071,62.71816,73.77854,122.897c34.5059,53.1429,68.73651,100.08874,108.04585,149.78472C870.59617,709.21309,868.662,711.17491,867.57068,709.78146Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#e4e4e4"
       />
       <path
-        fill="var(--color-accent)"
-        d="M486.3 500.5c0 10.1-19.1 18.3-42.7 18.3s-42.7-8.2-42.7-18.3 19.1-18.3 42.7-18.3 42.7 8.2 42.7 18.3z"
+        d="M414.91613,355.804c-1.43911-1.60428-2.86927-3.20856-4.31777-4.81284-11.42244-12.63259-23.6788-25.11847-39.3644-32.36067a57.11025,57.11025,0,0,0-23.92679-5.54622c-8.56213.02753-16.93178,2.27348-24.84306,5.41792-3.74034,1.49427-7.39831,3.1902-11.00078,4.99614-4.11634,2.07182-8.15927,4.28118-12.1834,6.50883q-11.33112,6.27044-22.36816,13.09089-21.9606,13.57221-42.54566,29.21623-10.67111,8.11311-20.90174,16.75788-9.51557,8.03054-18.64618,16.492c-1.30169,1.20091-3.24527-.74255-1.94358-1.94347,1.60428-1.49428,3.22691-2.97938,4.84955-4.44613q6.87547-6.21546,13.9712-12.19257,12.93921-10.91827,26.54851-20.99312,21.16293-15.67614,43.78288-29.22541,11.30361-6.76545,22.91829-12.96259c2.33794-1.24675,4.70318-2.466,7.09572-3.6211a113.11578,113.11578,0,0,1,16.86777-6.86632,60.0063,60.0063,0,0,1,25.476-2.50265,66.32706,66.32706,0,0,1,23.50512,8.1314c15.40091,8.60812,27.34573,21.919,38.97,34.90915C418.03337,355.17141,416.09875,357.12405,414.91613,355.804Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#e4e4e4"
       />
       <path
-        fill="#3F3D56"
-        d="M248.4 239.4h208c6.1 0 11.1 5 11.1 11.1v197c0 6.1-5 11.1-11.1 11.1h-208c-6.1 0-11.1-5-11.1-11.1v-197c0-6.1 5-11.1 11.1-11.1z"
+        d="M730.47659,486.71092l36.90462-13.498,18.32327-6.70183c5.96758-2.18267,11.92082-4.66747,18.08988-6.23036a28.53871,28.53871,0,0,1,16.37356.20862,37.73753,37.73753,0,0,1,12.771,7.91666,103.63965,103.63965,0,0,1,10.47487,11.18643c3.98932,4.79426,7.91971,9.63877,11.86772,14.46706q24.44136,29.89094,48.56307,60.04134,24.12117,30.14991,47.91981,60.556,23.85681,30.48041,47.38548,61.21573,2.88229,3.76518,5.75966,7.53415c1.0598,1.38809,3.44949.01962,2.37472-1.38808Q983.582,650.9742,959.54931,620.184q-24.09177-30.86383-48.51647-61.46586-24.42421-30.60141-49.17853-60.93743-6.16706-7.55761-12.35445-15.09858c-3.47953-4.24073-6.91983-8.52718-10.73628-12.47427-7.00539-7.24516-15.75772-13.64794-26.23437-13.82166-6.15972-.10214-12.121,1.85248-17.844,3.92287-6.16968,2.232-12.32455,4.50571-18.48633,6.75941l-37.16269,13.59243-9.29067,3.3981c-1.64875.603-.93651,3.2619.73111,2.652Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#e4e4e4"
       />
-      <text
-        x="352"
-        y="360"
-        fill="#FFFFFF"
-        fontSize="100"
-        fontWeight="bold"
-        textAnchor="middle"
-        fontFamily="Arial, sans-serif"
-      >
-        404
-      </text>
       <path
-        fill="#3F3D56"
-        d="M741.3 416.7l-45.7-91.4-45.7 91.4h91.4z"
+        d="M366.37741,334.52609c-18.75411-9.63866-42.77137-7.75087-60.00508,4.29119a855.84708,855.84708,0,0,1,97.37056,22.72581C390.4603,353.75916,380.07013,341.5635,366.37741,334.52609Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#f2f2f2"
       />
-      <circle cx="695.6" cy="300" r="30" fill="var(--color-accent)" />
-      <rect x="550" y="450" width="300" height="15" rx="7.5" fill="#3F3D56" opacity=".2" />
+      <circle cx="649.24878" cy="51" r="51" fill="var(--color-accent)" />
+      <path
+        d="M911.21851,176.29639c-24.7168-3.34094-52.93512,10.01868-59.34131,34.12353a21.59653,21.59653,0,0,0-41.09351,2.10871l2.82972,2.02667a372.27461,372.27461,0,0,0,160.65881-.72638C957.07935,195.76,935.93537,179.63727,911.21851,176.29639Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#f0f0f0"
+      />
+      <path
+        d="M805.21851,244.29639c-24.7168-3.34094-52.93512,10.01868-59.34131,34.12353a21.59653,21.59653,0,0,0-41.09351,2.10871l2.82972,2.02667a372.27461,372.27461,0,0,0,160.65881-.72638C851.07935,263.76,829.93537,247.63727,805.21851,244.29639Z"
+        transform="translate(-169.93432 -164.42601)"
+        fill="#f0f0f0"
+      />
+      <circle cx="95.24878" cy="439" r="11" fill="#3f3d56" />
+      <circle cx="227.24878" cy="559" r="11" fill="#3f3d56" />
+      <circle cx="728.24878" cy="559" r="11" fill="#3f3d56" />
+      <circle cx="755.24878" cy="419" r="11" fill="#3f3d56" />
+      <circle cx="723.24878" cy="317" r="11" fill="#3f3d56" />
+      <circle cx="484.24878" cy="349" r="11" fill="#3f3d56" />
+      <circle cx="599.24878" cy="443" r="11" fill="#3f3d56" />
+      <circle cx="426.24878" cy="338" r="16" fill="#3f3d56" />
     </svg>
   )
 }
 
 export default function NotFound() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center justify-center p-6 sm:p-12">
+    <main className="fixed inset-0 flex flex-col items-center justify-center bg-[#fcfbf9] p-6 text-center overflow-hidden">
       <VoidIllustration />
 
-      <div className="max-w-xl text-center">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-accent/80">
-          Pagina perdida no espaco
+      <div className="max-w-lg">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent/80">
+          Erro 404
         </p>
-        <h1 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-5xl">
-          Ops! Nao encontramos o que voce buscava.
+        <h1 className="mt-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">
+          Pagina nao encontrada
         </h1>
-        <p className="mt-6 text-base leading-relaxed text-ink-muted sm:text-lg">
-          O endereco pode ter sido removido, renomeado ou talvez voce tenha
-          digitado algo incorretamente. Que tal voltar ao catalogo?
+        <p className="mt-4 text-sm leading-relaxed text-ink-muted">
+          O endereco pode ter sido removido ou digitado incorretamente. 
+          Que tal voltar ao inicio?
         </p>
       </div>
 
-      <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <Link to="/app/feed" className="btn-secondary h-11 px-8 rounded-xl shadow-sm">
-          <House size={18} />
-          Ir para o feed
+      <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+        <Link to="/app/feed" className="btn-primary h-10 px-8 rounded-xl shadow-md">
+          <House size={16} />
+          Voltar ao inicio
         </Link>
-        <Link to="/app/catalog" className="btn-primary h-11 px-8 rounded-xl">
-          <Search size={18} />
-          Explorar catalogo
+        <Link to="/app/catalog" className="btn-secondary h-10 px-8 rounded-xl bg-white shadow-sm">
+          <Search size={16} />
+          Ver catalogo
         </Link>
       </div>
-
-      <section className="mt-16 w-full max-w-2xl rounded-2xl border border-line/30 bg-surface-alt/50 p-6 backdrop-blur-sm">
-        <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-wider text-ink">
-          <Compass size={18} className="text-accent" />
-          Algumas sugestoes
-        </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-ink">Verifique a URL</p>
-            <p className="text-xs text-ink-muted">Confira se nao ha erros de digitacao no endereco.</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-ink">Use a Busca</p>
-            <p className="text-xs text-ink-muted">Tente buscar pelo titulo do livro no topo da pagina.</p>
-          </div>
-        </div>
-      </section>
     </main>
   )
 }

@@ -7,10 +7,14 @@ import {
   Camera,
   Check,
   ChevronLeft,
+  Gift,
   Globe,
+  Heart,
   Lock,
   Mail,
   MapPin,
+  MessageCircle,
+  RefreshCw,
   Save,
   Send,
   UserRound,
@@ -121,9 +125,9 @@ function SectionHeader({
   description: string
 }) {
   return (
-    <div className="mb-5 border-b border-line/25 pb-4">
-      <h2 className="text-base font-semibold text-ink">{title}</h2>
-      <p className="mt-0.5 text-sm text-ink-muted">{description}</p>
+    <div className="mb-6 border-b border-line/30 pb-5">
+      <h2 className="text-lg font-semibold text-ink">{title}</h2>
+      <p className="mt-1 text-sm text-ink-muted">{description}</p>
     </div>
   )
 }
@@ -137,7 +141,7 @@ function SubSection({
 }) {
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-muted/70">
         {title}
       </p>
       {children}
@@ -474,15 +478,15 @@ function TabPerfil() {
             </div>
           </SubSection>
 
-          <div className="border-t border-line/20 pt-5">
+          <div className="flex items-center gap-4 border-t border-line/25 pt-5">
             <button
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="btn-primary h-9"
+              className="btn-primary h-10 px-6 text-sm"
             >
-              <Save size={14} />
-              {isSaving ? 'Salvando...' : 'Salvar alteracoes'}
+              <Save size={15} />
+              {isSaving ? 'Salvando...' : 'Salvar alterações'}
             </button>
           </div>
         </div>
@@ -495,7 +499,7 @@ function TabPerfil() {
           <div className="rounded-xl border border-line/35 bg-[#faf9f6] p-4">
             <div className="flex flex-col items-center gap-3">
               <div className="relative">
-                <div className="h-20 w-20 overflow-hidden rounded-2xl border border-accent/15 bg-white text-accent shadow-sm">
+                <div className="h-24 w-24 overflow-hidden rounded-2xl border border-accent/15 bg-white text-accent shadow-sm">
                   {photoPreview ? (
                     <img
                       src={photoPreview}
@@ -510,9 +514,9 @@ function TabPerfil() {
                 </div>
                 <label
                   htmlFor="settings-photo-file"
-                  className="absolute -bottom-2 -right-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-line/55 bg-white shadow-sm transition-colors hover:border-accent/35 hover:text-brand-deep"
+                  className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-line/40 bg-white shadow-md transition-colors hover:border-accent/35 hover:text-brand-deep"
                 >
-                  <Camera size={12} />
+                  <Camera size={13} />
                   <input
                     id="settings-photo-file"
                     type="file"
@@ -545,8 +549,11 @@ function TabPerfil() {
               )}
             </div>
 
-            <div className="mt-4 rounded-lg border border-line/30 bg-white p-2.5">
-              <div className="flex items-center gap-2.5">
+            <div className="mt-4 overflow-hidden rounded-lg border border-line/30 bg-white">
+              <p className="border-b border-line/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-muted/60">
+                Prévia pública
+              </p>
+              <div className="flex items-center gap-2.5 px-3 py-2.5">
                 <div className="h-8 w-8 shrink-0 overflow-hidden rounded-xl border border-accent/15 bg-[#f5f3ee] text-accent">
                   {photoPreview ? (
                     <img
@@ -571,7 +578,6 @@ function TabPerfil() {
                   )}
                 </div>
               </div>
-              <p className="mt-1.5 text-xs text-ink-muted/70">Previa publica</p>
             </div>
           </div>
         </div>
@@ -677,31 +683,31 @@ function TabNotificacoes() {
             <NotifRow
               label="Trocas e propostas"
               description="Novas propostas, aceites e recusas de troca"
-              icon={Bell}
+              icon={RefreshCw}
               checked={preferences.tradeUpdates}
               disabled={isSaving}
               onToggle={() => togglePreference('tradeUpdates')}
             />
             <NotifRow
               label="Curtidas no feed"
-              description="Quando alguem curte suas publicacoes"
-              icon={Bell}
+              description="Quando alguém curte suas publicações"
+              icon={Heart}
               checked={preferences.socialLikes}
               disabled={isSaving}
               onToggle={() => togglePreference('socialLikes')}
             />
             <NotifRow
-              label="Comentarios no feed"
-              description="Respostas e comentarios nas suas postagens"
-              icon={Bell}
+              label="Comentários no feed"
+              description="Respostas e comentários nas suas postagens"
+              icon={MessageCircle}
               checked={preferences.socialComments}
               disabled={isSaving}
               onToggle={() => togglePreference('socialComments')}
             />
             <NotifRow
-              label="Confirmacoes de doacao"
-              description="Atualizacoes sobre suas doacoes a instituicoes"
-              icon={Bell}
+              label="Confirmações de doação"
+              description="Atualizações sobre suas doações a instituições"
+              icon={Gift}
               checked={preferences.donationUpdates}
               disabled={isSaving}
               onToggle={() => togglePreference('donationUpdates')}
@@ -855,15 +861,15 @@ function TabGeneros() {
         </div>
       )}
 
-      <div className="mt-6 flex items-center gap-3 border-t border-line/20 pt-5">
+      <div className="mt-6 flex items-center gap-3 border-t border-line/25 pt-5">
         <button
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="btn-primary h-9"
+          className="btn-primary h-10 px-6 text-sm"
         >
-          <Save size={14} />
-          {isSaving ? 'Salvando...' : 'Salvar generos'}
+          <Save size={15} />
+          {isSaving ? 'Salvando...' : 'Salvar gêneros'}
         </button>
 
         {isSaved && (
@@ -1093,7 +1099,7 @@ export default function Settings() {
   const activeTabMeta = TABS.find((t) => t.id === activeTab)
 
   return (
-    <main className="mx-auto w-full max-w-6xl py-4 sm:py-8">
+    <main className="mx-auto w-full max-w-6xl">
       {/* Page header */}
       <div className="mb-8 space-y-1">
         <button
@@ -1142,21 +1148,10 @@ export default function Settings() {
             })}
           </div>
 
-          {/* Active tab summary — visible only on desktop */}
-          {activeTabMeta && (
-            <div className="mt-6 hidden border-t border-line/20 pt-6 px-1 lg:block">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted/50">
-                Sobre esta secao
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-                {activeTabMeta.description}
-              </p>
-            </div>
-          )}
         </nav>
 
         {/* Content panel */}
-        <section className="min-w-0 flex-1 lg:border-l lg:border-line/20 lg:pl-10">
+        <section className="min-w-0 flex-1 lg:border-l lg:border-line/40 lg:pl-10">
           {activeTab === 'perfil' && <TabPerfil />}
           {activeTab === 'notificacoes' && <TabNotificacoes />}
           {activeTab === 'generos' && <TabGeneros />}

@@ -423,9 +423,17 @@ export default function SocialFeed() {
                   className="shrink-0"
                   aria-label={`Ver perfil de ${postAuthor}`}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f0ea] text-sm font-semibold text-brand-deep">
-                    {postAuthor[0].toUpperCase()}
-                  </span>
+                  {post.author?.foto ? (
+                    <img
+                      src={post.author.foto}
+                      alt={postAuthor}
+                      className="h-9 w-9 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f0ea] text-sm font-semibold text-brand-deep">
+                      {postAuthor[0].toUpperCase()}
+                    </span>
+                  )}
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link
@@ -439,7 +447,7 @@ export default function SocialFeed() {
               </header>
 
               <div className="pt-3">
-                <h2 className="text-base font-semibold leading-tight text-ink">
+                <h2 className="text-[17px] font-semibold leading-snug text-ink">
                   {post.titulo}
                 </h2>
                 {(() => {
@@ -483,21 +491,21 @@ export default function SocialFeed() {
                 </div>
               ) : null}
 
-              <div className="mt-3 border-t border-line/25 pt-2.5">
+              <div className="mt-3 border-t border-line/25 pt-1.5">
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() =>
                       void onToggleLike(post.id, Boolean(post.liked_by_me))
                     }
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-colors ${
+                    className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors ${
                       post.liked_by_me
                         ? 'text-accent hover:bg-[#eef7f4]'
                         : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep'
                     }`}
                   >
                     <Heart
-                      size={15}
+                      size={16}
                       className={post.liked_by_me ? 'fill-current' : ''}
                     />
                     <span>{post.likes_count ?? 0}</span>
@@ -505,13 +513,13 @@ export default function SocialFeed() {
                   <button
                     type="button"
                     onClick={() => void onToggleComments(post)}
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-colors ${
+                    className={`inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors ${
                       isCommentsOpen[post.id]
                         ? 'text-brand-deep hover:bg-[#f3f0ea]'
                         : 'text-ink-muted hover:bg-[#fbfaf7] hover:text-brand-deep'
                     }`}
                   >
-                    <MessageCircle size={15} />
+                    <MessageCircle size={16} />
                     <span>{post.comments_count ?? 0}</span>
                   </button>
 
@@ -588,7 +596,7 @@ export default function SocialFeed() {
               </div>
 
               {isCommentsOpen[post.id] ? (
-                <section className="mt-3 space-y-2.5 border-t border-line/25 bg-[#fcfbf9] px-2.5 py-3 sm:px-3">
+                <section className="mt-3 space-y-2.5 border-t border-line/25 bg-[#f5f3ee] px-2.5 py-3 sm:px-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                     Comentarios
                   </p>
