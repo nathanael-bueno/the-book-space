@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, MessageSquare, Star } from 'lucide-react'
+import ReportDialog from '../components/ui/ReportDialog'
 import { getCurrentUserId } from '../services/auth'
 import { isFollowingUser, toggleFollowUser } from '../services/follows'
 import { ApiError } from '../services/http'
+import { createReport } from '../services/reports'
 import {
   getPublicProfile,
   type Profile as ProfileData,
 } from '../services/profile'
 import {
   listUserReviews,
-  reportReview,
   type ApiReview,
 } from '../services/reviews'
 import { useToast } from '../stores/useToast'
@@ -27,6 +28,10 @@ export default function PublicProfile() {
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
+  const [reportTarget, setReportTarget] = useState<{
+    title: string
+    target: string
+  } | null>(null)
   const [, forceFollowRefresh] = useState(0)
 
   useEffect(() => {
@@ -109,22 +114,27 @@ export default function PublicProfile() {
     return average.toFixed(1)
   })()
 
-  async function onReportReview(reviewId: string) {
-    const motivo =
-      window.prompt('Descreva o motivo da denuncia da avaliacao:')?.trim() ?? ''
-    if (!motivo) return
+  async function onReportReview(review: ApiReview) {
+    setReportTarget({
+      title: `Avaliacao de ${review.reviewer?.nome_completo ?? 'usuario'}`,
+      target: `[AVALIACAO:${review.id}] ${review.comentario ?? 'Sem comentario'}`,
+    })
+  }
 
+  async function onConfirmReport(motivo: string) {
+    if (!reportTarget) return
     try {
-      await reportReview(reviewId, motivo)
+      await createReport({ alvo: reportTarget.target, motivo })
+      setReportTarget(null)
       toast.success({
         title: 'Denuncia enviada',
-        message: 'A avaliacao foi encaminhada para moderacao.',
+        message: 'A denuncia foi encaminhada para moderacao.',
       })
     } catch (err) {
       const message =
         err instanceof ApiError
           ? err.message
-          : 'Nao foi possivel registrar a denuncia da avaliacao.'
+          : 'Nao foi possivel registrar a denuncia.'
 
       toast.error({
         title: 'Erro',
@@ -174,6 +184,20 @@ export default function PublicProfile() {
               }`}
             >
               {isFollowing ? 'Seguindo' : 'Seguir'}
+            </button>
+          ) : null}
+          {!isOwnProfile ? (
+            <button
+              type="button"
+              onClick={() =>
+                setReportTarget({
+                  title: profile?.nome_completo ?? 'Usuario',
+                  target: `[PERFIL:${userId}] ${profile?.nome_completo ?? 'Usuario'}`,
+                })
+              }
+              className="inline-flex h-9 items-center justify-center rounded-md border border-line/35 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+            >
+              Denunciar perfil
             </button>
           ) : null}
           <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
@@ -268,7 +292,7 @@ export default function PublicProfile() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => void onReportReview(review.id)}
+                  onClick={() => void onReportReview(review)}
                   className="mt-2 inline-flex h-8 items-center justify-center rounded-md border border-line/35 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
                 >
                   Denunciar avaliacao
@@ -311,6 +335,13 @@ export default function PublicProfile() {
           </div>
         </div>
       </section>
+
+      <ReportDialog
+        open={Boolean(reportTarget)}
+        target={reportTarget?.title ?? ''}
+        onCancel={() => setReportTarget(null)}
+        onConfirm={(motivo) => void onConfirmReport(motivo)}
+      />
     </main>
   )
 }

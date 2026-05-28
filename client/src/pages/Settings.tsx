@@ -479,7 +479,7 @@ function TabPerfil() {
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="btn-primary inline-flex h-9 items-center gap-2 px-5 text-sm transition-colors disabled:opacity-60"
+              className="btn-primary h-9"
             >
               <Save size={14} />
               {isSaving ? 'Salvando...' : 'Salvar alteracoes'}
@@ -860,7 +860,7 @@ function TabGeneros() {
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="btn-primary inline-flex h-9 items-center gap-2 px-5 text-sm transition-colors disabled:opacity-60"
+          className="btn-primary h-9"
         >
           <Save size={14} />
           {isSaving ? 'Salvando...' : 'Salvar generos'}
@@ -957,7 +957,7 @@ function TabConta() {
                     type="button"
                     onClick={handleSendPasswordReset}
                     disabled={isSendingReset || resetSent}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line/55 px-3 py-1.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep disabled:opacity-60"
+                    className="btn-secondary h-8 px-3 text-xs"
                   >
                     {resetSent ? (
                       <>
@@ -990,7 +990,7 @@ function TabConta() {
                   <button
                     type="button"
                     onClick={startGoogleLogin}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-line/55 px-3 py-1.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                    className="btn-secondary h-8 px-3 text-xs"
                   >
                     <Globe size={12} /> Vincular Google
                   </button>
@@ -1019,7 +1019,7 @@ function TabConta() {
               }
             />
 
-            {showDeleteConfirm && (
+                {showDeleteConfirm && (
               <div className="mt-3 space-y-3 rounded-lg border border-danger/30 bg-white p-4">
                 <p className="text-xs text-danger">
                   Para confirmar, digite{' '}
@@ -1036,7 +1036,7 @@ function TabConta() {
                   <button
                     type="button"
                     disabled={deleteInput.toLowerCase() !== 'excluir'}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-danger px-3 py-1.5 text-xs font-semibold text-white transition-opacity disabled:opacity-40"
+                    className="btn-primary bg-danger hover:bg-danger/90 h-9 text-xs"
                     onClick={() =>
                       toast.error({
                         title: 'Funcionalidade em desenvolvimento',
@@ -1053,7 +1053,7 @@ function TabConta() {
                       setShowDeleteConfirm(false)
                       setDeleteInput('')
                     }}
-                    className="rounded-lg border border-line/55 px-3 py-1.5 text-xs font-semibold text-ink-dim hover:text-ink"
+                    className="btn-secondary h-9 text-xs"
                   >
                     Cancelar
                   </button>
