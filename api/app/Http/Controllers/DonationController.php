@@ -7,6 +7,7 @@ use App\Models\Book;
 use App\Models\Donation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class DonationController extends Controller
@@ -15,9 +16,20 @@ class DonationController extends Controller
     {
         $user = auth()->user();
         $perPage = min(max((int) $request->query('per_page', 20), 1), 100);
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::in([
+                Donation::STATUS_SOLICITADA,
+                Donation::STATUS_CONCLUIDA,
+                Donation::STATUS_CANCELADA,
+            ])],
+        ]);
 
         $donations = Donation::query()
             ->where('id_usuario', $user->id)
+            ->when(
+                isset($validated['status']),
+                fn ($query) => $query->where('status', $validated['status'])
+            )
             ->with([
                 'institution:id,nome,cidade,email_contato,telefone',
                 'book:id,titulo,autor,fotos,status',

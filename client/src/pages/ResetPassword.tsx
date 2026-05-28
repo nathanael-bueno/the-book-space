@@ -94,12 +94,12 @@ export default function ResetPassword() {
 
       {/* Reset Password Card */}
       <div className="ui-auth-card relative z-10 w-full max-w-sm p-8 backdrop-blur-md">
-        <div className="mb-8 flex items-center gap-3">
+        <div className="mb-8">
           <Link
             to="/auth/login"
-            className="inline-flex items-center gap-2 text-neutral-500 hover:text-brand-deep text-xs font-medium transition-colors duration-200"
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
           <div>

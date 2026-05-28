@@ -91,7 +91,7 @@ export default function ProfileNotifications() {
           <div className="space-y-1">
             <Link
               to="/app/profile"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
             >
               <ChevronLeft size={16} />
               Voltar

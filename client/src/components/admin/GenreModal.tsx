@@ -4,8 +4,10 @@ import type { FormEvent } from 'react'
 type GenreModalProps = {
   open: boolean
   isEditing: boolean
-  value: string
-  onChange: (value: string) => void
+  nameValue: string
+  categoryValue: string
+  onNameChange: (value: string) => void
+  onCategoryChange: (value: string) => void
   onCancel: () => void
   onSubmit: (event: FormEvent) => void
 }
@@ -13,8 +15,10 @@ type GenreModalProps = {
 export default function GenreModal({
   open,
   isEditing,
-  value,
-  onChange,
+  nameValue,
+  categoryValue,
+  onNameChange,
+  onCategoryChange,
   onCancel,
   onSubmit,
 }: GenreModalProps) {
@@ -36,9 +40,15 @@ export default function GenreModal({
 
         <form onSubmit={onSubmit} className="mt-4 grid gap-2.5">
           <input
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
+            value={nameValue}
+            onChange={(event) => onNameChange(event.target.value)}
             placeholder="Genero"
+            className="h-9 rounded-lg border border-line/45 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
+          />
+          <input
+            value={categoryValue}
+            onChange={(event) => onCategoryChange(event.target.value)}
+            placeholder="Categoria"
             className="h-9 rounded-lg border border-line/45 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
           />
           <div className="mt-1 flex justify-end gap-2">

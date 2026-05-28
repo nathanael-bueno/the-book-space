@@ -48,13 +48,33 @@ class Report extends Model
             $dateLabel = $created->format('d/m/Y, H:i');
         }
 
+        $targetLabel = $this->alvo;
+        $contextPath = null;
+
+        if (preg_match('/^\[(POST|REVIEW):([^\]]+)\]\s*(.*)$/', $this->alvo, $matches) === 1) {
+            $type = $matches[1];
+            $reference = $matches[2];
+            $label = trim($matches[3]);
+
+            if ($type === 'POST') {
+                $targetLabel = $label !== '' ? 'Postagem: ' . $label : 'Postagem denunciada';
+                $contextPath = '/app/feed';
+            }
+
+            if ($type === 'REVIEW') {
+                $targetLabel = $label !== '' ? 'Avaliacao: ' . $label : 'Avaliacao denunciada';
+                $contextPath = '/app/users/' . $reference;
+            }
+        }
+
         return [
             'id'        => $this->id,
             'reason'    => $this->motivo,
-            'target'    => $this->alvo,
+            'target'    => $targetLabel,
             'author'    => $this->denunciante,
             'createdAt' => $dateLabel,
             'status'    => $this->status,
+            'contextPath' => $contextPath,
         ];
     }
 }

@@ -54,6 +54,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if (in_array($user->status, ['suspenso', 'bloqueado', 'inativo'], true)) {
+            return response()->json([
+                'message' => 'Sua conta esta suspensa ou banida. Contate a administracao.',
+            ], 403);
+        }
+
         if (!$user->hasVerifiedEmail()) {
             return response()->json([
                 'message' => 'E-mail não verificado. Verifique sua caixa de entrada.',
@@ -162,6 +168,12 @@ class AuthController extends Controller
         }
 
         $record->delete();
+
+        if (in_array($user->status, ['suspenso', 'bloqueado', 'inativo'], true)) {
+            return response()->json([
+                'message' => 'Sua conta esta suspensa ou banida. Contate a administracao.',
+            ], 403);
+        }
 
         $token = JWTAuth::fromUser($user);
 

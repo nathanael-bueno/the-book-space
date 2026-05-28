@@ -17,12 +17,12 @@ class InitialUserSeeder extends Seeder
         User::query()->updateOrCreate(
             ['email' => 'admin@bookspace.com'],
             [
-                'nome_completo' => 'Usuario Inicial',
+                'nome_completo' => 'Administrador Geral',
                 'senha_hash' => Hash::make('Senha123!'),
                 'role' => UserRole::ADMINISTRADOR,
                 'instituicao' => 'Book Space',
                 'cidade' => 'Belo Horizonte, MG',
-                'bio' => 'Usuario inicial para ambiente de desenvolvimento.',
+                'bio' => 'Administrador do sistema para ambiente de desenvolvimento.',
                 'status' => 'ativo',
                 'nota' => 0,
                 'email_verified_at' => now(),

@@ -22,6 +22,7 @@ export type AdminReport = {
   author: string
   createdAt: string
   status: AdminReportStatus
+  contextPath?: string | null
 }
 
 export type AdminUserStatus = 'Ativo' | 'Suspenso' | 'Banido'
@@ -53,6 +54,12 @@ export type AdminDashboardStats = {
   donations: number
   pendingReports: number
   recentUsers: AdminDashboardRecentUser[]
+}
+
+export type AdminDonationByInstitution = {
+  institutionId: string
+  institutionName: string
+  totalDonations: number
 }
 
 type ApiData<T> = { data: T }
@@ -171,6 +178,13 @@ export async function persistReportStatus(
   await apiSend('PATCH', `/admin/reports/${id}/status`, { status })
 }
 
+export async function submitReport(payload: {
+  motivo: string
+  alvo: string
+}): Promise<void> {
+  await apiSend('POST', '/reports', payload)
+}
+
 export async function persistUserStatus(id: string, status: AdminUserStatus) {
   await apiSend('PATCH', `/admin/users/${id}/status`, { status })
 }
@@ -209,4 +223,28 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     pendingReports: raw.pending_reports,
     recentUsers: raw.recent_users,
   }
+}
+
+export async function getAdminDonationsByInstitution(params?: {
+  from?: string
+  to?: string
+}): Promise<AdminDonationByInstitution[]> {
+  const search = new URLSearchParams()
+  if (params?.from) search.set('from', params.from)
+  if (params?.to) search.set('to', params.to)
+  const query = search.toString()
+
+  const raw = await apiGet<
+    Array<{
+      institution_id: string
+      institution_name: string
+      total_donations: number
+    }>
+  >(`/admin/reports/donations-by-institution${query ? `?${query}` : ''}`)
+
+  return raw.map((row) => ({
+    institutionId: row.institution_id,
+    institutionName: row.institution_name,
+    totalDonations: row.total_donations,
+  }))
 }

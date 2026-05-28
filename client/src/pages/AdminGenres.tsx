@@ -28,8 +28,10 @@ export default function AdminGenres() {
   )
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
+  const [category, setCategory] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [createName, setCreateName] = useState('')
+  const [createCategory, setCreateCategory] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [openMenu, setOpenMenu] = useState<{
@@ -81,16 +83,14 @@ export default function AdminGenres() {
   function resetForm() {
     setEditingId(null)
     setName('')
+    setCategory('')
   }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (!editingId || !name.trim()) return
 
-    const currentGenre = genres.find((genre) => genre.id === editingId)
-    if (!currentGenre) return
-
-    const payload = { name: name.trim(), category: currentGenre.category }
+    const payload = { name: name.trim(), category: category.trim() }
 
     try {
       await persistGenreUpdate(editingId, payload)
@@ -119,7 +119,7 @@ export default function AdminGenres() {
 
     const payload = {
       name: createName.trim(),
-      category: 'Geral',
+      category: createCategory.trim(),
     }
 
     try {
@@ -130,6 +130,7 @@ export default function AdminGenres() {
         message: 'Genero criado com sucesso.',
       })
       setCreateName('')
+      setCreateCategory('')
       setIsCreateModalOpen(false)
     } catch (err) {
       toast.error({
@@ -142,6 +143,7 @@ export default function AdminGenres() {
   function onEdit(genre: AdminGenre) {
     setEditingId(genre.id)
     setName(genre.name)
+    setCategory(genre.category)
     setIsCreateModalOpen(true)
   }
 
@@ -199,6 +201,7 @@ export default function AdminGenres() {
           onClick={() => {
             resetForm()
             setCreateName('')
+            setCreateCategory('')
             setIsCreateModalOpen(true)
           }}
           className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-deep"
@@ -233,6 +236,9 @@ export default function AdminGenres() {
                     Genero
                   </th>
                   <th className="whitespace-nowrap px-4 py-3 font-semibold">
+                    Categoria
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">
                     Status
                   </th>
                   <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">
@@ -250,6 +256,11 @@ export default function AdminGenres() {
                     >
                       <td className="px-4 py-3 font-medium text-ink">
                         <p className="max-w-[340px] truncate">{genre.name}</p>
+                      </td>
+                      <td className="px-4 py-3 text-ink-dim">
+                        <p className="max-w-[260px] truncate">
+                          {genre.category || 'Sem categoria'}
+                        </p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
                         <span
@@ -351,13 +362,21 @@ export default function AdminGenres() {
       <GenreModal
         open={isCreateModalOpen}
         isEditing={Boolean(editingId)}
-        value={editingId ? name : createName}
-        onChange={(value) => {
+        nameValue={editingId ? name : createName}
+        categoryValue={editingId ? category : createCategory}
+        onNameChange={(value) => {
           if (editingId) {
             setName(value)
             return
           }
           setCreateName(value)
+        }}
+        onCategoryChange={(value) => {
+          if (editingId) {
+            setCategory(value)
+            return
+          }
+          setCreateCategory(value)
         }}
         onCancel={() => {
           setIsCreateModalOpen(false)

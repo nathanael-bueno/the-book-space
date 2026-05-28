@@ -1,22 +1,33 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, MessageSquare, Star } from 'lucide-react'
+import { getCurrentUserId } from '../services/auth'
+import { isFollowingUser, toggleFollowUser } from '../services/follows'
 import { ApiError } from '../services/http'
 import {
   getPublicProfile,
   type Profile as ProfileData,
 } from '../services/profile'
-import { listUserReviews, type ApiReview } from '../services/reviews'
+import {
+  listUserReviews,
+  reportReview,
+  type ApiReview,
+} from '../services/reviews'
+import { useToast } from '../stores/useToast'
 
 export default function PublicProfile() {
+  const toast = useToast()
   const { userId } = useParams()
   const hasInvalidUserId = !userId
+  const currentUserId = getCurrentUserId()
+  const isOwnProfile = Boolean(currentUserId) && currentUserId === userId
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [reviews, setReviews] = useState<ApiReview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
+  const [, forceFollowRefresh] = useState(0)
 
   useEffect(() => {
     if (!userId) return
@@ -98,13 +109,51 @@ export default function PublicProfile() {
     return average.toFixed(1)
   })()
 
+  async function onReportReview(reviewId: string) {
+    const motivo =
+      window.prompt('Descreva o motivo da denuncia da avaliacao:')?.trim() ?? ''
+    if (!motivo) return
+
+    try {
+      await reportReview(reviewId, motivo)
+      toast.success({
+        title: 'Denuncia enviada',
+        message: 'A avaliacao foi encaminhada para moderacao.',
+      })
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : 'Nao foi possivel registrar a denuncia da avaliacao.'
+
+      toast.error({
+        title: 'Erro',
+        message,
+      })
+    }
+  }
+
+  function onToggleFollow() {
+    if (!userId || isOwnProfile) return
+    const next = toggleFollowUser(userId)
+    forceFollowRefresh((value) => value + 1)
+    toast.success({
+      title: next ? 'Usuario seguido' : 'Usuario removido',
+      message: next
+        ? 'As recomendacoes desse leitor vao aparecer primeiro no seu feed.'
+        : 'As recomendacoes voltaram para a ordem padrao do feed.',
+    })
+  }
+
+  const isFollowing = userId ? isFollowingUser(userId) : false
+
   return (
     <main className="mx-auto w-full space-y-3">
       <section className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <Link
             to="/app/feed"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
             <ChevronLeft size={16} />
             Voltar
@@ -113,14 +162,29 @@ export default function PublicProfile() {
             {profile?.nome_completo ?? 'Usuario'}
           </h1>
         </div>
-        <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
-          <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-deep">
-            <Star size={16} fill="currentColor" />
-            {averageRating}
-          </p>
-          <p className="mt-1 text-xs text-ink-muted">
-            {totalReviews} avaliacoes
-          </p>
+        <div className="flex items-center gap-2">
+          {!isOwnProfile ? (
+            <button
+              type="button"
+              onClick={onToggleFollow}
+              className={`inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm font-semibold transition-colors ${
+                isFollowing
+                  ? 'border-accent/45 bg-[#eef7f4] text-accent hover:border-accent/60'
+                  : 'border-line/35 bg-white text-ink-dim hover:border-accent/35 hover:text-brand-deep'
+              }`}
+            >
+              {isFollowing ? 'Seguindo' : 'Seguir'}
+            </button>
+          ) : null}
+          <div className="rounded-xl border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
+            <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-deep">
+              <Star size={16} fill="currentColor" />
+              {averageRating}
+            </p>
+            <p className="mt-1 text-xs text-ink-muted">
+              {totalReviews} avaliacoes
+            </p>
+          </div>
         </div>
       </section>
 
@@ -202,6 +266,13 @@ export default function PublicProfile() {
                 <p className="mt-2 text-sm leading-6 text-ink-dim">
                   {review.comentario ?? 'Sem comentario.'}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => void onReportReview(review.id)}
+                  className="mt-2 inline-flex h-8 items-center justify-center rounded-md border border-line/35 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                >
+                  Denunciar avaliacao
+                </button>
               </div>
             ))}
             {!isLoadingReviews && !reviewsError && !reviews.length ? (

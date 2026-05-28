@@ -27,6 +27,37 @@ const fallbackInstitutions: DonationInstitution[] = [
 
 type ApiData<T> = { data: T }
 
+type ApiDonation = {
+  id: string
+  status: 'solicitada' | 'concluida' | 'cancelada'
+  created_at: string
+  updated_at: string
+  institution?: {
+    id: string
+    nome: string
+    cidade?: string | null
+  } | null
+  book?: {
+    id: string
+    titulo: string
+    autor: string
+  } | null
+}
+
+type PaginatedDonations = {
+  data: ApiDonation[]
+}
+
+export type DonationHistoryItem = {
+  id: string
+  status: ApiDonation['status']
+  createdAt: string
+  updatedAt: string
+  institutionName: string
+  bookTitle: string
+  bookAuthor: string
+}
+
 export async function getDonationInstitutionById(institutionId: string) {
   const token = getToken()
 
@@ -78,4 +109,31 @@ export async function submitDonation(payload: {
     localStorage.setItem(key, JSON.stringify(current))
     return { persisted: false }
   }
+}
+
+export async function getMyDonationHistory(params?: {
+  status?: 'solicitada' | 'concluida' | 'cancelada'
+  perPage?: number
+}) {
+  const token = getToken()
+  const search = new URLSearchParams()
+
+  if (params?.status) search.set('status', params.status)
+  if (params?.perPage) search.set('per_page', String(params.perPage))
+
+  const query = search.toString()
+  const response = await http<PaginatedDonations>(
+    `/donations${query ? `?${query}` : ''}`,
+    { token }
+  )
+
+  return response.data.map((item) => ({
+    id: item.id,
+    status: item.status,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+    institutionName: item.institution?.nome ?? 'Instituicao parceira',
+    bookTitle: item.book?.titulo ?? 'Livro sem titulo',
+    bookAuthor: item.book?.autor ?? 'Autor nao informado',
+  }))
 }

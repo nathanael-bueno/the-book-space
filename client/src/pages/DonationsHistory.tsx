@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Building2 } from 'lucide-react'
 import { ApiError } from '../services/http'
-import { getMyBooks, type ApiBook } from '../services/books'
+import {
+  getMyDonationHistory,
+  type DonationHistoryItem,
+} from '../services/donations'
 import { StatusBadge } from '../components/ui/StatusBadge'
 
 function formatDate(isoDate?: string) {
@@ -16,7 +19,7 @@ function formatDate(isoDate?: string) {
 }
 
 export default function DonationsHistory() {
-  const [donations, setDonations] = useState<ApiBook[]>([])
+  const [donations, setDonations] = useState<DonationHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,13 +30,12 @@ export default function DonationsHistory() {
       setIsLoading(true)
       setError(null)
       try {
-        const response = await getMyBooks()
+        const response = await getMyDonationHistory({
+          status: 'concluida',
+          perPage: 50,
+        })
         if (!active) return
-        setDonations(
-          response.data.filter(
-            (book) => book.status?.toLowerCase().trim() === 'doado'
-          )
-        )
+        setDonations(response)
       } catch (err) {
         if (!active) return
         setError(
@@ -55,12 +57,12 @@ export default function DonationsHistory() {
 
   const donationItems = useMemo(
     () =>
-      donations.map((book) => ({
-        id: book.id,
-        institution: 'Instituicao parceira',
-        book: `${book.titulo} - ${book.autor}`,
+      donations.map((donation) => ({
+        id: donation.id,
+        institution: donation.institutionName,
+        book: `${donation.bookTitle} - ${donation.bookAuthor}`,
         status: 'Concluida',
-        date: formatDate(book.updated_at ?? book.created_at),
+        date: formatDate(donation.updatedAt ?? donation.createdAt),
       })),
     [donations]
   )

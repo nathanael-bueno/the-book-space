@@ -7,6 +7,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Models\Book;
 use App\Models\Post;
 use App\Models\PostComment;
+use App\Models\Report;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,14 +24,22 @@ class PostController extends Controller
         $posts = Post::query()
             ->with([
                 'author:id,nome_completo,foto',
-                'book:id,titulo,autor,fotos',
+                'book:id,titulo,autor,fotos,id_genero',
+                'book.genre:id,nome',
             ])
             ->withCount(['likes', 'comments'])
             ->withExists([
                 'likes as liked_by_me' => fn($query) => $query->where('id_usuario', $user->id),
-            ])
-            ->latest()
-            ->paginate($perPage);
+            ]);
+
+        if ($request->filled('id_genero')) {
+            $genreId = (string) $request->query('id_genero');
+            $posts->whereHas('book', function ($query) use ($genreId): void {
+                $query->where('id_genero', $genreId);
+            });
+        }
+
+        $posts = $posts->latest()->paginate($perPage);
 
         $items = $posts->getCollection();
         $postIds = $items->pluck('id')->all();
@@ -67,7 +76,8 @@ class PostController extends Controller
     {
         $post->load([
             'author:id,nome_completo,foto',
-            'book:id,titulo,autor,fotos',
+            'book:id,titulo,autor,fotos,id_genero',
+            'book.genre:id,nome',
         ]);
         $post->loadCount(['likes', 'comments']);
         $post->liked_by_me = $post->likes()
@@ -110,7 +120,7 @@ class PostController extends Controller
 
         $payload['id_usuario'] = $user->id;
         $post = Post::create($payload);
-        $post->load(['author:id,nome_completo,foto', 'book:id,titulo,autor,fotos']);
+        $post->load(['author:id,nome_completo,foto', 'book:id,titulo,autor,fotos,id_genero', 'book.genre:id,nome']);
 
         return response()->json([
             'message' => 'Post publicado com sucesso.',
@@ -148,7 +158,7 @@ class PostController extends Controller
 
         $post->fill($payload);
         $post->save();
-        $post->load(['author:id,nome_completo,foto', 'book:id,titulo,autor,fotos']);
+        $post->load(['author:id,nome_completo,foto', 'book:id,titulo,autor,fotos,id_genero', 'book.genre:id,nome']);
 
         return response()->json([
             'message' => 'Post atualizado com sucesso.',
@@ -172,6 +182,27 @@ class PostController extends Controller
         return response()->json([
             'message' => 'Post removido com sucesso.',
         ]);
+    }
+
+    public function report(Request $request, Post $post): JsonResponse
+    {
+        $payload = $request->validate([
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $user = auth()->user();
+
+        Report::create([
+            'motivo' => trim($payload['motivo']),
+            'alvo' => sprintf('[POST:%s] %s', $post->id, $post->titulo),
+            'denunciante' => $user->nome_completo,
+            'id_denunciante' => $user->id,
+            'status' => 'Pendente',
+        ]);
+
+        return response()->json([
+            'message' => 'Denuncia registrada com sucesso.',
+        ], 201);
     }
 
     private function resolveImageUrl(Request $request): ?string

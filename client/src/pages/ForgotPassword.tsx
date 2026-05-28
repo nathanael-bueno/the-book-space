@@ -48,12 +48,12 @@ export default function ForgotPassword() {
 
       {/* Forgot Password Card */}
       <div className="ui-auth-card relative z-10 w-full max-w-sm p-8 backdrop-blur-md">
-        <div className="mb-8 flex items-center gap-3">
+        <div className="mb-8">
           <Link
             to="/auth/login"
-            className="inline-flex items-center gap-2 rounded-lg border border-line/55 bg-white px-3 py-2 text-xs font-medium text-neutral-500 shadow-sm transition-colors duration-200 hover:text-brand-deep"
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={16} />
             Voltar
           </Link>
           <div>

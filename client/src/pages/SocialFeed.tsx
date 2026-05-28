@@ -1,28 +1,45 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
+  AlertTriangle,
   CalendarDays,
+  Edit,
+  Filter,
   Heart,
   MessageCircle,
   PenSquare,
   Send,
+  Trash2,
   UserRound,
 } from 'lucide-react'
+import ReportDialog from '../components/ui/ReportDialog'
+import { getCurrentUserId } from '../services/auth'
+import { listFollowedUserIds } from '../services/follows'
 import { ApiError } from '../services/http'
 import {
   createPostComment,
+  deletePost,
   likePost,
   listPostComments,
   listPosts,
+  reportPost,
   unlikePost,
   type ApiPost,
   type ApiPostComment,
 } from '../services/posts'
+import { listGenres, type ApiGenre } from '../services/books'
 import { useToast } from '../stores/useToast'
 
 export default function SocialFeed() {
+  const navigate = useNavigate()
   const toast = useToast()
+  const currentUserId = useMemo(() => getCurrentUserId(), [])
   const [posts, setPosts] = useState<ApiPost[]>([])
+  const [followedUserIds, setFollowedUserIds] = useState<string[]>(() =>
+    listFollowedUserIds()
+  )
+  const [genres, setGenres] = useState<ApiGenre[]>([])
+  const [selectedGenreId, setSelectedGenreId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [commentsByPost, setCommentsByPost] = useState<
     Record<string, ApiPostComment[]>
@@ -39,6 +56,48 @@ export default function SocialFeed() {
   const [commentInputByPost, setCommentInputByPost] = useState<
     Record<string, string>
   >({})
+  const [reportTarget, setReportTarget] = useState<{
+    postId: string
+    title: string
+  } | null>(null)
+
+  useEffect(() => {
+    function syncFollowedUsers() {
+      setFollowedUserIds(listFollowedUserIds())
+    }
+
+    window.addEventListener(
+      'book-space:followed-users-changed',
+      syncFollowedUsers
+    )
+    return () => {
+      window.removeEventListener(
+        'book-space:followed-users-changed',
+        syncFollowedUsers
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadGenres() {
+      try {
+        const response = await listGenres()
+        if (!active) return
+        setGenres(response.data)
+      } catch {
+        if (!active) return
+        setGenres([])
+      }
+    }
+
+    void loadGenres()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -46,7 +105,10 @@ export default function SocialFeed() {
     async function load() {
       setIsLoading(true)
       try {
-        const response = await listPosts()
+        const response = await listPosts({
+          id_genero: selectedGenreId || undefined,
+          per_page: 30,
+        })
         if (!active) return
         setPosts(response.data)
       } catch (err) {
@@ -67,7 +129,19 @@ export default function SocialFeed() {
     return () => {
       active = false
     }
-  }, [])
+  }, [selectedGenreId])
+
+  const prioritizedPosts = useMemo(() => {
+    if (!followedUserIds.length) return posts
+
+    const followed = new Set(followedUserIds)
+    return [...posts].sort((a, b) => {
+      const aFollowed = followed.has(a.id_usuario) ? 1 : 0
+      const bFollowed = followed.has(b.id_usuario) ? 1 : 0
+      if (aFollowed !== bFollowed) return bFollowed - aFollowed
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [followedUserIds, posts])
 
   async function onToggleLike(postId: string, likedByMe: boolean) {
     try {
@@ -193,6 +267,50 @@ export default function SocialFeed() {
     }
   }
 
+  async function onConfirmReport(motivo: string) {
+    if (!reportTarget) return
+    const { postId } = reportTarget
+    setReportTarget(null)
+
+    try {
+      await reportPost(postId, motivo)
+      toast.success({
+        title: 'Denuncia enviada',
+        message: 'A moderacao vai analisar o conteudo reportado.',
+      })
+    } catch (err) {
+      toast.error({
+        title: 'Erro',
+        message:
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel registrar a denuncia.',
+      })
+    }
+  }
+
+  async function onDeletePost(post: ApiPost) {
+    const confirmed = window.confirm(`Excluir o post "${post.titulo}"?`)
+    if (!confirmed) return
+
+    try {
+      await deletePost(post.id)
+      setPosts((prev) => prev.filter((item) => item.id !== post.id))
+      toast.success({
+        title: 'Post excluido',
+        message: 'Seu post foi removido com sucesso.',
+      })
+    } catch (err) {
+      toast.error({
+        title: 'Erro ao excluir',
+        message:
+          err instanceof ApiError
+            ? err.message
+            : 'Nao foi possivel excluir o post.',
+      })
+    }
+  }
+
   return (
     <main className="mx-auto w-full space-y-4">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -212,6 +330,27 @@ export default function SocialFeed() {
         </Link>
       </section>
 
+      <section className="rounded-xl border border-line/35 bg-white p-3 shadow-sm sm:p-3.5">
+        <label className="block">
+          <span className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-deep">
+            <Filter size={14} />
+            Filtrar recomendacoes por genero
+          </span>
+          <select
+            value={selectedGenreId}
+            onChange={(event) => setSelectedGenreId(event.target.value)}
+            className="h-9 w-full rounded-lg border border-line/55 bg-[#fbfaf7] px-3 text-sm text-ink outline-none transition-colors focus:border-accent"
+          >
+            <option value="">Todos os generos</option>
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.id}>
+                {genre.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
       <section className="space-y-3">
         {isLoading ? (
           <p className="rounded-lg border border-line/30 bg-white p-3 text-sm text-ink-dim">
@@ -219,12 +358,14 @@ export default function SocialFeed() {
           </p>
         ) : null}
 
-        {posts.map((post) => {
+        {prioritizedPosts.map((post) => {
           const postAuthor =
             post.author?.nome_completo ?? 'Leitor da comunidade'
           const postDate = post.created_at
             ? new Date(post.created_at).toLocaleDateString('pt-BR')
             : null
+          const isOwner =
+            Boolean(currentUserId) && post.id_usuario === currentUserId
 
           return (
             <article
@@ -263,7 +404,7 @@ export default function SocialFeed() {
                 </div>
               ) : null}
 
-              <div className="mt-3 flex items-center gap-2 border-t border-line/25 pt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line/25 pt-3">
                 <button
                   type="button"
                   onClick={() =>
@@ -289,6 +430,36 @@ export default function SocialFeed() {
                   <MessageCircle size={14} />
                   {post.comments_count ?? 0}
                 </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setReportTarget({ postId: post.id, title: post.titulo })
+                  }
+                  className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-line/35 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                >
+                  <AlertTriangle size={14} />
+                  Denunciar
+                </button>
+                {isOwner ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/app/posts/${post.id}/edit`)}
+                      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-line/35 bg-white px-2.5 text-xs font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                    >
+                      <Edit size={14} />
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void onDeletePost(post)}
+                      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-brand-deep/25 bg-brand-deep/5 px-2.5 text-xs font-semibold text-brand-deep transition-colors hover:border-brand-deep/40 hover:bg-brand-deep/10"
+                    >
+                      <Trash2 size={14} />
+                      Excluir
+                    </button>
+                  </>
+                ) : null}
               </div>
 
               {isCommentsOpen[post.id] ? (
@@ -370,6 +541,13 @@ export default function SocialFeed() {
           </section>
         ) : null}
       </section>
+
+      <ReportDialog
+        open={Boolean(reportTarget)}
+        target={reportTarget?.title ?? ''}
+        onCancel={() => setReportTarget(null)}
+        onConfirm={(motivo) => void onConfirmReport(motivo)}
+      />
     </main>
   )
 }

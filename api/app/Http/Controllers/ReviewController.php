@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreReviewRequest;
 use App\Models\Review;
+use App\Models\Report;
 use App\Models\Trade;
 use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
@@ -78,6 +80,27 @@ class ReviewController extends Controller
         return response()->json([
             'message' => 'Avaliacao enviada com sucesso.',
             'data' => $review,
+        ], 201);
+    }
+
+    public function report(Request $request, Review $review): JsonResponse
+    {
+        $payload = $request->validate([
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $user = auth()->user();
+
+        Report::create([
+            'motivo' => trim($payload['motivo']),
+            'alvo' => sprintf('[REVIEW:%s] Avaliacao recebida por usuario %s', $review->id_avaliado, $review->id_avaliado),
+            'denunciante' => $user->nome_completo,
+            'id_denunciante' => $user->id,
+            'status' => 'Pendente',
+        ]);
+
+        return response()->json([
+            'message' => 'Denuncia da avaliacao registrada com sucesso.',
         ], 201);
     }
 

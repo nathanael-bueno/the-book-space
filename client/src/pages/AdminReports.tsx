@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, Eye, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import {
   listAdminReports,
@@ -134,13 +135,24 @@ export default function AdminReports() {
               </div>
 
               <div className="mt-2.5 flex flex-wrap gap-2 border-t border-line/35 pt-2.5">
-                <button
-                  type="button"
-                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
-                >
-                  <Eye size={16} />
-                  Ver contexto
-                </button>
+                {report.contextPath ? (
+                  <Link
+                    to={report.contextPath}
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                  >
+                    <Eye size={16} />
+                    Ver contexto
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-line/45 bg-white px-3 text-sm font-semibold text-ink-dim opacity-60"
+                  >
+                    <Eye size={16} />
+                    Ver contexto
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={resolved}

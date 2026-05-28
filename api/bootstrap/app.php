@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role.admin' => \App\Http\Middleware\EnsureAdminRole::class,
             'verified.email' => \App\Http\Middleware\EnsureVerifiedEmail::class,
             'token.fresh' => \App\Http\Middleware\EnsureFreshJwt::class,
+            'active.user' => \App\Http\Middleware\EnsureActiveUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

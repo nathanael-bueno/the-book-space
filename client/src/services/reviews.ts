@@ -1,4 +1,5 @@
 import { http } from './http'
+import { getToken } from './auth'
 
 export type ApiReview = {
   id: string
@@ -17,4 +18,12 @@ export type ApiReview = {
 
 export async function listUserReviews(userId: string) {
   return http<{ data: ApiReview[] }>(`/users/${userId}/reviews`)
+}
+
+export async function reportReview(reviewId: string, motivo: string) {
+  return http<{ message: string }>(`/reviews/${reviewId}/report`, {
+    method: 'POST',
+    body: { motivo },
+    token: getToken(),
+  })
 }

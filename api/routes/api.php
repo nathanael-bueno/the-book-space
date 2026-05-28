@@ -20,6 +20,7 @@ use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TradeController;
 use App\Http\Controllers\TradeMessageController;
@@ -47,7 +48,7 @@ Route::get('/institutions', [InstitutionController::class, 'index']);
 Route::get('/institutions/{institution}', [InstitutionController::class, 'show']);
 
 // --- Authenticated routes ---
-Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function () {
+Route::middleware(['auth.jwt', 'active.user', 'token.fresh', 'verified.email'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/me/profile', [ProfileController::class, 'me']);
     Route::patch('/me/profile', [ProfileController::class, 'update']);
@@ -59,7 +60,8 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function
     Route::get('/me/notification-preferences', [NotificationPreferenceController::class, 'show']);
     Route::patch('/me/notification-preferences', [NotificationPreferenceController::class, 'update']);
 
-    // Books (write)
+    // Books (write/read auth)
+    Route::get('/books/recommended', [BookController::class, 'recommended']);
     Route::post('/books', [BookController::class, 'store']);
     Route::patch('/books/{book}', [BookController::class, 'update']);
     Route::delete('/books/{book}', [BookController::class, 'destroy']);
@@ -73,6 +75,7 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function
     Route::get('/trades/{trade}/messages', [TradeMessageController::class, 'index']);
     Route::post('/trades/{trade}/messages', [TradeMessageController::class, 'store']);
     Route::post('/trades/{trade}/reviews', [ReviewController::class, 'store']);
+    Route::post('/reviews/{review}/report', [ReviewController::class, 'report']);
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
@@ -84,10 +87,14 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function
     Route::post('/posts', [PostController::class, 'store']);
     Route::patch('/posts/{post}', [PostController::class, 'update']);
     Route::delete('/posts/{post}', [PostController::class, 'destroy']);
+    Route::post('/posts/{post}/report', [PostController::class, 'report']);
     Route::post('/posts/{post}/likes', [PostLikeController::class, 'store']);
     Route::delete('/posts/{post}/likes', [PostLikeController::class, 'destroy']);
     Route::get('/posts/{post}/comments', [PostCommentController::class, 'index']);
     Route::post('/posts/{post}/comments', [PostCommentController::class, 'store']);
+
+    // Reports (user-facing: create a report on a post or review)
+    Route::post('/reports', [ReportController::class, 'store'])->middleware('throttle:10,1');
 
     // Donations
     Route::get('/donations', [DonationController::class, 'index']);
@@ -98,7 +105,7 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email'])->group(function
 });
 
 // --- Admin-only routes ---
-Route::middleware(['auth.jwt', 'token.fresh', 'verified.email', 'role.admin'])->group(function () {
+Route::middleware(['auth.jwt', 'active.user', 'token.fresh', 'verified.email', 'role.admin'])->group(function () {
     // Stats
     Route::get('/admin/stats', [AdminStatsController::class, 'index']);
 
@@ -117,6 +124,7 @@ Route::middleware(['auth.jwt', 'token.fresh', 'verified.email', 'role.admin'])->
     // Reports (list + moderate)
     Route::get('/admin/reports', [AdminReportController::class, 'index']);
     Route::patch('/admin/reports/{report}/status', [AdminReportController::class, 'updateStatus']);
+    Route::get('/admin/reports/donations-by-institution', [AdminStatsController::class, 'donationsByInstitution']);
 
     // Genres (admin CRUD — extends the public read-only endpoint)
     Route::post('/admin/genres', [AdminGenreController::class, 'store']);

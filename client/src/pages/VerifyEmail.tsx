@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  clearToken,
   resendEmailCodeByEmail,
   verifyEmailCode,
 } from '../services/auth'
@@ -33,6 +32,45 @@ export default function VerifyEmail() {
   const [genres, setGenres] = useState<ApiGenre[]>([])
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const [isSavingGenres, setIsSavingGenres] = useState(false)
+  const TIMER_KEY = 'book-space.verify-code-expiry'
+  const CODE_DURATION = 900 // 15 minutos em segundos
+
+  function getSecondsLeft(): number {
+    const saved = localStorage.getItem(TIMER_KEY)
+    if (!saved) return CODE_DURATION
+    const diff = Math.floor((parseInt(saved) - Date.now()) / 1000)
+    return Math.max(0, diff)
+  }
+
+  function saveTimer() {
+    localStorage.setItem(TIMER_KEY, String(Date.now() + CODE_DURATION * 1000))
+  }
+
+  const [timeLeft, setTimeLeft] = useState(() => getSecondsLeft())
+
+  // Salva o timestamp na primeira vez que chega na tela (se não houver um salvo)
+  useEffect(() => {
+    if (!localStorage.getItem(TIMER_KEY)) saveTimer()
+  }, [])
+
+  useEffect(() => {
+    if (step !== 'verify') return
+    if (timeLeft <= 0) return
+
+    const timer = setInterval(() => {
+      const remaining = getSecondsLeft()
+      setTimeLeft(remaining)
+      if (remaining <= 0) clearInterval(timer)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [step])
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  }
 
   useEffect(() => {
     if (step !== 'genres') return
@@ -98,6 +136,8 @@ export default function VerifyEmail() {
     try {
       const response = await resendEmailCodeByEmail(normalizedEmail)
       setMessage(response.message)
+      saveTimer()                      // Reseta o timestamp no localStorage
+      setTimeLeft(CODE_DURATION)       // Atualiza o estado local
     } catch (error) {
       toast.error({
         title: 'Erro',
@@ -128,8 +168,7 @@ export default function VerifyEmail() {
     try {
       await saveMyFavoriteGenres(selectedGenres)
       localStorage.removeItem('book-space.pending-verification-email')
-      clearToken()
-      navigate('/auth/login', { replace: true })
+      navigate('/app/home', { replace: true })
     } catch (error) {
       toast.error({
         title: 'Erro',
@@ -215,9 +254,24 @@ export default function VerifyEmail() {
               />
             </div>
 
+            <div className="text-center py-1">
+              {timeLeft > 0 ? (
+                <p className="text-xs text-neutral-500">
+                  O código expira em:{' '}
+                  <span className="font-semibold text-brand-deep">
+                    {formatTime(timeLeft)}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs font-semibold text-brand-deep animate-pulse">
+                  Código expirado! Solicite um novo reenvio.
+                </p>
+              )}
+            </div>
+
             <button
               type="submit"
-              disabled={isLoading || code.length !== 6}
+              disabled={isLoading || code.length !== 6 || timeLeft === 0}
               className="ui-auth-primary-btn w-full bg-accent hover:bg-brand-deep disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 transition-all duration-300"
             >
               {isLoading ? 'Validando...' : 'Verificar codigo'}

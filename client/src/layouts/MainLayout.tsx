@@ -4,14 +4,18 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   Building2,
+  LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
   PenSquare,
   Plus,
   Repeat2,
   Search,
+  Tag,
   LogOut,
   Settings,
+  ShieldAlert,
+  Users,
 } from 'lucide-react'
 import { clearToken, getToken } from '../services/auth'
 import { listBooks } from '../services/books'
@@ -76,9 +80,33 @@ const NAV_ITEMS: SidebarItem[] = [
 
 const ADMIN_ITEMS: SidebarItem[] = [
   {
+    to: '/app/admin/dashboard',
+    label: 'Painel admin',
+    icon: LayoutDashboard,
+    roles: ['administrador'],
+  },
+  {
+    to: '/app/admin/reports',
+    label: 'Denuncias',
+    icon: ShieldAlert,
+    roles: ['administrador'],
+  },
+  {
     to: '/app/admin/institutions',
     label: 'Instituicoes',
     icon: Building2,
+    roles: ['administrador'],
+  },
+  {
+    to: '/app/admin/users',
+    label: 'Usuarios',
+    icon: Users,
+    roles: ['administrador'],
+  },
+  {
+    to: '/app/admin/genres',
+    label: 'Generos',
+    icon: Tag,
     roles: ['administrador'],
   },
 ]
@@ -445,7 +473,7 @@ export default function MainLayout() {
                 ].join(' ')}
               >
                 <Link
-                  to="/app/settings"
+                  to="/app/settings?tab=perfil"
                   role="menuitem"
                   onClick={() => setIsSidebarProfileMenuOpen(false)}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
@@ -561,7 +589,7 @@ export default function MainLayout() {
           <div className="mb-3 h-px bg-line/45" />
           <div className="space-y-2">
             <Link
-              to="/app/settings"
+              to="/app/settings?tab=perfil"
               onClick={() => setIsMobileSidebarOpen(false)}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-dim transition-colors hover:bg-[#fbfaf7] hover:text-brand-deep"
             >

@@ -1072,7 +1072,19 @@ function TabConta() {
 export default function Settings() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = (searchParams.get('tab') as Tab) ?? 'perfil'
+  const currentTab = searchParams.get('tab')
+  const activeTab: Tab =
+    currentTab === 'perfil' ||
+    currentTab === 'notificacoes' ||
+    currentTab === 'generos' ||
+    currentTab === 'conta'
+      ? currentTab
+      : 'perfil'
+
+  useEffect(() => {
+    if (currentTab) return
+    setSearchParams({ tab: 'perfil' }, { replace: true })
+  }, [currentTab, setSearchParams])
 
   function setTab(tab: Tab) {
     setSearchParams({ tab }, { replace: true })
@@ -1088,7 +1100,7 @@ export default function Settings() {
           type="button"
           onClick={() => navigate(-1)}
           aria-label="Voltar"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
         >
           <ChevronLeft size={16} className="shrink-0" />
           Voltar

@@ -2,7 +2,11 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout'
 import ErrorPage from '../pages/ErrorPage'
 import {
+  AdminDashboard,
+  AdminGenres,
   AdminInstitutions,
+  AdminReports,
+  AdminUsers,
   BookDetails,
   BookForm,
   Catalog,
@@ -123,16 +127,36 @@ export const router = createBrowserRouter([
         element: withSuspense(ProfileEdit),
       },
       {
+        path: 'profile/notifications',
+        element: <Navigate to="/app/settings?tab=notificacoes" replace />,
+      },
+      {
         path: 'settings',
         element: withSuspense(Settings),
       },
       {
         path: 'admin',
-        element: <Navigate to="/app/admin/institutions" replace />,
+        element: <Navigate to="/app/admin/dashboard" replace />,
+      },
+      {
+        path: 'admin/dashboard',
+        element: withSuspense(AdminDashboard),
       },
       {
         path: 'admin/institutions',
         element: withSuspense(AdminInstitutions),
+      },
+      {
+        path: 'admin/reports',
+        element: withSuspense(AdminReports),
+      },
+      {
+        path: 'admin/users',
+        element: withSuspense(AdminUsers),
+      },
+      {
+        path: 'admin/genres',
+        element: withSuspense(AdminGenres),
       },
     ],
   },

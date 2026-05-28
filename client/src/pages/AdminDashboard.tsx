@@ -9,6 +9,8 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import {
   getAdminDashboardStats,
+  getAdminDonationsByInstitution,
+  type AdminDonationByInstitution,
   type AdminDashboardRecentUser,
 } from '../services/admin'
 import { useToast } from '../stores/useToast'
@@ -23,6 +25,9 @@ export default function AdminDashboard() {
     recentUsers: [] as AdminDashboardRecentUser[],
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [donationsByInstitution, setDonationsByInstitution] = useState<
+    AdminDonationByInstitution[]
+  >([])
 
   const metrics = [
     {
@@ -55,7 +60,9 @@ export default function AdminDashboard() {
     setIsLoading(true)
     try {
       const response = await getAdminDashboardStats()
+      const donationsRanking = await getAdminDonationsByInstitution()
       setStats(response)
+      setDonationsByInstitution(donationsRanking)
     } catch {
       toast.error({
         title: 'Erro',
@@ -158,6 +165,44 @@ export default function AdminDashboard() {
                   Nenhum usuario cadastrado ainda.
                 </p>
               )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-line/35 bg-white">
+        <header className="flex items-center justify-between border-b border-line/25 px-4 py-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+            Doacoes por instituicao
+          </h2>
+          <span className="text-xs text-ink-muted">
+            {donationsByInstitution.length} instituicao(oes)
+          </span>
+        </header>
+
+        <div className="divide-y divide-line/20">
+          {donationsByInstitution.length ? (
+            donationsByInstitution.map((item, index) => (
+              <article
+                key={item.institutionId}
+                className="flex items-center justify-between gap-3 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">
+                    {index + 1}. {item.institutionName}
+                  </p>
+                  <p className="text-xs text-ink-muted">
+                    Doacoes concluidas
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-brand-deep">
+                  {item.totalDonations.toLocaleString('pt-BR')}
+                </p>
+              </article>
+            ))
+          ) : !isLoading ? (
+            <p className="px-4 py-4 text-sm text-ink-muted">
+              Nenhuma doacao concluida registrada.
+            </p>
+          ) : null}
         </div>
       </section>
     </main>

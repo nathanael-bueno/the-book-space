@@ -213,7 +213,7 @@ export default function Profile() {
       <section className="space-y-1">
         <Link
           to="/app/feed"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-deep"
         >
           <span className="text-base leading-none">‹</span>
           Voltar

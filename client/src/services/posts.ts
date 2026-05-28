@@ -19,6 +19,11 @@ export type ApiPost = {
     id: string
     titulo: string
     autor: string
+    id_genero?: string | null
+    genre?: {
+      id: string
+      nome: string
+    } | null
     fotos?: string[] | null
   } | null
   likes_count?: number
@@ -58,8 +63,13 @@ type CommentsEnvelope = {
   total: number
 }
 
-export async function listPosts() {
-  return http<PaginatedPosts>('/posts', { token: getToken() })
+export async function listPosts(params?: { id_genero?: string; per_page?: number }) {
+  const search = new URLSearchParams()
+  if (params?.id_genero) search.set('id_genero', params.id_genero)
+  if (params?.per_page) search.set('per_page', String(params.per_page))
+
+  const suffix = search.toString() ? `?${search.toString()}` : ''
+  return http<PaginatedPosts>(`/posts${suffix}`, { token: getToken() })
 }
 
 export async function getPost(postId: string) {
@@ -134,4 +144,12 @@ export async function createPostComment(postId: string, conteudo: string) {
       token: getToken(),
     }
   )
+}
+
+export async function reportPost(postId: string, motivo: string) {
+  return http<{ message: string }>(`/posts/${postId}/report`, {
+    method: 'POST',
+    body: { motivo },
+    token: getToken(),
+  })
 }
