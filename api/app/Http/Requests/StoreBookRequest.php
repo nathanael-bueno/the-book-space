@@ -25,6 +25,8 @@ class StoreBookRequest extends FormRequest
             'fotos.*' => 'required|string|max:500',
             'estado_conservacao' => 'required|string|max:50',
             'descricao' => 'nullable|string|max:2500',
+            'opcoes_troca' => 'nullable|array|max:10',
+            'opcoes_troca.*' => 'required|string|max:200',
             'cidade' => 'nullable|string|max:120',
             'id_genero' => 'required|uuid|exists:genres,id',
         ];
@@ -40,6 +42,8 @@ class StoreBookRequest extends FormRequest
             'fotos.*' => 'foto',
             'estado_conservacao' => 'estado de conservação',
             'descricao' => 'descrição',
+            'opcoes_troca' => 'opções de troca',
+            'opcoes_troca.*' => 'opção de troca',
             'cidade' => 'cidade',
             'id_genero' => 'gênero',
         ];

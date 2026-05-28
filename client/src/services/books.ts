@@ -10,6 +10,7 @@ export type ApiBook = {
   estado_conservacao: string
   status: string
   descricao: string | null
+  opcoes_troca?: string[] | null
   cidade: string | null
   id_usuario_dono: string
   id_genero: string | null
@@ -93,6 +94,7 @@ export async function createBook(payload: {
   fotos: string[]
   estado_conservacao: string
   descricao?: string | null
+  opcoes_troca?: string[] | null
   cidade?: string | null
   id_genero: string
 }) {
@@ -105,17 +107,18 @@ export async function createBook(payload: {
 
 export async function updateBook(
   bookId: string,
-  payload: {
+    payload: {
     titulo?: string
     autor?: string
     isbn?: string | null
     fotos?: string[]
     estado_conservacao?: string
     status?: string
-    descricao?: string | null
-    cidade?: string | null
-    id_genero?: string | null
-  }
+      descricao?: string | null
+      opcoes_troca?: string[] | null
+      cidade?: string | null
+      id_genero?: string | null
+    }
 ) {
   return http<BookEnvelope>(`/books/${bookId}`, {
     method: 'PATCH',

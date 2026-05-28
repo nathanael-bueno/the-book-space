@@ -53,6 +53,8 @@ export default function BookForm() {
   const [uf, setUf] = useState('')
   const [cidade, setCidade] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [tradeOptionInput, setTradeOptionInput] = useState('')
+  const [tradeOptions, setTradeOptions] = useState<string[]>([])
   const [photos, setPhotos] = useState<string[]>([])
   const [uploadingCount, setUploadingCount] = useState(0)
   const [selectedGenreId, setSelectedGenreId] = useState('')
@@ -131,6 +133,7 @@ export default function BookForm() {
         setUf(parsed.stateCode)
         setCidade(parsed.city)
         setDescricao(data.descricao ?? '')
+        setTradeOptions(data.opcoes_troca ?? [])
         setPhotos(data.fotos ?? [])
         setSelectedGenreId(data.id_genero ?? '')
       } catch (err) {
@@ -205,6 +208,31 @@ export default function BookForm() {
     setPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
+  function addTradeOption() {
+    const normalized = tradeOptionInput.trim().replace(/\s+/g, ' ')
+
+    if (!normalized) {
+      return
+    }
+
+    if (tradeOptions.includes(normalized)) {
+      setTradeOptionInput('')
+      return
+    }
+
+    if (tradeOptions.length >= 10) {
+      setError('Voce pode informar no maximo 10 opcoes de troca.')
+      return
+    }
+
+    setTradeOptions((prev) => [...prev, normalized])
+    setTradeOptionInput('')
+  }
+
+  function removeTradeOption(optionToRemove: string) {
+    setTradeOptions((prev) => prev.filter((option) => option !== optionToRemove))
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSaving(true)
@@ -234,6 +262,7 @@ export default function BookForm() {
       isbn: isbn.trim() || null,
       estado_conservacao: estado,
       descricao: descricao.trim() || null,
+      opcoes_troca: tradeOptions.length ? tradeOptions : null,
       cidade: formatCityWithState(cidade, uf) || null,
       id_genero: selectedGenreId,
       fotos: photos.length
@@ -505,6 +534,56 @@ export default function BookForm() {
                   className="w-full resize-none rounded-lg border border-line/45 bg-[#fbfaf7] px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
                 />
               </label>
+
+              <section className="space-y-2 rounded-lg border border-line/35 bg-[#fbfaf7] p-2.5 sm:col-span-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                  Opcoes de troca (opcional)
+                </span>
+                <p className="text-xs text-ink-muted">
+                  Se preencher, so aceitara propostas com livros destes titulos.
+                </p>
+
+                <div className="flex gap-2">
+                  <input
+                    value={tradeOptionInput}
+                    onChange={(event) => setTradeOptionInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter') return
+                      event.preventDefault()
+                      addTradeOption()
+                    }}
+                    placeholder="Ex: O Hobbit"
+                    className="h-9 w-full rounded-lg border border-line/45 bg-white px-3.5 text-sm text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/12"
+                  />
+                  <button
+                    type="button"
+                    onClick={addTradeOption}
+                    className="inline-flex h-9 items-center rounded-lg border border-line/55 bg-white px-3 text-sm font-semibold text-ink-dim transition-colors hover:border-accent/35 hover:text-brand-deep"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+
+                {tradeOptions.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {tradeOptions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => removeTradeOption(option)}
+                        className="inline-flex items-center gap-1 rounded-md border border-accent/25 bg-accent/8 px-2.5 py-1 text-xs font-semibold text-accent"
+                      >
+                        {option}
+                        <X size={12} />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-ink-muted">
+                    Sem restricao de titulos. Qualquer livro disponivel pode ser ofertado.
+                  </p>
+                )}
+              </section>
             </div>
           </section>
 

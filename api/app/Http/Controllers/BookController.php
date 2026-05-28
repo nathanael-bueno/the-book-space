@@ -60,6 +60,7 @@ class BookController extends Controller
     {
         $user = auth()->user();
         $payload = $request->validated();
+        $payload['opcoes_troca'] = $this->sanitizeTradeOptions($payload['opcoes_troca'] ?? null);
         $payload['id_usuario_dono'] = $user->id;
 
         try {
@@ -92,7 +93,13 @@ class BookController extends Controller
         }
 
         try {
-            $book->fill($request->validated());
+            $payload = $request->validated();
+
+            if (array_key_exists('opcoes_troca', $payload)) {
+                $payload['opcoes_troca'] = $this->sanitizeTradeOptions($payload['opcoes_troca']);
+            }
+
+            $book->fill($payload);
             $book->save();
         } catch (QueryException $exception) {
             if ($exception->getCode() === '23505') {
@@ -160,5 +167,48 @@ class BookController extends Controller
             'message' => 'Livros do usuario carregados com sucesso.',
             'data' => $books,
         ]);
+    }
+
+    public function recommended(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 100);
+
+        $query = Book::query()
+            ->with(['owner:id,nome_completo,cidade,foto', 'genre:id,nome'])
+            ->where('id_usuario_dono', '!=', $user->id)
+            ->where('status', Book::STATUS_DISPONIVEL);
+
+        if ($request->filled('id_genero')) {
+            $query->where('id_genero', (string) $request->query('id_genero'));
+        }
+
+        $books = $query->latest()->paginate($perPage);
+
+        return response()->json($books);
+    }
+
+    /**
+     * @param array<int, string>|null $options
+     * @return array<int, string>|null
+     */
+    private function sanitizeTradeOptions(?array $options): ?array
+    {
+        if ($options === null) {
+            return null;
+        }
+
+        $sanitized = [];
+        foreach ($options as $option) {
+            $value = trim((string) $option);
+            if ($value === '') {
+                continue;
+            }
+            $sanitized[] = preg_replace('/\s+/', ' ', $value) ?? $value;
+        }
+
+        $sanitized = array_values(array_unique($sanitized));
+
+        return count($sanitized) ? $sanitized : null;
     }
 }

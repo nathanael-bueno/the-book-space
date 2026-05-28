@@ -91,6 +91,10 @@ class TradeController extends Controller
                 abort(422, 'O livro oferecido precisa estar com status disponivel para abrir a proposta.');
             }
 
+            if (!$this->matchesRequestedBookTradeOptions($requestedBook, $offeredBook)) {
+                abort(422, 'Este livro aceita troca apenas por opcoes pre-definidas pelo dono do anuncio.');
+            }
+
             $intermediaryInstitutionId = $this->resolveIntermediaryInstitutionId(
                 $payload['id_instituicao_intermediadora'] ?? null,
                 $requestedBook->cidade,
@@ -274,6 +278,31 @@ class TradeController extends Controller
         );
 
         return null;
+    }
+
+    private function matchesRequestedBookTradeOptions(Book $requestedBook, Book $offeredBook): bool
+    {
+        $options = $requestedBook->opcoes_troca;
+
+        if (!is_array($options) || count($options) === 0) {
+            return true;
+        }
+
+        $normalizedOfferedTitle = $this->normalizeTitle((string) $offeredBook->titulo);
+
+        foreach ($options as $option) {
+            if ($this->normalizeTitle((string) $option) === $normalizedOfferedTitle) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function normalizeTitle(string $value): string
+    {
+        $normalized = mb_strtolower(trim($value));
+        return preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
     }
 
     private function handleAccept(Trade $trade, bool $isRecipient): ?JsonResponse

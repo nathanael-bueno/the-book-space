@@ -29,6 +29,7 @@ class Book extends Model
         'estado_conservacao',
         'status',
         'descricao',
+        'opcoes_troca',
         'cidade',
         'id_usuario_dono',
         'id_genero',
@@ -38,6 +39,7 @@ class Book extends Model
     {
         return [
             'fotos' => 'array',
+            'opcoes_troca' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

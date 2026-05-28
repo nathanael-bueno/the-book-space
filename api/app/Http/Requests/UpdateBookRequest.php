@@ -26,6 +26,8 @@ class UpdateBookRequest extends FormRequest
             'estado_conservacao' => 'sometimes|required|string|max:50',
             'status' => 'sometimes|required|string|in:disponivel,reservado,trocado,doado,indisponivel',
             'descricao' => 'nullable|string|max:2500',
+            'opcoes_troca' => 'nullable|array|max:10',
+            'opcoes_troca.*' => 'required|string|max:200',
             'cidade' => 'nullable|string|max:120',
             'id_genero' => 'nullable|uuid|exists:genres,id',
         ];
@@ -41,6 +43,8 @@ class UpdateBookRequest extends FormRequest
             'fotos.*' => 'foto',
             'estado_conservacao' => 'estado de conservação',
             'descricao' => 'descrição',
+            'opcoes_troca' => 'opções de troca',
+            'opcoes_troca.*' => 'opção de troca',
             'cidade' => 'cidade',
             'id_genero' => 'gênero',
             'status' => 'status',

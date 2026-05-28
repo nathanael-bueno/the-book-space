@@ -34,6 +34,10 @@ export default function TradeProposal() {
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  function normalizeTitle(value: string) {
+    return value.trim().toLowerCase().replace(/\s+/g, ' ')
+  }
+
   useEffect(() => {
     if (!bookId) return
     const safeBookId = bookId
@@ -53,9 +57,19 @@ export default function TradeProposal() {
 
         if (!active) return
 
-        const filteredBooks = myBooksResponse.data.filter(
+        const availableBooks = myBooksResponse.data.filter(
           (item) => item.status === 'disponivel'
         )
+
+        const requestedTradeOptions = (bookResponse.data.opcoes_troca ?? [])
+          .map((option) => normalizeTitle(option))
+          .filter(Boolean)
+
+        const filteredBooks = requestedTradeOptions.length
+          ? availableBooks.filter((item) =>
+              requestedTradeOptions.includes(normalizeTitle(item.titulo))
+            )
+          : availableBooks
 
         setRequestedBook(bookResponse.data)
         setUserBooks(filteredBooks)
@@ -108,6 +122,7 @@ export default function TradeProposal() {
     requestedBook?.id_usuario_dono === currentUserId
   const isRequestedBookUnavailable =
     Boolean(requestedBook) && requestedBook?.status !== 'disponivel'
+  const hasTradeRestrictions = Boolean(requestedBook?.opcoes_troca?.length)
 
   const blockReason = useMemo(() => {
     if (isOwnRequestedBook) {
@@ -119,11 +134,20 @@ export default function TradeProposal() {
     }
 
     if (!userBooks.length) {
+      if (hasTradeRestrictions) {
+        return 'Este anuncio aceita troca apenas por titulos pre-definidos e voce nao possui nenhum deles disponivel.'
+      }
+
       return 'Voce nao tem livros disponiveis para oferecer.'
     }
 
     return null
-  }, [isOwnRequestedBook, isRequestedBookUnavailable, userBooks.length])
+  }, [
+    hasTradeRestrictions,
+    isOwnRequestedBook,
+    isRequestedBookUnavailable,
+    userBooks.length,
+  ])
 
   const isProposalBlocked = Boolean(blockReason)
 
@@ -271,6 +295,24 @@ export default function TradeProposal() {
                 </p>
               </div>
             </div>
+
+            {requestedBook?.opcoes_troca?.length ? (
+              <div className="mt-5 rounded-lg border border-line/35 bg-[#fbfaf7] px-3 py-2.5">
+                <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                  Aceita troca por
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {requestedBook.opcoes_troca.map((option) => (
+                    <span
+                      key={option}
+                      className="inline-flex items-center rounded-md border border-accent/25 bg-accent/8 px-2 py-1 text-xs font-semibold text-accent"
+                    >
+                      {option}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </article>
 

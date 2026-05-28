@@ -286,6 +286,24 @@ export default function BookDetails() {
             </p>
           </div>
 
+          {book.opcoes_troca?.length ? (
+            <div className="rounded-xl border border-line/25 bg-white p-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+                Aceita troca por
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {book.opcoes_troca.map((option) => (
+                  <span
+                    key={option}
+                    className="inline-flex items-center rounded-md border border-accent/25 bg-accent/8 px-2.5 py-1 text-xs font-semibold text-accent"
+                  >
+                    {option}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {/* Ações */}
           <div className="flex flex-wrap gap-2 border-t border-line/20 pt-3">
             {canPropose ? (

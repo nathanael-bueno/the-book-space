@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('estado_conservacao', 50);
             $table->string('status', 20)->default('disponivel');
             $table->text('descricao')->nullable();
+            $table->json('opcoes_troca')->nullable();
             $table->string('cidade', 120)->nullable();
             $table->foreignUuid('id_usuario_dono')->constrained('users')->cascadeOnDelete();
             $table->foreignUuid('id_genero')->nullable()->constrained('genres')->nullOnDelete();
