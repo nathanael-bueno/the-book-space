@@ -16,6 +16,7 @@ import {
   listPublicInstitutions,
   type PublicInstitution,
 } from '../services/institutions'
+import { getMyProfile } from '../services/profile'
 import { createTrade } from '../services/trades'
 import { useToast } from '../stores/useToast'
 
@@ -33,6 +34,7 @@ export default function TradeProposal() {
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [myCity, setMyCity] = useState<string | null>(null)
 
   function normalizeTitle(value: string) {
     return value.trim().toLowerCase().replace(/\s+/g, ' ')
@@ -48,12 +50,17 @@ export default function TradeProposal() {
       setIsLoading(true)
 
       try {
-        const [bookResponse, myBooksResponse, institutionsResponse] =
-          await Promise.all([
-            getBook(safeBookId),
-            getMyBooks(),
-            listPublicInstitutions(),
-          ])
+        const [
+          bookResponse,
+          myBooksResponse,
+          institutionsResponse,
+          profileResponse,
+        ] = await Promise.all([
+          getBook(safeBookId),
+          getMyBooks(),
+          listPublicInstitutions(),
+          getMyProfile(),
+        ])
 
         if (!active) return
 
@@ -75,6 +82,7 @@ export default function TradeProposal() {
         setUserBooks(filteredBooks)
         setOfferedBookId(filteredBooks[0]?.id ?? '')
         setInstitutions(institutionsResponse.data)
+        setMyCity(profileResponse.data.cidade ?? null)
       } catch (err) {
         if (!active) return
         toast.error({
@@ -126,19 +134,23 @@ export default function TradeProposal() {
 
   const blockReason = useMemo(() => {
     if (isOwnRequestedBook) {
-      return 'Este livro e seu. Nao e possivel propor troca para o proprio livro.'
+      return 'Este livro é seu. Não é possível propor troca para o próprio livro.'
     }
 
     if (isRequestedBookUnavailable) {
-      return 'Este livro nao esta disponivel para troca no momento.'
+      return 'Este livro não está disponível para troca no momento.'
+    }
+
+    if (!myCity) {
+      return 'Você precisa informar sua cidade antes de propor uma troca. Acesse as configurações de perfil para preenchê-la.'
     }
 
     if (!userBooks.length) {
       if (hasTradeRestrictions) {
-        return 'Este anuncio aceita troca apenas por titulos pre-definidos e voce nao possui nenhum deles disponivel.'
+        return 'Este anúncio aceita troca apenas por títulos pré-definidos e você não possui nenhum deles disponível.'
       }
 
-      return 'Voce nao tem livros disponiveis para oferecer.'
+      return 'Você não tem livros disponíveis para oferecer.'
     }
 
     return null
@@ -146,10 +158,19 @@ export default function TradeProposal() {
     hasTradeRestrictions,
     isOwnRequestedBook,
     isRequestedBookUnavailable,
+    myCity,
     userBooks.length,
   ])
 
   const isProposalBlocked = Boolean(blockReason)
+
+  const cityMismatchWarning = useMemo(() => {
+    if (isProposalBlocked || !offeredBook || !requestedBook) return null
+    const offered = offeredBook.cidade?.toLowerCase().trim()
+    const requested = requestedBook.cidade?.toLowerCase().trim()
+    if (!offered || !requested || offered === requested) return null
+    return `Seu livro está em ${offeredBook.cidade} e o livro solicitado está em ${requestedBook.cidade}. Combine a logística de entrega com o outro usuário pelo chat após o aceite.`
+  }, [isProposalBlocked, offeredBook, requestedBook])
 
   if (hasInvalidBookId) {
     return (
@@ -342,6 +363,22 @@ export default function TradeProposal() {
           {blockReason ? (
             <div className="mt-5 rounded-xl border border-brand-deep/25 bg-brand-deep/5 p-3 text-sm font-medium text-brand-deep">
               {blockReason}
+              {!myCity && (
+                <Link
+                  to="/app/settings?tab=perfil"
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                >
+                  <MapPin size={13} />
+                  Preencher cidade nas configurações
+                </Link>
+              )}
+            </div>
+          ) : null}
+
+          {cityMismatchWarning ? (
+            <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              <MapPin size={15} className="mt-0.5 shrink-0 text-amber-500" />
+              {cityMismatchWarning}
             </div>
           ) : null}
 
