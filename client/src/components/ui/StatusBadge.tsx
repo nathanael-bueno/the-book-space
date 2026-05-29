@@ -44,7 +44,7 @@ const STATUS_TONES: Record<string, BadgeTone> = {
   },
 }
 
-export function getStatusTone(rawStatus?: string, fallback = 'Indefinido') {
+function getStatusTone(rawStatus?: string, fallback = 'Indefinido') {
   const key = (rawStatus ?? '').trim().toLowerCase()
   const tone = STATUS_TONES[key]
   if (tone) return tone

@@ -57,7 +57,7 @@ export default function AdminInstitutions() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {

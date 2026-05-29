@@ -94,7 +94,7 @@ export default function TradeProposal() {
     return () => {
       active = false
     }
-  }, [bookId])
+  }, [bookId, toast])
 
   const offeredBook = useMemo(
     () => userBooks.find((item) => item.id === offeredBookId),

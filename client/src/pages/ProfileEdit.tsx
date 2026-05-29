@@ -97,7 +97,7 @@ export default function ProfileEdit() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     let active = true
@@ -128,7 +128,7 @@ export default function ProfileEdit() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     if (!estado) return

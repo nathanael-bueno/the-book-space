@@ -61,7 +61,7 @@ export default function VerifyEmail() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [step])
+  }, [step, timeLeft])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -93,7 +93,7 @@ export default function VerifyEmail() {
     return () => {
       active = false
     }
-  }, [step])
+  }, [step, toast])
 
   async function handleVerify(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

@@ -41,7 +41,7 @@ export default function AdminReports() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   const pendingCount = useMemo(
     () => reports.filter((report) => report.status === 'Pendente').length,

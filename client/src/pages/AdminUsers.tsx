@@ -47,7 +47,7 @@ export default function AdminUsers() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {

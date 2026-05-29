@@ -53,7 +53,7 @@ export default function Login() {
     if (errorMessage) {
       toast.error({ title: 'Erro', message: errorMessage })
     }
-  }, [errorMessage])
+  }, [errorMessage, toast])
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">

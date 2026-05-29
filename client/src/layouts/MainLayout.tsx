@@ -307,11 +307,9 @@ export default function MainLayout() {
     }
 
     loadNotificationsSummary()
-    const intervalId = window.setInterval(loadNotificationsSummary, 15000)
 
     return () => {
       active = false
-      window.clearInterval(intervalId)
     }
   }, [location.pathname])
 

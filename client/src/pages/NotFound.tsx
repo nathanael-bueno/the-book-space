@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Compass, House, Search } from 'lucide-react'
+import { House, Search } from 'lucide-react'
 
 function VoidIllustration() {
   return (
@@ -69,17 +69,23 @@ export default function NotFound() {
           Pagina nao encontrada
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-ink-muted">
-          O endereco pode ter sido removido ou digitado incorretamente. 
-          Que tal voltar ao inicio?
+          O endereco pode ter sido removido ou digitado incorretamente. Que tal
+          voltar ao inicio?
         </p>
       </div>
 
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-        <Link to="/app/feed" className="btn-primary h-10 px-8 rounded-xl shadow-md">
+        <Link
+          to="/app/feed"
+          className="btn-primary h-10 px-8 rounded-xl shadow-md"
+        >
           <House size={16} />
           Voltar ao inicio
         </Link>
-        <Link to="/app/catalog" className="btn-secondary h-10 px-8 rounded-xl bg-white shadow-sm">
+        <Link
+          to="/app/catalog"
+          className="btn-secondary h-10 px-8 rounded-xl bg-white shadow-sm"
+        >
           <Search size={16} />
           Ver catalogo
         </Link>

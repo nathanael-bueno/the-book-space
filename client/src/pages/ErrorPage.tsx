@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronLeft, RotateCcw } from 'lucide-react'
+import { ChevronLeft, RotateCcw } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function ServerErrorIllustration() {
@@ -119,8 +119,8 @@ export default function ErrorPage() {
           Algo nao saiu como planejado
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-ink-muted">
-          Ocorreu um erro no servidor ou na conexao. 
-          Ja estamos trabalhando para colocar tudo em ordem!
+          Ocorreu um erro no servidor ou na conexao. Ja estamos trabalhando para
+          colocar tudo em ordem!
         </p>
       </div>
 

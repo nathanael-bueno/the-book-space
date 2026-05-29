@@ -40,7 +40,7 @@ export default function TradesHistory() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   return (
     <main className="mx-auto w-full space-y-4">

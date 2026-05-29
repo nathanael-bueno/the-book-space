@@ -91,7 +91,7 @@ export default function Register() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     if (!state) return
@@ -123,7 +123,7 @@ export default function Register() {
     return () => {
       active = false
     }
-  }, [state])
+  }, [state, toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

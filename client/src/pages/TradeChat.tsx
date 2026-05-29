@@ -66,19 +66,8 @@ export default function TradeChat() {
 
     load()
 
-    const intervalId = window.setInterval(async () => {
-      try {
-        const messagesResponse = await listTradeMessages(safeTradeId)
-        if (!active) return
-        setMessages(normalizeMessagesPayload(messagesResponse.data))
-      } catch {
-        // Ignora falhas temporarias de polling para nao interromper o chat.
-      }
-    }, 8000)
-
     return () => {
       active = false
-      window.clearInterval(intervalId)
     }
   }, [toast, tradeId])
 

@@ -168,7 +168,7 @@ export default function Catalog() {
     return () => {
       active = false
     }
-  }, [query, condition, locationTerm, selectedGenreId, currentUserId])
+  }, [query, condition, locationTerm, selectedGenreId, currentUserId, toast])
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {

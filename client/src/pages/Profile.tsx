@@ -111,7 +111,7 @@ export default function Profile() {
     return () => {
       active = false
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     if (!profile?.id) return
@@ -140,7 +140,7 @@ export default function Profile() {
     return () => {
       active = false
     }
-  }, [profile?.id])
+  }, [profile?.id, toast])
 
   useEffect(() => {
     let active = true

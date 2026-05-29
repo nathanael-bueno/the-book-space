@@ -71,7 +71,7 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
