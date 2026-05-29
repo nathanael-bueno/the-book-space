@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent, FormEvent, KeyboardEvent } from 'react'
-import { BookOpen, Send, ChevronLeft, Image, X, UploadCloud } from 'lucide-react'
+import {
+  BookOpen,
+  Send,
+  ChevronLeft,
+  Image,
+  X,
+  UploadCloud,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../stores/useToast'
 import { createPost } from '../services/posts'

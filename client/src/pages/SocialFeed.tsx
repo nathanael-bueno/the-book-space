@@ -161,7 +161,7 @@ export default function SocialFeed() {
     return () => {
       active = false
     }
-  }, [selectedGenreId])
+  }, [selectedGenreId, toast])
 
   const prioritizedPosts = useMemo(() => {
     if (!followedUserIds.length) return posts

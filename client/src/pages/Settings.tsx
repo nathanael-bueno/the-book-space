@@ -1096,8 +1096,6 @@ export default function Settings() {
     setSearchParams({ tab }, { replace: true })
   }
 
-  const activeTabMeta = TABS.find((t) => t.id === activeTab)
-
   return (
     <main className="mx-auto w-full max-w-6xl">
       {/* Page header */}
@@ -1147,7 +1145,6 @@ export default function Settings() {
               )
             })}
           </div>
-
         </nav>
 
         {/* Content panel */}
