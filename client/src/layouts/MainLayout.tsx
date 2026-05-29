@@ -19,8 +19,8 @@ import {
 } from 'lucide-react'
 import { clearToken, getToken } from '../services/auth'
 import { listBooks } from '../services/books'
-import { listNotifications } from '../services/notifications'
 import { getMyProfile } from '../services/profile'
+import { useNotifications } from '../stores/notificationStore'
 
 type JwtPayload = {
   role?: string
@@ -143,7 +143,7 @@ export default function MainLayout() {
   const [sidebarProfile, setSidebarProfile] = useState<SidebarProfile | null>(
     null
   )
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
+  const { unreadCount: totalUnread } = useNotifications()
   const sidebarProfileMenuRef = useRef<HTMLDivElement | null>(null)
   const userRole = useMemo<UserRole>(() => {
     const token = getToken()
@@ -289,29 +289,6 @@ export default function MainLayout() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [isMobileSidebarOpen])
-
-  useEffect(() => {
-    let active = true
-
-    async function loadNotificationsSummary() {
-      try {
-        const response = await listNotifications()
-        if (!active) return
-        setUnreadNotificationsCount(
-          response.data.filter((item) => !item.lida_em).length
-        )
-      } catch {
-        if (!active) return
-        setUnreadNotificationsCount(0)
-      }
-    }
-
-    loadNotificationsSummary()
-
-    return () => {
-      active = false
-    }
-  }, [location.pathname])
 
   useEffect(() => {
     if (!isMobileSidebarOpen) return
@@ -690,11 +667,9 @@ export default function MainLayout() {
               aria-label="Notificacoes"
             >
               <Bell size={18} />
-              {unreadNotificationsCount > 0 ? (
-                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-white">
-                  {unreadNotificationsCount > 9
-                    ? '9+'
-                    : unreadNotificationsCount}
+              {totalUnread > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
+                  {totalUnread > 99 ? '99+' : totalUnread}
                 </span>
               ) : null}
             </Link>

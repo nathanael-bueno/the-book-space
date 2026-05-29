@@ -16,6 +16,7 @@ import {
   markNotificationAsRead,
   type ApiNotification,
 } from '../services/notifications'
+import { useNotifications } from '../stores/notificationStore'
 
 type NotificationsCache = {
   data: ApiNotification[]
@@ -60,10 +61,15 @@ function resolveActionTo(notification: ApiNotification) {
 
 export default function Notifications() {
   const navigate = useNavigate()
+  const { resetUnread } = useNotifications()
   const [notifications, setNotifications] = useState<ApiNotification[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMarkingId, setIsMarkingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    resetUnread()
+  }, [resetUnread])
 
   useEffect(() => {
     let active = true

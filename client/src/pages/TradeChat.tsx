@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronLeft, MessageSquareText, Send } from 'lucide-react'
@@ -10,6 +10,7 @@ import {
   type ApiTradeMessage,
 } from '../services/trades'
 import { useToast } from '../stores/useToast'
+import { getEcho, disconnectEcho } from '../lib/echo'
 
 function normalizeMessagesPayload(payload: unknown): ApiTradeMessage[] {
   if (Array.isArray(payload)) {
@@ -37,6 +38,13 @@ export default function TradeChat() {
   const [draft, setDraft] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
 
   useEffect(() => {
     if (!tradeId) return
@@ -66,10 +74,28 @@ export default function TradeChat() {
 
     load()
 
+    const echo = getEcho()
+    const channel = echo
+      .private(`trade.${safeTradeId}`)
+      .listen('NewTradeMessage', (event: { message: ApiTradeMessage }) => {
+        setMessages((prev) => {
+          const alreadyExists = prev.some((m) => m.id === event.message.id)
+          if (alreadyExists) return prev
+          return [...prev, event.message]
+        })
+      })
+
     return () => {
       active = false
+      channel.stopListening('NewTradeMessage')
     }
   }, [toast, tradeId])
+
+  useEffect(() => {
+    return () => {
+      disconnectEcho()
+    }
+  }, [])
 
   if (hasInvalidTradeId) {
     return (
@@ -91,7 +117,13 @@ export default function TradeChat() {
     setIsSending(true)
     try {
       const response = await sendTradeMessage(tradeId, trimmedDraft)
-      setMessages((currentMessages) => [...currentMessages, response.data])
+      setMessages((currentMessages) => {
+        const alreadyExists = currentMessages.some(
+          (m) => m.id === response.data.id
+        )
+        if (alreadyExists) return currentMessages
+        return [...currentMessages, response.data]
+      })
       setDraft('')
     } catch (err) {
       toast.error({
@@ -135,7 +167,7 @@ export default function TradeChat() {
           </div>
         ) : null}
 
-        <div className="space-y-2.5 bg-[#fbfaf7] p-3 sm:p-3.5">
+        <div className="max-h-[480px] space-y-2.5 overflow-y-auto bg-[#fbfaf7] p-3 sm:p-3.5">
           {!isLoading && !messages.length ? (
             <div className="rounded-lg border border-line/35 bg-white px-3 py-2.5 text-sm text-ink-dim">
               Nenhuma mensagem ainda nesta troca.
@@ -183,6 +215,8 @@ export default function TradeChat() {
               </div>
             )
           })}
+
+          <div ref={messagesEndRef} />
         </div>
 
         <form

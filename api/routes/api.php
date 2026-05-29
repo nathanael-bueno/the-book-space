@@ -47,6 +47,11 @@ Route::get('/genres', [GenreController::class, 'index']);          // public rea
 Route::get('/institutions', [InstitutionController::class, 'index']);
 Route::get('/institutions/{institution}', [InstitutionController::class, 'show']);
 
+// --- Broadcast auth (JWT) ---
+Route::post('/broadcasting/auth', function () {
+    return \Illuminate\Support\Facades\Broadcast::auth(request());
+})->middleware(['auth.jwt']);
+
 // --- Authenticated routes ---
 Route::middleware(['auth.jwt', 'active.user', 'token.fresh', 'verified.email'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);

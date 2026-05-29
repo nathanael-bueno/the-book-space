@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewTradeMessage;
 use App\Http\Requests\StoreTradeMessageRequest;
 use App\Models\Trade;
 use App\Models\TradeMessage;
@@ -64,6 +65,8 @@ class TradeMessageController extends Controller
         });
 
         $message->load('sender:id,nome_completo,foto');
+
+        broadcast(new NewTradeMessage($message))->toOthers();
 
         return response()->json([
             'message' => 'Mensagem enviada com sucesso.',
